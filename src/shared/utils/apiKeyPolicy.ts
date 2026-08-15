@@ -180,6 +180,19 @@ function normalizeComboAccessName(value: unknown): string | null {
   return trimmed.startsWith("combo/") ? trimmed.slice(6).trim() || trimmed : trimmed;
 }
 
+/**
+ * Media routes use a provider model that is deliberately hidden from the
+ * public chat-combo catalogue.  Requiring both an exact per-key model grant
+ * and the images endpoint keeps this exception narrow: wildcard grants and
+ * chat requests still pass through the normal combo/group policy.
+ */
+function hasExplicitImageModelGrant(apiKeyInfo: ApiKeyMetadata, modelStr: string): boolean {
+  return (
+    apiKeyInfo.allowedEndpoints?.includes("images") === true &&
+    apiKeyInfo.allowedModels?.includes(modelStr) === true
+  );
+}
+
 function matchesComboAccessRule(comboName: string, requestedModel: string, rule: string): boolean {
   const normalizedRule = normalizeComboAccessName(rule);
   if (!normalizedRule) return false;
@@ -248,8 +261,18 @@ async function isComboAllowedForKey(
   allowedCombos: string[],
   modelStr: string
 ): Promise<{ allowed: boolean; comboName: string | null }> {
+  // Curated API keys are deliberately a public facade.  Do not let a raw
+  // provider id or OmniRoute virtual route (for example auto/*) resolve to a
+  // combo and bypass the facade.  Internal fallback targets are selected after
+  // this request-policy stage and are therefore unaffected by this guard.
+  const isCuratedAlias = modelStr.startsWith("bp/") || modelStr.startsWith("combo/bp/");
+  if (!isCuratedAlias) return { allowed: false, comboName: null };
+
   const comboName = await resolveRequestedComboName(modelStr);
-  if (!comboName) return { allowed: true, comboName: null };
+  // A key with an explicit curated-combo allow-list must never fall through
+  // to a raw/virtual model (for example auto/*). Without this fail-closed
+  // branch, an unknown model could bypass the combo list and reach a provider.
+  if (!comboName) return { allowed: false, comboName: null };
 
   const allowed = allowedCombos.some((rule) => matchesComboAccessRule(comboName, modelStr, rule));
   return { allowed, comboName };
@@ -302,6 +325,11 @@ async function validateStandardRoutingTarget(
   apiKeyInfo: ApiKeyMetadata,
   modelStr: string
 ): Promise<Response | null> {
+  // Explicit model grants are used for internal specialty endpoints such as
+  // image generation. They must be evaluated before the curated chat-combo
+  // facade; otherwise any key that has allowedCombos would reject a granted
+  // provider/model as an unknown combo.
+  if (hasExplicitImageModelGrant(apiKeyInfo, modelStr)) return null;
   let requestedComboName: string | null = null;
   if (apiKeyInfo.allowedCombos && apiKeyInfo.allowedCombos.length > 0) {
     try {
@@ -522,6 +550,7 @@ async function validateQuotaAccess(context: PolicyContext): Promise<Response | n
 async function validateModelAccess(context: PolicyContext): Promise<Response | null> {
   const { request, apiKey, apiKeyInfo, modelStr } = context;
   if (!modelStr || apiKeyInfo.allowedQuotas?.length) return null;
+  if (hasExplicitImageModelGrant(apiKeyInfo, modelStr)) return null;
   const comboAccess = await validateComboAccess(apiKeyInfo.allowedCombos, modelStr);
   if (comboAccess.rejection) return comboAccess.rejection;
   let requestedComboName = comboAccess.comboName;

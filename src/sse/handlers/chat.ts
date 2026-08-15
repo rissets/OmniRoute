@@ -107,6 +107,7 @@ import {
 } from "./reasoningRouting";
 import { createVirtualAutoCombo, resolveAutoRoutingState } from "./autoRouting";
 import { getComboFailureLogError } from "./comboFailureLogging";
+import { shouldEnforceCandidateModelAllowlist } from "./comboCandidatePolicy";
 
 // Pipeline integration — wired modules
 import { classify429FromError, type FailureKind } from "@/shared/utils/classify429";
@@ -735,10 +736,11 @@ async function handleChatImplementation(
       // skips isModelAllowedForKey, so the per-candidate check here is the only
       // enforcement point during combo routing. Without it, a key with
       // disableNonPublicModels=true can reach free/prohibited models through auto/*.
-      const hasModelRestrictions =
-        apiKeyInfo &&
-        (Boolean(apiKeyInfo.allowedModels?.length) || apiKeyInfo.disableNonPublicModels === true);
-      if (hasModelRestrictions && apiKey) {
+      const enforceCandidateModelAllowlist = shouldEnforceCandidateModelAllowlist(
+        apiKeyInfo,
+        combo.name,
+      );
+      if (enforceCandidateModelAllowlist && apiKey) {
         const modelAllowed = await isModelAllowedForKey(apiKey, modelString);
         if (!modelAllowed) return false;
       }

@@ -61,7 +61,7 @@ export const setTokenLimitSchema = z
       .number()
       .int("tokenLimit must be an integer")
       .positive("tokenLimit must be greater than zero"),
-    resetInterval: z.enum(["daily", "weekly", "monthly"]).default("monthly"),
+    resetInterval: z.enum(["5h", "daily", "weekly", "monthly"]).default("monthly"),
     resetTime: z
       .string()
       .trim()

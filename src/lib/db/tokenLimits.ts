@@ -71,7 +71,7 @@ function normalizeScopeType(value: unknown): TokenLimitScopeType {
 }
 
 function normalizeResetInterval(value: unknown): BudgetResetInterval {
-  if (value === "daily" || value === "weekly" || value === "monthly") return value;
+  if (value === "5h" || value === "daily" || value === "weekly" || value === "monthly") return value;
   return "monthly";
 }
 
@@ -85,12 +85,12 @@ function ensureSchema() {
       scope_type      TEXT NOT NULL CHECK (scope_type IN ('model', 'provider', 'global')),
       scope_value     TEXT NOT NULL DEFAULT '',
       token_limit     INTEGER NOT NULL CHECK (token_limit > 0),
-      reset_interval  TEXT NOT NULL DEFAULT 'monthly' CHECK (reset_interval IN ('daily', 'weekly', 'monthly')),
+      reset_interval  TEXT NOT NULL DEFAULT 'monthly' CHECK (reset_interval IN ('5h', 'daily', 'weekly', 'monthly')),
       reset_time      TEXT,
       enabled         INTEGER NOT NULL DEFAULT 1,
       created_at      TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at      TEXT NOT NULL DEFAULT (datetime('now')),
-      UNIQUE (api_key_id, scope_type, scope_value)
+      UNIQUE (api_key_id, scope_type, scope_value, reset_interval)
     );
     CREATE INDEX IF NOT EXISTS idx_aktl_api_key_id ON api_key_token_limits (api_key_id);
     CREATE TABLE IF NOT EXISTS api_key_token_counters (
@@ -152,7 +152,7 @@ export function upsertTokenLimit(input: UpsertTokenLimitInput): TokenLimit {
     `INSERT INTO api_key_token_limits
        (id, api_key_id, scope_type, scope_value, token_limit, reset_interval, reset_time, enabled, created_at, updated_at)
      VALUES (@id, @apiKeyId, @scopeType, @scopeValue, @tokenLimit, @resetInterval, @resetTime, @enabled, datetime('now'), datetime('now'))
-     ON CONFLICT(api_key_id, scope_type, scope_value)
+     ON CONFLICT(api_key_id, scope_type, scope_value, reset_interval)
      DO UPDATE SET token_limit    = excluded.token_limit,
                    reset_interval = excluded.reset_interval,
                    reset_time     = excluded.reset_time,
@@ -162,9 +162,9 @@ export function upsertTokenLimit(input: UpsertTokenLimitInput): TokenLimit {
 
   const row = db
     .prepare(
-      "SELECT * FROM api_key_token_limits WHERE api_key_id = ? AND scope_type = ? AND scope_value = ?"
+      "SELECT * FROM api_key_token_limits WHERE api_key_id = ? AND scope_type = ? AND scope_value = ? AND reset_interval = ?"
     )
-    .get(input.apiKeyId, scopeType, scopeValue);
+    .get(input.apiKeyId, scopeType, scopeValue, resetInterval);
   return rowToTokenLimit(row);
 }
 

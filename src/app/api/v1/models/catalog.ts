@@ -599,6 +599,28 @@ async function buildUnifiedModelsResponseCore(
           ...diagnosticHeaders,
         });
       }
+      // BP Batam policy keys are combo-only.  Do not leak the underlying
+      // provider/model catalog to an operator or end-user key even though the
+      // router itself needs those IDs internally for fallback resolution.
+      if (earlyKeyMeta?.allowedCombos && earlyKeyMeta.allowedCombos.length > 0) {
+        const allowedNames = new Set(earlyKeyMeta.allowedCombos);
+        const comboOnly = combos
+          .filter((combo) => combo.isActive !== false && combo.isHidden !== true && typeof combo.name === "string" && allowedNames.has(combo.name))
+          .map((combo) => ({
+            id: combo.name,
+            object: "model",
+            created: timestamp,
+            owned_by: "combo",
+            permission: [],
+            root: combo.name,
+            parent: null,
+            ...buildComboCatalogMetadata(combo, resolveNestedComboTargets(combo as Parameters<typeof resolveNestedComboTargets>[0], combos as Parameters<typeof resolveNestedComboTargets>[1]) as ComboCatalogTarget[]),
+          }));
+        return finalizeCatalogResponse(request, comboOnly, () => undefined, {
+          ...corsHeaders,
+          ...diagnosticHeaders,
+        });
+      }
     }
 
     // #4164: advertise the built-in zero-setup `auto/*` combos at the very top.

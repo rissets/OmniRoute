@@ -84,6 +84,13 @@ function makePolicyRequest(apiKey) {
   });
 }
 
+function makeImagePolicyRequest(apiKey) {
+  return new Request("http://localhost/api/v1/images/generations", {
+    method: "POST",
+    headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
+  });
+}
+
 function makeAnthropicPolicyRequest(apiKey) {
   return new Request("http://localhost/v1/messages", {
     method: "POST",
@@ -564,47 +571,70 @@ test("enforceApiKeyPolicy enforces custom multi-window rate limits", async () =>
 test("enforceApiKeyPolicy enforces combo allowlists separately from model allowlists", async () => {
   const allowedKey = await createKeyWithPolicy({
     allowedModels: ["openai/*"],
-    allowedCombos: ["fast-chat", "mapped-chat"],
+    allowedCombos: ["bp/fast-chat", "bp/mapped-chat"],
   });
   const blockedKey = await createKeyWithPolicy({
-    allowedCombos: ["slow-chat"],
+    allowedCombos: ["bp/slow-chat"],
   });
   await combosDb.createCombo({
-    name: "fast-chat",
+    name: "bp/fast-chat",
     strategy: "priority",
     models: ["anthropic/claude-3-5-sonnet"],
   });
   await combosDb.createCombo({
-    name: "mapped-chat",
+    name: "bp/mapped-chat",
     strategy: "priority",
     models: ["openai/gpt-4.1"],
   });
-  const mappedCombo = await combosDb.getComboByName("mapped-chat");
+  const mappedCombo = await combosDb.getComboByName("bp/mapped-chat");
   assert.ok(mappedCombo?.id);
   await modelComboMappingsDb.createModelComboMapping({
-    pattern: "mapped-model-*",
+    pattern: "bp/mapped-model-*",
     comboId: mappedCombo.id as string,
   });
   const policy = await loadPolicy("combo-access");
 
   const allowed = await policy.enforceApiKeyPolicy(
     makePolicyRequest(allowedKey.key),
-    "combo/fast-chat"
+    "combo/bp/fast-chat"
   );
   assert.equal(allowed.rejection, null);
 
   const blocked = await policy.enforceApiKeyPolicy(
     makePolicyRequest(blockedKey.key),
-    "combo/fast-chat"
+    "combo/bp/fast-chat"
   );
   assert.equal(blocked.rejection.status, 403);
-  assert.match(await readErrorMessage(blocked.rejection), /Combo "fast-chat" is not allowed/);
+  assert.match(await readErrorMessage(blocked.rejection), /Combo "bp\/fast-chat" is not allowed/);
 
   const mapped = await policy.enforceApiKeyPolicy(
     makePolicyRequest(allowedKey.key),
-    "mapped-model-1"
+    "bp/mapped-model-1"
   );
   assert.equal(mapped.rejection, null);
+});
+
+test("enforceApiKeyPolicy permits only an exact image model grant beside chat combos", async () => {
+  const mediaKey = await createKeyWithPolicy({
+    modelAccessMode: "restricted",
+    allowedModels: ["openai/gpt-image-1-mini"],
+    allowedCombos: ["bp/gpt-5.6-sol-medium"],
+    allowedEndpoints: ["chat", "images"],
+  });
+  const policy = await loadPolicy("explicit-image-model");
+
+  const allowed = await policy.enforceApiKeyPolicy(
+    makeImagePolicyRequest(mediaKey.key),
+    "openai/gpt-image-1-mini"
+  );
+  assert.equal(allowed.rejection, null);
+
+  const denied = await policy.enforceApiKeyPolicy(
+    makeImagePolicyRequest(mediaKey.key),
+    "openai/gpt-image-1"
+  );
+  assert.equal(denied.rejection.status, 403);
+  assert.match(await readErrorMessage(denied.rejection), /not allowed/);
 });
 
 test("enforceApiKeyPolicy applies configured throttle delay", async () => {

@@ -27,6 +27,7 @@ import {
   withCompressionHeaderEcho,
 } from "@/shared/utils/compressionHeaderEcho";
 import { resolveModelAliasOnBody } from "@/lib/modelAliasResolver";
+import { normalizeOpenAiToolCallSseResponse } from "@/lib/openAiToolCallSseCompatibility";
 
 let initPromise = null;
 
@@ -212,7 +213,7 @@ export async function POST(request) {
       const handlerResponse = releaseChatAdmissionAfterHandler(
         handleChat(request, null, parsedBody, reqId),
         admission.lease
-      );
+      ).then(normalizeOpenAiToolCallSseResponse);
       const streamedResponse = await withEarlyStreamKeepalive(handlerResponse, {
         signal: request.signal,
         thresholdMs: resolveKeepaliveThreshold(parsedBody?.model),
