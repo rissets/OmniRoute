@@ -841,10 +841,4 @@ export const SIDEBAR_SECTIONS: readonly SidebarSectionDefinition[] = [
     titleFallback: "Configuration",
     children: CONFIGURATION_ITEMS,
   },
-  {
-    id: "help",
-    titleKey: "helpSection",
-    titleFallback: "Help",
-    children: HELP_ITEMS,
-  },
 ] as const;

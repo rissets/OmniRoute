@@ -168,7 +168,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-xs text-text-muted/60 mt-8">
-            OmniRoute — {t("unifiedProxy")}
+            BP Batam AI Router — {t("unifiedProxy")}
           </p>
         </div>
       </div>
@@ -208,7 +208,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-xs text-text-muted/60 mt-8">
-            OmniRoute — {t("unifiedAiApiProxy")}
+            BP Batam AI — {t("unifiedAiApiProxy")}
           </p>
         </div>
       </div>
@@ -227,11 +227,13 @@ export default function LoginPage() {
           >
             <div className="mb-10">
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center">
-                  <span className="material-symbols-outlined text-white text-[20px]">hub</span>
-                </div>
+                <img
+                  src="/bp-batam-logo.png"
+                  alt="BP Batam"
+                  className="h-10 w-auto rounded-lg object-contain"
+                />
                 <span className="text-xl font-semibold text-text-main tracking-tight">
-                  OmniRoute
+                  BP Batam AI
                 </span>
               </div>
               <h1 className="text-2xl font-bold text-text-main tracking-tight">{t("signIn")}</h1>

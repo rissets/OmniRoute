@@ -23,13 +23,13 @@ export const viewport: Viewport = {
 
 export async function generateMetadata() {
   const settings = await getSettings();
-  const instanceName = settings?.instanceName || "OmniRoute";
+  const instanceName = settings?.instanceName || "BP Batam AI Router";
   const customFaviconUrl = settings?.customFaviconUrl || settings?.customFaviconBase64;
 
   return {
-    title: `${instanceName} — AI Gateway for Multi-Provider LLMs`,
+    title: `${instanceName} — Gateway AI Multi-Provider BP Batam`,
     description:
-      "OmniRoute is an AI gateway for multi-provider LLMs. One endpoint for all your AI providers.",
+      "BP Batam AI Router adalah gateway AI multi-provider untuk BP Batam.",
     manifest: "/manifest.webmanifest",
     applicationName: instanceName,
     appleWebApp: {

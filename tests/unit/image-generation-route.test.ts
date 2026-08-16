@@ -376,6 +376,43 @@ test("v1 image edit POST routes built-in Codex references through native Respons
   assert.equal(captured.body.input[0].content.length, 3);
 });
 
+test("v1 image edit POST forwards built-in OpenAI models to the native edit endpoint", async () => {
+  await seedConnection("openai", { apiKey: "openai-image-key" });
+
+  let capturedUrl = "";
+  let capturedHeaders: Record<string, string> = {};
+  let capturedBody = "";
+  globalThis.fetch = async (url, options: RequestInit = {}) => {
+    capturedUrl = String(url);
+    capturedHeaders = options.headers as Record<string, string>;
+    capturedBody = Buffer.from(options.body as ArrayBuffer).toString("latin1");
+    return new Response(
+      JSON.stringify({ created: 1, data: [{ b64_json: "b3BlbmFpLWVkaXQ=" }] }),
+      { status: 200, headers: { "content-type": "application/json" } }
+    );
+  };
+
+  const formData = new FormData();
+  formData.set("prompt", "add a blue and gold frame");
+  formData.set("model", "openai/gpt-image-1-mini");
+  formData.set("response_format", "b64_json");
+  formData.set("image", new File([VALID_PNG_BYTES], "source.png", { type: "image/png" }));
+
+  const response = await imageEditRoute.POST(
+    new Request("http://localhost/api/v1/images/edits", { method: "POST", body: formData })
+  );
+  const body = (await response.json()) as ImageResponseBody;
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data[0].b64_json, "b3BlbmFpLWVkaXQ=");
+  assert.equal(capturedUrl, "https://api.openai.com/v1/images/edits");
+  assert.equal(capturedHeaders.Authorization, "Bearer openai-image-key");
+  assert.match(capturedHeaders["Content-Type"], /^multipart\/form-data; boundary=/);
+  assert.match(capturedBody, /name="model"\r\n\r\ngpt-image-1-mini/);
+  assert.match(capturedBody, /name="prompt"\r\n\r\nadd a blue and gold frame/);
+  assert.match(capturedBody, /name="image"; filename="image.png"/);
+});
+
 test("v1 image edit POST rejects excessive or malformed Codex reference sets", async () => {
   await seedConnection("codex", { apiKey: "codex-oauth-token" });
   globalThis.fetch = async () => {

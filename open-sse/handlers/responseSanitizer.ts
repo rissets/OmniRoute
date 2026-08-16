@@ -48,6 +48,17 @@ const ALLOWED_RESPONSES_USAGE_FIELDS = new Set([
   "server_side_tool_usage",
 ]);
 
+function normalizeResponseId(id: unknown): string {
+  if (!id || (typeof id !== "string" && typeof id !== "number")) {
+    return `chatcmpl-${crypto.randomUUID().replace(/-/g, "").slice(0, 29)}`;
+  }
+  const str = String(id);
+  if (str === "") {
+    return `chatcmpl-${crypto.randomUUID().replace(/-/g, "").slice(0, 29)}`;
+  }
+  return str;
+}
+
 const RESPONSES_EXTRA_TOP_LEVEL_FIELDS = [
   "server_side_tool_usage_details",
   "server_side_tool_usage",
@@ -612,21 +623,6 @@ function sanitizeResponsesUsage(usage: unknown): unknown {
  * Normalize response ID to use chatcmpl- prefix.
  * Preserves numeric/short custom ids as their string form rather than
  * regenerating them — a passthrough numeric id (e.g. `123`) must stay `"123"`
- * so streaming clients can correlate chunks (#3427/#5776). Only a genuinely
- * missing/empty id gets a fresh `chatcmpl-` token.
- */
-function normalizeResponseId(id: unknown): string {
-  if (!id || (typeof id !== "string" && typeof id !== "number")) {
-    return `chatcmpl-${crypto.randomUUID().replace(/-/g, "").slice(0, 29)}`;
-  }
-  const str = String(id);
-  if (str === "") {
-    return `chatcmpl-${crypto.randomUUID().replace(/-/g, "").slice(0, 29)}`;
-  }
-  // Already correct format, or a custom/numeric id — keep it.
-  return str;
-}
-
 function normalizeResponsesId(id: unknown): string {
   if (!id || typeof id !== "string") {
     return `resp_${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`;
@@ -1085,14 +1081,12 @@ export function sanitizeStreamingChunk(parsed: unknown): unknown {
   const sanitized: JsonRecord = {};
 
   // Keep only standard fields — normalize id to string to avoid AI_InvalidResponseDataError
-  if (parsedRecord.id !== undefined && parsedRecord.id !== null) {
-    sanitized.id = normalizeResponseId(
-      typeof parsedRecord.id === "string" ? parsedRecord.id : String(parsedRecord.id)
-    );
-  }
+  sanitized.id = normalizeResponseId(
+    typeof parsedRecord.id === "string" ? parsedRecord.id : parsedRecord.id != null ? String(parsedRecord.id) : ""
+  );
   sanitized.object = toString(parsedRecord.object) || "chat.completion.chunk";
-  if (parsedRecord.created !== undefined) sanitized.created = parsedRecord.created;
-  if (parsedRecord.model !== undefined) sanitized.model = parsedRecord.model;
+  sanitized.created = typeof parsedRecord.created === "number" ? parsedRecord.created : Math.floor(Date.now() / 1000);
+  sanitized.model = typeof parsedRecord.model === "string" && parsedRecord.model.length > 0 ? parsedRecord.model : "model";
 
   // Sanitize choices with delta
   if (Array.isArray(parsedRecord.choices)) {

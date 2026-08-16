@@ -179,6 +179,12 @@ export const RENAMED_MIGRATION_COMPATIBILITY = [
     toVersion: "153",
     toName: "radar_local_model_state",
   },
+  {
+    fromVersion: "074",
+    fromName: "token_limit_5h",
+    toVersion: "154",
+    toName: "token_limit_5h",
+  },
 ] as const;
 
 export const LEGACY_VERSION_SLOT_MIGRATIONS = [

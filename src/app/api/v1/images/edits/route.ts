@@ -585,6 +585,57 @@ async function postHandler(request: Request, _context?: unknown) {
     });
   }
 
+  // OpenAI's native image models expose the same multipart /images/edits
+  // contract as custom compatible nodes. The registry stores the generation
+  // endpoint, and resolveImageBaseUrl rewrites it to /images/edits.
+  if (providerConfig?.format === "openai") {
+    const credentials = await getProviderCredentialsWithQuotaPreflight(
+      parsed.provider,
+      null,
+      allowedConnections,
+      resolvedModel
+    );
+    if (!credentials) {
+      return errorResponse(
+        HTTP_STATUS.UNAUTHORIZED,
+        `No credentials for provider: ${parsed.provider}`
+      );
+    }
+    if (credentials.allRateLimited) {
+      return unavailableResponse(
+        HTTP_STATUS.RATE_LIMITED,
+        `[${parsed.provider}] All accounts rate limited`,
+        credentials.retryAfter,
+        credentials.retryAfterHuman
+      );
+    }
+
+    const result = await handleOpenAIImageEdit({
+      provider: parsed.provider,
+      model: parsed.model,
+      credentials: {
+        ...credentials,
+        baseUrl: providerConfig.baseUrl,
+      },
+      prompt,
+      imageBytes,
+      imageMime,
+      size,
+      responseFormat,
+      n: 1,
+      log,
+    });
+
+    if (result.success) {
+      await clearRecoveredProviderState(credentials);
+      return jsonResponse(result.data);
+    }
+    return jsonResponse(
+      toJsonErrorPayload(result.error, "Image edit provider error"),
+      result.status
+    );
+  }
+
   // Other built-in providers do not expose an OpenAI-compatible edit endpoint.
   if (providerConfig) {
     return errorResponse(

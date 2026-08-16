@@ -14,7 +14,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 lg:col-span-2">
             <div className="flex items-center gap-3 mb-6">
-              <div className="size-6 rounded bg-[#E54D5E] flex items-center justify-center text-white">
+              <div className="size-6 rounded bg-linear-to-br from-[#1737B8] to-[#F5B800] flex items-center justify-center text-white">
                 <OmniRouteLogo size={16} className="text-white" />
               </div>
               <h3 className="text-white text-lg font-bold">{t("brandName")}</h3>

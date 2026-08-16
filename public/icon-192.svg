@@ -1,25 +1,14 @@
 <svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="192" height="192" rx="36" fill="url(#gradient)" />
-    <!-- Central node -->
-    <circle cx="96" cy="96" r="18" fill="white" />
-    <!-- Outer nodes -->
-    <circle cx="48" cy="48" r="12" fill="white" />
-    <circle cx="144" cy="48" r="12" fill="white" />
-    <circle cx="48" cy="144" r="12" fill="white" />
-    <circle cx="144" cy="144" r="12" fill="white" />
-    <circle cx="96" cy="30" r="9" fill="white" />
-    <circle cx="96" cy="162" r="9" fill="white" />
-    <!-- Connection lines -->
-    <line x1="96" y1="78" x2="48" y2="48" stroke="white" stroke-width="7" stroke-linecap="round" />
-    <line x1="96" y1="78" x2="144" y2="48" stroke="white" stroke-width="7" stroke-linecap="round" />
-    <line x1="96" y1="114" x2="48" y2="144" stroke="white" stroke-width="7" stroke-linecap="round" />
-    <line x1="96" y1="114" x2="144" y2="144" stroke="white" stroke-width="7" stroke-linecap="round" />
-    <line x1="96" y1="78" x2="96" y2="30" stroke="white" stroke-width="7" stroke-linecap="round" />
-    <line x1="96" y1="114" x2="96" y2="162" stroke="white" stroke-width="7" stroke-linecap="round" />
+    <rect width="192" height="192" rx="36" fill="#1737B8" />
+    <path d="M20 36h56v120H20z" fill="#F5B800" />
+    <path d="M30 92c21-25 40-27 60-8 12 11 22 14 39 9-16 16-35 24-54 13-16-9-29-13-45-14Z" fill="#1737B8" />
+    <text x="87" y="81" fill="white" font-family="Arial, sans-serif" font-size="21" font-weight="700">BP</text>
+    <text x="87" y="108" fill="#F5B800" font-family="Arial, sans-serif" font-size="20" font-weight="700">BATAM</text>
+    <text x="87" y="128" fill="white" font-family="Arial, sans-serif" font-size="9" font-weight="600">AI</text>
     <defs>
         <linearGradient id="gradient" x1="0" y1="0" x2="192" y2="192" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#E54D5E" />
-            <stop offset="1" stop-color="#C93D4E" />
+            <stop stop-color="#1737B8" />
+            <stop offset="1" stop-color="#F5B800" />
         </linearGradient>
     </defs>
 </svg>

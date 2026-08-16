@@ -743,6 +743,8 @@ export function createSSEStream(options: StreamOptions = {}) {
   // empty (which happens when `store: false` — see backfillResponsesCompletedOutput).
   const passthroughResponsesOutputItems: unknown[] = [];
   const passthroughResponsesPendingFunctionCalls = new Map<string, JsonRecord>();
+  let passthroughSharedChatId: string | null = null;
+  let passthroughFirstRoleEmitted = false;
   let passthroughResponsesId: string | null = null;
   let passthroughResponsesCurrentFunctionCallKey: string | null = null;
   const passthroughResponsesReasoningSummarySeen = new Set<string>();
@@ -1738,11 +1740,29 @@ export function createSSEStream(options: StreamOptions = {}) {
                   const restoredOpenAIToolName = restoreOpenAIToolNames(parsed, toolNameMap);
                   const idFixed = hadNonStringTopLevelId ? false : fixInvalidId(parsed);
 
+                  if (typeof parsed?.id === "string" && parsed.id.length >= 8 && !passthroughSharedChatId) {
+                    passthroughSharedChatId = parsed.id;
+                  } else if (!passthroughSharedChatId) {
+                    passthroughSharedChatId = `chatcmpl-${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`;
+                  }
+                  if (parsed && typeof parsed === "object") {
+                    parsed.id = passthroughSharedChatId;
+                    if (model && (!parsed.model || parsed.model === "model")) {
+                      parsed.model = model;
+                    }
+                  }
+
                   if (!hasValuableContent(parsed, FORMATS.OPENAI)) {
                     continue;
                   }
 
                   const delta = parsed.choices?.[0]?.delta;
+                  if (delta && typeof delta === "object") {
+                    if (!delta.role && (!passthroughFirstRoleEmitted || delta.tool_calls || passthroughHasToolCalls)) {
+                      delta.role = "assistant";
+                      passthroughFirstRoleEmitted = true;
+                    }
+                  }
                   let textualToolCallConverted = false;
                   let toolCallIdCoerced = false;
                   let splitMixedReasoningContent = false;
@@ -1943,7 +1963,9 @@ export function createSSEStream(options: StreamOptions = {}) {
             }
 
             if (!injectedUsage) {
-              if (line.startsWith("data:") && !line.startsWith("data: ")) {
+              if (clientPayload && typeof clientPayload === "object" && !(clientPayload as Record<string, unknown>).done) {
+                output = `data: ${JSON.stringify(clientPayload)}\n\n`;
+              } else if (line.startsWith("data:") && !line.startsWith("data: ")) {
                 output = "data: " + line.slice(5) + "\n\n";
               } else {
                 output = line + "\n\n";
@@ -2415,7 +2437,7 @@ export function createSSEStream(options: StreamOptions = {}) {
               // Synthesize a terminal chunk when the upstream omitted one.
               if (shouldEmitDoneTerminator && !passthroughSawFinishReason) {
                 const syntheticFinishChunk = buildSyntheticChatChunk(
-                  passthroughResponsesId,
+                  passthroughSharedChatId || passthroughResponsesId,
                   model,
                   {},
                   passthroughHasToolCalls ? "tool_calls" : "stop"

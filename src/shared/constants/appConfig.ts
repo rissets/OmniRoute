@@ -1,8 +1,8 @@
 import pkg from "../../../package.json" with { type: "json" };
 
 export const APP_CONFIG = {
-  name: "OmniRoute",
-  description: "AI Gateway for Multi-Provider LLMs",
+  name: "BP Batam AI Router",
+  description: "AI Gateway for BP Batam Multi-Provider LLMs",
   version: pkg.version,
 };
 

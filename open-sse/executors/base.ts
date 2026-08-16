@@ -539,6 +539,11 @@ export class BaseExecutor {
 
       // Fix #1884: Cursor sends prompt_cache_retention which breaks strict upstream endpoints
       delete cloned.prompt_cache_retention;
+      delete cloned._omnirouteInternalRequest;
+      delete cloned._omnirouteSkipContextRelay;
+      delete cloned._omnirouteSkipUniversalHandoff;
+      delete cloned._omnirouteReasoningRouteTrace;
+      delete cloned._omnirouteResponsesStore;
 
       // Also clean up top level optional fields that commonly cause issues when empty
       const optionalKeys = ["user", "stop", "seed", "response_format"];

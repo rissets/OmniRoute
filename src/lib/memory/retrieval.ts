@@ -12,6 +12,7 @@ import { getQdrantConfig, checkQdrantHealth, searchSemanticMemory } from "./qdra
 import type { MemoryEngineStatus } from "@/shared/schemas/memory";
 import { estimateTokens, parseMetadata, rowToMemory, getRelevanceScore } from "./retrieval/scoring";
 import type { MemoryRow } from "./retrieval/scoring";
+import { toSafeFts5Query } from "./retrieval/fts";
 
 const log = logger("MEMORY_RETRIEVAL");
 
@@ -122,7 +123,7 @@ function buildFtsRows(apiKeyId: string, config: FtsColConfig): MemoryRow[] {
   }
   ftsQueryStr += ` ORDER BY f.rank LIMIT 100`;
 
-  const ftsParams: unknown[] = [q, apiKeyId];
+  const ftsParams: unknown[] = [toSafeFts5Query(q), apiKeyId];
   if (scope === "session" && sessionId) ftsParams.push(sessionId);
   if (retentionDays && retentionDays > 0) {
     const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000).toISOString();
@@ -523,7 +524,7 @@ async function retrieveMemoriesInternal(
                 await vec.ensureReady(resolution);
                 const hybridHits = await vec.searchHybrid(
                   embeddingResult.vector,
-                  config.query,
+                  toSafeFts5Query(config.query),
                   100,
                   apiKeyId
                 );
@@ -918,7 +919,10 @@ export async function retrievePreview(
       const ftsQueryStr = apiKeyId
         ? `SELECT m.* FROM ${tableName} m JOIN memory_fts f ON m.memory_id = f.rowid WHERE f.memory_fts MATCH ? AND m.${apiKeyCol} = ? ORDER BY f.rank LIMIT ?`
         : `SELECT m.* FROM ${tableName} m JOIN memory_fts f ON m.memory_id = f.rowid WHERE f.memory_fts MATCH ? ORDER BY f.rank LIMIT ?`;
-      const ftsP: unknown[] = apiKeyId ? [query, apiKeyId, limit] : [query, limit];
+      const safeFtsQuery = toSafeFts5Query(query);
+      const ftsP: unknown[] = apiKeyId
+        ? [safeFtsQuery, apiKeyId, limit]
+        : [safeFtsQuery, limit];
       try {
         ftsRows = db.prepare(ftsQueryStr).all(...ftsP) as MemoryRow[];
       } catch {
