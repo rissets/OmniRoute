@@ -270,6 +270,7 @@ const ADMIN_SHOWN: ReadonlySet<HideableSidebarItemId> = new Set([
   "costs-pricing",
   "costs-budget",
   "costs-quota-share",
+  "organization-reserve",
   "radar-admin",
   "cache",
   "logs",

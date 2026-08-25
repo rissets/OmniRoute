@@ -255,6 +255,76 @@ export function getWindowUsage(limit: TokenLimit, now = Date.now()): number {
 }
 
 /**
+ * Return whether a current-window counter row exists, including an explicit
+ * zero marker written by a manual reset. This distinction is important: a
+ * missing row is a cold window that may be seeded from usage_history, while a
+ * zero row means an operator deliberately started a fresh window and history
+ * before that reset must not be re-applied.
+ */
+export function hasWindowCounter(limit: TokenLimit, now = Date.now()): boolean {
+  ensureSchema();
+  const db = getDbInstance();
+  const { windowStart } = resetWindowIfElapsed(limit, now);
+  const row = db
+    .prepare(
+      "SELECT 1 AS present FROM api_key_token_counters WHERE limit_id = ? AND window_start = ?"
+    )
+    .get(limit.id, windowStart);
+  return Boolean(row);
+}
+
+/**
+ * Reset live counters for an API key without deleting its configured limits.
+ *
+ * A reset writes a persistent zero marker for the active window. Previously
+ * the row was deleted, which made the next request look like a cold window;
+ * the cold-window history seed then restored all usage from before the reset
+ * and the user was still blocked. Older-window counters are pruned, while the
+ * current zero marker remains authoritative until new usage is recorded.
+ */
+export function resetTokenLimitUsage(apiKeyId: string, resetInterval?: BudgetResetInterval): number {
+  ensureSchema();
+  const db = getDbInstance();
+  const limits = db
+    .prepare(
+      `SELECT * FROM api_key_token_limits
+       WHERE api_key_id = ? AND (? IS NULL OR reset_interval = ?)`
+    )
+    .all(apiKeyId, resetInterval ?? null, resetInterval ?? null)
+    .map(rowToTokenLimit);
+  const reset = db.transaction(() => {
+    let changed = 0;
+    for (const limit of limits) {
+      const { windowStart } = resetWindowIfElapsed(limit);
+      const row = db
+        .prepare(
+          "SELECT tokens_used FROM api_key_token_counters WHERE limit_id = ? AND window_start = ?"
+        )
+        .get(limit.id, windowStart) as { tokens_used?: unknown } | undefined;
+      const previous = toNumber(row?.tokens_used);
+      if (previous > 0) {
+        logTokenLimitReset(limit.id, previous, windowStart);
+      }
+      // Keep the active row as a durable manual-reset marker. A later cold
+      // read must never seed pre-reset usage from usage_history.
+      db.prepare(
+        `INSERT INTO api_key_token_counters (limit_id, window_start, tokens_used, updated_at)
+         VALUES (?, ?, 0, datetime('now'))
+         ON CONFLICT(limit_id, window_start)
+         DO UPDATE SET tokens_used = 0, updated_at = datetime('now')`
+      ).run(limit.id, windowStart);
+      // Old windows are not applicable anymore and can be removed safely.
+      db.prepare(
+        "DELETE FROM api_key_token_counters WHERE limit_id = ? AND window_start <> ?"
+      ).run(limit.id, windowStart);
+      changed += 1;
+    }
+    return changed;
+  });
+  return reset();
+}
+
+/**
  * Atomically add `tokens` to the counter for (limitId, windowStart) and return
  * the new running total. Uses UPSERT (no read-then-write) so concurrent
  * increments under WAL cannot lose updates.

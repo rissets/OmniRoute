@@ -85,6 +85,7 @@ const HEADER_DESCRIPTIONS: Partial<Record<HideableSidebarItemId | "omni-skills",
   // Costs sub-pages
   "costs-budget": "costsBudgetDescription",
   "costs-pricing": "costsPricingDescription",
+  "organization-reserve": "organizationReserveDescription",
   // Logs sub-pages
   "logs-proxy": "logsProxyDescription",
   "logs-console": "logsConsoleDescription",

@@ -77,6 +77,15 @@ const OMNI_PROXY_ITEMS: readonly SidebarItemDefinition[] = [
     subtitleKey: "costsQuotaShareSubtitle",
     icon: "pie_chart",
   },
+  {
+    id: "organization-reserve",
+    href: "/dashboard/costs/organization-reserve",
+    i18nKey: "organizationReserve",
+    labelFallback: "Platform Budget",
+    subtitleKey: "organizationReserveSubtitle",
+    subtitleFallback: "Monthly platform capacity and operator allocation",
+    icon: "account_balance",
+  },
 ];
 
 export const COMPRESSION_CONTEXT_GROUP: SidebarItemGroup = {

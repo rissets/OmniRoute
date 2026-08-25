@@ -16,6 +16,7 @@ import { getDbInstance } from "../../src/lib/db/core.ts";
 import {
   resetWindowIfElapsed,
   getWindowUsage,
+  hasWindowCounter,
   incrementWindowTokens,
   getTokenLimitsForRequest,
   logTokenLimitReset,
@@ -116,7 +117,11 @@ export function getCurrentWindowUsage(
   // seed to the counter row so a subsequent recordTokenUsage increment does not
   // forget the existing historical usage in this window (force-fresh read then
   // first record must accumulate on top of history, not restart from 0).
-  if (dbUsage === 0 && (!cached || cached.windowStart !== windowStart)) {
+  // A manual reset leaves an explicit zero counter row. Only a truly missing
+  // row is cold and eligible for a usage_history seed; otherwise old usage
+  // would be restored immediately after a reset and the key would remain
+  // rate-limited.
+  if (dbUsage === 0 && !hasWindowCounter(limit, now) && (!cached || cached.windowStart !== windowStart)) {
     const seeded = seedWindowUsageFromHistory(limit, now);
     if (seeded > 0) {
       // UPSERT creates the row at `seeded`; safe because there is no row yet

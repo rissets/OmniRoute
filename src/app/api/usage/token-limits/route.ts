@@ -19,7 +19,9 @@ import {
   deleteTokenLimit,
   getWindowUsage,
   resetWindowIfElapsed,
+  resetTokenLimitUsage,
 } from "@/lib/localDb";
+import { clearTokenLimitCache } from "@omniroute/open-sse/services/tokenLimitCounter.ts";
 import type { TokenLimit } from "@/lib/db/tokenLimits";
 
 export async function GET(request: Request) {
@@ -93,6 +95,36 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: deleted }, { status: deleted ? 200 : 404 });
   } catch (error) {
     console.error("Error deleting token limit:", error);
+    return NextResponse.json(buildErrorBody(500, sanitizeErrorMessage(error)), { status: 500 });
+  }
+}
+
+/** Reset live counters while retaining the configured policy. */
+export async function PUT(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(buildErrorBody(400, "Invalid JSON body"), { status: 400 });
+  }
+  const payload = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+  const apiKeyId = typeof payload.apiKeyId === "string" ? payload.apiKeyId.trim() : "";
+  const resetInterval = typeof payload.resetInterval === "string" ? payload.resetInterval : undefined;
+  if (!apiKeyId) {
+    return NextResponse.json(buildErrorBody(400, "apiKeyId is required"), { status: 400 });
+  }
+  if (resetInterval && !["5h", "daily", "weekly", "monthly"].includes(resetInterval)) {
+    return NextResponse.json(buildErrorBody(400, "Invalid resetInterval"), { status: 400 });
+  }
+  try {
+    const deletedCounters = resetTokenLimitUsage(apiKeyId, resetInterval as any);
+    // Resetting through the management API must invalidate the hot-path cache
+    // in this process as well as the SQLite counter marker. Other instances
+    // read the marker from SQLite and therefore remain consistent.
+    clearTokenLimitCache();
+    return NextResponse.json({ success: true, apiKeyId, resetInterval: resetInterval ?? "all", deletedCounters });
+  } catch (error) {
+    console.error("Error resetting token limit usage:", error);
     return NextResponse.json(buildErrorBody(500, sanitizeErrorMessage(error)), { status: 500 });
   }
 }

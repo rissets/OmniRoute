@@ -183,6 +183,34 @@ test("getCurrentWindowUsage seeds from history and PERSISTS the seed (FIX 3)", a
   assert.equal(counter.getCurrentWindowUsage(limit, NOW_JAN, true), seeded + 25);
 });
 
+test("manual reset persists a zero marker and does not reseed pre-reset history", async () => {
+  const limit = tokenLimits.upsertTokenLimit({
+    apiKeyId: "k-reset",
+    scopeType: "global",
+    tokenLimit: 1000,
+    resetInterval: "5h",
+  });
+
+  // Historical usage already exists in the active window and would normally
+  // be used to seed a cold counter.
+  insertUsage("k-reset", "openai", "gpt-4o", 900, 0, new Date().toISOString());
+  assert.equal(counter.getCurrentWindowUsage(limit, Date.now(), true), 900);
+
+  // The reset must leave a durable zero marker. Clearing the in-memory cache
+  // simulates a different router process handling the next request.
+  const changed = tokenLimits.resetTokenLimitUsage("k-reset", "5h");
+  assert.equal(changed, 1);
+  counter.clearTokenLimitCache();
+  assert.equal(tokenLimits.hasWindowCounter(limit), true);
+  assert.equal(counter.getCurrentWindowUsage(limit, Date.now(), true), 0);
+
+  // New usage after the reset starts from zero, not from the 900 old tokens.
+  const { windowStart } = tokenLimits.resetWindowIfElapsed(limit);
+  tokenLimits.incrementWindowTokens(limit.id, windowStart, 75);
+  assert.equal(counter.checkTokenLimits("k-reset", "openai", "gpt-4o"), null);
+  assert.equal(tokenLimits.getWindowUsage(limit), 75);
+});
+
 test("seed total excludes cache tokens (no double-count) (FIX 2)", async () => {
   const limit = tokenLimits.upsertTokenLimit({
     apiKeyId: "k2c",

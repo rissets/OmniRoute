@@ -655,9 +655,11 @@ export {
   getTokenLimitsForRequest,
   deleteTokenLimit,
   getWindowUsage,
+  hasWindowCounter,
   incrementWindowTokens,
   resetWindowIfElapsed,
   logTokenLimitReset,
+  resetTokenLimitUsage,
 } from "./db/tokenLimits";
 
 export type {
