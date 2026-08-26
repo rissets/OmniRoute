@@ -88,7 +88,7 @@ export default function OrganizationReservePage() {
         <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Costs · Governance</p>
         <h1 className="mt-2 text-3xl font-semibold text-text-main">Platform Budget</h1>
         <p className="mt-2 max-w-3xl text-sm text-text-muted">
-          Set the single monthly token budget for the BP Batam platform. Per-user limits, sharing, and short-window resets are managed from the operator dashboard.
+          Set the single monthly token budget for HelloDigi. Per-user limits, sharing, and short-window resets are managed from the operator dashboard.
         </p>
         <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm text-text-muted">
           <strong className="text-text-main">Platform budget:</strong> set the total monthly token budget here (for example 1,000,000,000). The operator dashboard then assigns the default allowance, shared tokens, and short-window reset grants to individual users. This page never creates a per-user allowance.
@@ -100,7 +100,7 @@ export default function OrganizationReservePage() {
           <option value="">Select the organization reserve key</option>
           {organizationKeys.map((key) => <option key={key.id} value={key.id}>{key.name || key.id}</option>)}
         </select>
-        {!organizationKeys.length && <p className="mt-2 text-xs text-amber-400">No organization reserve key was found. Create or provision the BP Batam organization reserve before configuring commitments.</p>}
+        {!organizationKeys.length && <p className="mt-2 text-xs text-amber-400">No organization reserve key was found. Create or provision the HelloDigi organization reserve before configuring commitments.</p>}
       </section>
       {reserve && (
         <>
@@ -116,7 +116,7 @@ export default function OrganizationReservePage() {
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-text-main">Platform monthly budget</h2>
-                <p className="mt-1 max-w-2xl text-sm text-text-muted">This is the total reserve granted to BP Batam. It is separate from each user&apos;s 5-hour, weekly, and monthly limits.</p>
+                <p className="mt-1 max-w-2xl text-sm text-text-muted">This is the total reserve granted to HelloDigi. It is separate from each user&apos;s 5-hour, weekly, and monthly limits.</p>
               </div>
               <div className="flex min-w-[320px] gap-2">
                 <input value={sourceMonthlyLimit} onChange={(event) => setSourceMonthlyLimit(event.target.value)} className="w-full rounded-lg border border-border bg-bg-subtle px-3 py-2 text-text-main" inputMode="numeric" aria-label="Platform monthly token budget" />

@@ -168,7 +168,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-xs text-text-muted/60 mt-8">
-            BP Batam AI Router — {t("unifiedProxy")}
+            HelloDigi AI Router — {t("unifiedProxy")}
           </p>
         </div>
       </div>
@@ -208,7 +208,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-xs text-text-muted/60 mt-8">
-            BP Batam AI — {t("unifiedAiApiProxy")}
+            HelloDigi — {t("unifiedAiApiProxy")}
           </p>
         </div>
       </div>
@@ -228,12 +228,12 @@ export default function LoginPage() {
             <div className="mb-10">
               <div className="flex items-center gap-3 mb-8">
                 <img
-                  src="/bp-batam-logo.png"
-                  alt="BP Batam"
+                  src="/hellodigi-mark.png"
+                  alt="HelloDigi"
                   className="h-10 w-auto rounded-lg object-contain"
                 />
                 <span className="text-xl font-semibold text-text-main tracking-tight">
-                  BP Batam AI
+                  HelloDigi
                 </span>
               </div>
               <h1 className="text-2xl font-bold text-text-main tracking-tight">{t("signIn")}</h1>
@@ -258,7 +258,6 @@ export default function LoginPage() {
                     {error}
                   </p>
                 )}
-                <p className="text-xs text-text-muted/60 pt-0.5">{t("defaultPasswordHint")}</p>
               </div>
 
               <Button

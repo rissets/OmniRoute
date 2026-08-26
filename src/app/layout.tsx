@@ -23,13 +23,13 @@ export const viewport: Viewport = {
 
 export async function generateMetadata() {
   const settings = await getSettings();
-  const instanceName = settings?.instanceName || "BP Batam AI Router";
+  const instanceName = settings?.instanceName || "HelloDigi AI Router";
   const customFaviconUrl = settings?.customFaviconUrl || settings?.customFaviconBase64;
 
   return {
-    title: `${instanceName} — Gateway AI Multi-Provider BP Batam`,
+    title: `${instanceName} — Gateway AI Multi-Provider`,
     description:
-      "BP Batam AI Router adalah gateway AI multi-provider untuk BP Batam.",
+      "HelloDigi AI Router adalah gateway privat untuk model dan agent multi-provider.",
     manifest: "/manifest.webmanifest",
     applicationName: instanceName,
     appleWebApp: {
