@@ -400,7 +400,7 @@ export default function VolcengineConnectModal({
               {providerText(
                 t,
                 "volcAutoLoginDesc",
-                "Enter your phone number. OmniRoute sends a verification code via the Volcano Engine console and extracts the session cookies automatically — no browser interaction needed."
+                "Enter your phone number. BP Batam AI Gateway sends a verification code via the Volcano Engine console and extracts the session cookies automatically — no browser interaction needed."
               )}
             </p>
             <Input

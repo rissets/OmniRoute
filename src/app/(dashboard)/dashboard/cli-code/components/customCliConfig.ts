@@ -58,7 +58,7 @@ export function buildCustomCliEnvScript({
   const mappings = getValidMappings(aliasMappings);
 
   const lines = [
-    `# ${resolvedName} -> OmniRoute (OpenAI-compatible)`,
+    `# ${resolvedName} -> BP Batam AI Gateway (OpenAI-compatible)`,
     `export OPENAI_BASE_URL="${normalizedBaseUrl}"`,
     `export OPENAI_API_KEY="${apiKey}"`,
   ];

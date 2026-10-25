@@ -591,7 +591,7 @@ export default function CompressionPanel() {
             <h3 className="text-lg font-semibold">{t("compressionTitle")}</h3>
             <p className="text-sm text-text-muted">{t("compressionDesc")}</p>
             <a
-              href="https://github.com/cheaper-inference/OmniRoute/blob/main/docs/compression/COMPRESSION_GUIDE.md"
+              href="/dashboard/help"
               target="_blank"
               rel="noopener noreferrer"
               data-testid="compression-guide-link"

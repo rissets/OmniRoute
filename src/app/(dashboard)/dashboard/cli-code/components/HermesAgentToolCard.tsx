@@ -196,13 +196,13 @@ export default function HermesAgentToolCard({
     onToggle?.();
   };
 
-  const setRoleSelection = (roleId: string, model: string, provider = "OmniRoute") => {
+  const setRoleSelection = (roleId: string, model: string, provider = "BP Batam AI Gateway") => {
     setSelections((prev) => ({ ...prev, [roleId]: { model, provider } }));
   };
 
   const applyToAll = (model: string) => {
     const newSel: Record<string, RoleSelection> = {};
-    HERMES_ROLES.forEach((r) => (newSel[r.id] = { model, provider: "OmniRoute" }));
+    HERMES_ROLES.forEach((r) => (newSel[r.id] = { model, provider: "BP Batam AI Gateway" }));
     setSelections(newSel);
   };
 
@@ -446,7 +446,7 @@ export default function HermesAgentToolCard({
 
               if (sel) {
                 // pending change made via the Select modal / quick apply → will be routed via OmniRoute
-                const prov = sel.provider || "OmniRoute";
+                const prov = sel.provider || "BP Batam AI Gateway";
                 badge = {
                   label: t("hermesViaOmniRoute", { provider: prov }),
                   pending: true,
@@ -459,7 +459,7 @@ export default function HermesAgentToolCard({
                   (current?.base_url || "").includes("localhost");
 
                 if (isOmni) {
-                  badge = { label: "OmniRoute", pending: false, outsideOmniRoute: false };
+                  badge = { label: "BP Batam AI Gateway", pending: false, outsideOmniRoute: false };
                 } else {
                   const realProvider = current.provider || t("other");
                   badge = {
@@ -612,7 +612,8 @@ export default function HermesAgentToolCard({
             if (modelValue) {
               // Capture a useful provider label from the modal selection when available
               const prov =
-                (model && (model.provider || model.providerId || model.group)) || "OmniRoute";
+                (model && (model.provider || model.providerId || model.group)) ||
+                "BP Batam AI Gateway";
               setRoleSelection(modalRole, modelValue, prov);
             }
           }

@@ -1,0 +1,263 @@
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/bp-batam/plus-jakarta-sans-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/bp-batam/plus-jakarta-sans-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/bp-batam/plus-jakarta-sans-latin-700-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/bp-batam/plus-jakarta-sans-latin-800-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/bp-batam/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/bp-batam/jetbrains-mono-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/bp-batam/jetbrains-mono-latin-600-normal.woff2") format("woff2");
+}
+
+:root,
+.ci-theme {
+  --ci-observed-canvas: #f7f9fc;
+  --ci-observed-ink: #142b50;
+  --ci-observed-body: #142b50;
+  --ci-observed-muted: #64748b;
+  --ci-button-primary-bg: var(--ci-color-accent);
+  --ci-button-primary-fg: var(--ci-color-accent-foreground);
+  --ci-button-primary-hover: var(--ci-color-accent-hover);
+  --primary: var(--ci-color-accent);
+  --primary-foreground: var(--ci-color-accent-foreground);
+  --brand-blue: #31569b;
+  --brand-gold: #d49b29;
+  --brand-navy: #142b50;
+  --ci-font-ui: Inter, Arial, sans-serif;
+  --ci-font-display: "Plus Jakarta Sans", Inter, Arial, sans-serif;
+  --ci-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --ci-type-dashboard-display-family: var(--ci-font-display);
+  --ci-type-dashboard-display-size: 2rem;
+  --ci-type-dashboard-display-weight: 700;
+  --ci-type-dashboard-display-leading: 1.25;
+  --ci-type-display-weight: 700;
+  --ci-color-background: #f7f9fc;
+  --ci-color-surface: #ffffff;
+  --ci-color-surface-subtle: #edf3fb;
+  --ci-color-surface-muted: #f1f5f9;
+  --ci-color-foreground: #142b50;
+  --ci-color-heading: #142b50;
+  --ci-color-text-muted: #64748b;
+  --ci-color-text-subtle: #64748b;
+  --ci-color-accent: #31569b;
+  --ci-color-accent-hover: #284780;
+  --ci-color-accent-active: #203b6d;
+  --ci-color-accent-foreground: #ffffff;
+  --ci-color-accent-surface-subtle: #edf3fb;
+  --ci-color-accent-surface-strong: #e3ebf8;
+  --ci-color-accent-surface-range: rgb(49 86 155 / 0.15);
+  --ci-color-border-subtle: #e2e8f0;
+  --ci-color-border: #cbd5e1;
+  --ci-color-border-strong: #94a3b8;
+  --ci-color-focus: #31569b;
+  --ci-color-selection: #dce7fa;
+  --ci-lime-50: #edf3fb;
+  --ci-lime-100: #e3ebf8;
+  --ci-lime-200: #d2dff5;
+  --ci-lime-300: #9cb8ed;
+  --ci-lime-400: #31569b;
+  --ci-lime-500: #284780;
+  --ci-lime-600: #264575;
+  --ci-lime-700: #203b6d;
+  --ci-lime-800: #31569b;
+  --ci-lime-900: #142b50;
+  --ci-lime-950: #101e35;
+  --ci-color-live: #15803d;
+  --ci-color-success: #15803d;
+  --ci-color-warning: #b45309;
+  --ci-color-danger: #b91c1c;
+  --ci-color-info: #2563eb;
+  --ci-chart-1: #31569b;
+  --ci-chart-2: #d49b29;
+  --ci-chart-3: #0d9488;
+  --ci-chart-4: #7c3aed;
+  --ci-chart-5: #e76f51;
+  --ci-radius-control: 10px;
+  --ci-radius-surface: 12px;
+  --ci-radius-xl: 16px;
+}
+:root[data-theme="dark"],
+.ci-theme[data-theme="dark"],
+.dark,
+.dark .ci-theme,
+[data-theme="dark"],
+[data-theme="dark"] .ci-theme {
+  --ci-color-background: #101e35;
+  --ci-color-surface: #203450;
+  --ci-color-surface-subtle: #29466c;
+  --ci-color-surface-muted: #203450;
+  --ci-color-foreground: #f8fafc;
+  --ci-color-heading: #f8fafc;
+  --ci-color-text-muted: #b8c6d8;
+  --ci-color-text-subtle: #b8c6d8;
+  --ci-lime-400: #9cb8ed;
+  --ci-lime-300: #b1c8f2;
+  --ci-color-accent: #9cb8ed;
+  --ci-color-accent-hover: #b1c8f2;
+  --ci-color-accent-active: #8baae4;
+  --ci-color-accent-foreground: #101e35;
+  --ci-color-accent-surface-subtle: #29466c;
+  --ci-color-accent-surface-strong: #29466c;
+  --ci-color-border-subtle: #344861;
+  --ci-color-border: #47617e;
+  --ci-color-border-strong: #6f88a5;
+  --ci-color-focus: #9cb8ed;
+  --ci-lime-800: #9cb8ed;
+  --ci-color-success: #4ade80;
+  --ci-color-warning: #fbbf24;
+  --ci-color-danger: #fca5a5;
+  --ci-color-info: #93c5fd;
+}
+body {
+  font-family: var(--ci-font-ui);
+  background: var(--ci-color-background);
+  color: var(--ci-color-foreground);
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+nav,
+.ci-sidebar {
+  font-family: var(--ci-font-display);
+}
+code,
+pre,
+kbd,
+.font-mono {
+  font-family: var(--ci-font-mono);
+}
+.bp-brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+.bp-brand-lockup img {
+  width: 190px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+.bp-service-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  margin-bottom: 24px;
+  background: var(--ci-color-surface);
+  border: 1px solid var(--ci-color-border-subtle);
+  border-radius: 12px;
+}
+.bp-service-banner h2 {
+  margin: 4px 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+}
+.bp-service-banner p {
+  margin: 0;
+  color: var(--ci-color-text-muted);
+  max-width: 65ch;
+  line-height: 1.6;
+}
+.bp-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--brand-blue);
+}
+.dark .bp-eyebrow {
+  color: #9cb8ed;
+}
+.bp-help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.bp-help-grid section {
+  background: var(--ci-color-surface);
+  border: 1px solid var(--ci-color-border-subtle);
+  padding: 24px;
+  border-radius: 12px;
+}
+.bp-help-grid h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.bp-help-grid p,
+.bp-help-grid li {
+  line-height: 1.7;
+  color: var(--ci-color-text-muted);
+}
+.bp-help-grid a {
+  color: var(--color-primary-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 640px) {
+  .bp-service-banner {
+    display: block;
+    padding: 20px;
+  }
+  .bp-service-banner a {
+    display: inline-block;
+    margin-top: 16px;
+  }
+  .bp-help-grid {
+    grid-template-columns: 1fr;
+  }
+  .bp-brand-lockup img {
+    width: 164px;
+  }
+}
+
+h1,
+h2,
+h3,
+.ci-heading {
+  font-weight: 700;
+}

@@ -627,7 +627,7 @@ export function useProviderConnections(
   };
 
   const UPSTREAM_PROXY_MODE_MESSAGES: Record<UpstreamProxyMode, string> = {
-    native: "Requests now use native OmniRoute (direct)",
+    native: "Requests now use native BP Batam AI Gateway (direct)",
     cliproxyapi: "Requests now route through CLIProxyAPI (deeper emulation)",
     dario: "Requests now route through Dario (Claude subscription proxy)",
     fallback: "Requests try native first, retrying via the configured backend on failure",

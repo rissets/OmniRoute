@@ -270,12 +270,7 @@ function OAuthGoogleLoopbackNotice({ hint }: { hint: GoogleLoopbackHint }) {
       <p className="text-xs text-text-muted">
         {t.rich("googleLoopbackHeadlessAlt", {
           a: (chunks) => (
-            <a
-              href="https://github.com/cheaper-inference/OmniRoute#oauth-on-a-remote-server"
-              target="_blank"
-              rel="noreferrer"
-              className="underline"
-            >
+            <a href="/dashboard/help" target="_blank" rel="noreferrer" className="underline">
               {chunks}
             </a>
           ),

@@ -26,7 +26,7 @@ export interface OpenApiEndpoint {
 }
 
 export const OPENAPI_VERSION = "3.8.53";
-export const OPENAPI_TITLE = "OmniRoute API";
+export const OPENAPI_TITLE = "BP Batam AI Gateway API";
 
 export const OPENAPI_ENDPOINTS: OpenApiEndpoint[] = [
   {

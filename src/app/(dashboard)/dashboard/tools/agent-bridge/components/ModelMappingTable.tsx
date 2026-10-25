@@ -67,7 +67,7 @@ export function ModelMappingTable({ agentId, mappings, onSave }: ModelMappingTab
         <div className="rounded-control border border-border bg-bg-subtle px-4 py-6 text-center">
           <p className="mb-3 text-xs text-text-muted">
             {t("noMappingsDesc") ||
-              "No model mappings configured yet. Add mappings to route agent requests through OmniRoute."}
+              "No model mappings configured yet. Add mappings to route agent requests through BP Batam AI Gateway."}
           </p>
           <Button size="sm" variant="secondary" icon="add" onClick={addMapping}>
             {t("addMapping") || "Add mapping"}
@@ -79,7 +79,7 @@ export function ModelMappingTable({ agentId, mappings, onSave }: ModelMappingTab
             <TableHeader>
               <TableRow>
                 <TableHead>{t("sourceModel") || "Source model (agent native)"}</TableHead>
-                <TableHead>{t("targetModel") || "Target model (OmniRoute)"}</TableHead>
+                <TableHead>{t("targetModel") || "Target model (BP Batam AI Gateway)"}</TableHead>
                 <TableHead className="w-12">
                   <span className="sr-only">{t("removeMapping")}</span>
                 </TableHead>
@@ -104,7 +104,7 @@ export function ModelMappingTable({ agentId, mappings, onSave }: ModelMappingTab
                       size="sm"
                       fullWidth
                       className="justify-between font-mono"
-                      aria-label={`${t("targetModel") || "Target model (OmniRoute)"}: ${row.target || t("selectModel") || "Select…"}`}
+                      aria-label={`${t("targetModel") || "Target model (BP Batam AI Gateway)"}: ${row.target || t("selectModel") || "Select…"}`}
                       onClick={() => setSelectorOpen(i)}
                     >
                       {row.target || (

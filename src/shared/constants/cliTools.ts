@@ -13,7 +13,7 @@ export const CLI_TOOLS: Record<string, CliCatalogEntry> = {
     name: "Claude Code",
     image: "/providers/claude.svg",
     color: "#D97757",
-    description: "Anthropic Claude Code CLI — ANTHROPIC_BASE_URL points to OmniRoute",
+    description: "Anthropic Claude Code CLI — ANTHROPIC_BASE_URL points to BP Batam AI Gateway",
     docsUrl: "https://docs.anthropic.com/en/docs/claude-code/overview",
     configType: "env",
     category: "code",
@@ -76,7 +76,7 @@ export const CLI_TOOLS: Record<string, CliCatalogEntry> = {
     name: "OpenAI Codex CLI",
     image: "/providers/codex.svg",
     color: "#10A37F",
-    description: "OpenAI Codex CLI — OpenAI-compatible base URL targets OmniRoute",
+    description: "OpenAI Codex CLI — OpenAI-compatible base URL targets BP Batam AI Gateway",
     docsUrl: "https://github.com/openai/codex",
     configType: "custom",
     category: "code",
@@ -322,7 +322,7 @@ export const CLI_TOOLS: Record<string, CliCatalogEntry> = {
   "provider": {
     "omniroute": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "OmniRoute",
+      "name": "BP Batam AI Gateway",
       "options": {
         "baseURL": "{{baseUrl}}",
         "apiKey": "{{apiKey}}"
@@ -368,7 +368,7 @@ export const CLI_TOOLS: Record<string, CliCatalogEntry> = {
       {
         step: 5,
         title: "Save Provider Block",
-        desc: "Use the JSON block below as the OpenAI-compatible provider definition for OmniRoute.",
+        desc: "Use the JSON block below as the OpenAI-compatible provider definition for BP Batam AI Gateway.",
       },
     ],
     codeBlock: {
@@ -427,7 +427,8 @@ export const CLI_TOOLS: Record<string, CliCatalogEntry> = {
     name: "Qwen Code",
     image: "/providers/qwen.svg",
     color: "#10B981",
-    description: "Qwen Code CLI — current V4 OpenAI-compatible model provider via OmniRoute",
+    description:
+      "Qwen Code CLI — current V4 OpenAI-compatible model provider via BP Batam AI Gateway",
     docsUrl: "https://qwenlm.github.io/qwen-code-docs/en/users/configuration/model-providers/",
     configType: "guide",
     category: "code",
@@ -439,7 +440,7 @@ export const CLI_TOOLS: Record<string, CliCatalogEntry> = {
     notes: [
       {
         type: "info",
-        text: "OmniRoute is registered under modelProviders.openai using Qwen Code's current bare-array V4 format.",
+        text: "BP Batam AI Gateway is registered under modelProviders.openai using Qwen Code's current bare-array V4 format.",
       },
       {
         type: "info",
@@ -464,7 +465,7 @@ export const CLI_TOOLS: Record<string, CliCatalogEntry> = {
     "openai": [
       {
         "id": "{{model}}",
-        "name": "{{model}} (OmniRoute)",
+        "name": "{{model}} (BP Batam AI Gateway)",
         "envKey": "OMNIROUTE_API_KEY",
         "baseUrl": "{{baseUrl}}"
       }
@@ -817,7 +818,7 @@ OPENAI_API_KEY: "{{apiKey}}"`,
     image: "/providers/cli-generic.svg",
     color: "#111111",
     docsUrl: "https://github.com/can1357/oh-my-pi",
-    description: "Oh My Pi terminal coding agent via OmniRoute",
+    description: "Oh My Pi terminal coding agent via BP Batam AI Gateway",
     configType: "custom",
     category: "agent",
     vendor: "OSS",
@@ -827,7 +828,7 @@ OPENAI_API_KEY: "{{apiKey}}"`,
     notes: [
       {
         type: "info",
-        text: "Oh My Pi reads custom OpenAI-compatible providers from ~/.omp/agent/models.yml. OmniRoute adds itself as a provider with auto-discovery — models appear automatically in omp's /model menu.",
+        text: "Oh My Pi reads custom OpenAI-compatible providers from ~/.omp/agent/models.yml. BP Batam AI Gateway adds itself as a provider with auto-discovery — models appear automatically in omp's /model menu.",
       },
       {
         type: "warning",
@@ -851,11 +852,11 @@ OPENAI_API_KEY: "{{apiKey}}"`,
     notes: [
       {
         type: "info",
-        text: "Letta CLI uses pi-ai which sends OpenAI-compatible requests. OmniRoute configures it as an OpenAI provider with custom base URL.",
+        text: "Letta CLI uses pi-ai which sends OpenAI-compatible requests. BP Batam AI Gateway configures it as an OpenAI provider with custom base URL.",
       },
       {
         type: "info",
-        text: "CLI (Local Mode): OmniRoute auto-configures ~/.letta/lc-local-backend/providers/auth.json. Use 'letta --info' to check if local mode is enabled.",
+        text: "CLI (Local Mode): BP Batam AI Gateway auto-configures ~/.letta/lc-local-backend/providers/auth.json. Use 'letta --info' to check if local mode is enabled.",
       },
       {
         type: "warning",
@@ -921,7 +922,7 @@ OPENAI_API_KEY: "{{apiKey}}"`,
     icon: "hub",
     color: "#7C3AED",
     description:
-      "5dive — self-hosted fleet of long-running coding agents; one auth profile points every claude seat at OmniRoute",
+      "5dive — self-hosted fleet of long-running coding agents; one auth profile points every claude seat at BP Batam AI Gateway",
     docsUrl: "https://5dive.ai",
     configType: "custom",
     category: "agent",

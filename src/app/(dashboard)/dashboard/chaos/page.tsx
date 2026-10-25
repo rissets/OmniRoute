@@ -6,7 +6,7 @@ import ChaosConfigPageClient from "./ChaosConfigPageClient";
 
 export async function generateMetadata() {
   const t = await getTranslations("chaosConfig");
-  return { title: `${t("pageTitle")} — OmniRoute` };
+  return { title: `${t("pageTitle")} — BP Batam AI Gateway` };
 }
 
 export default function Page() {

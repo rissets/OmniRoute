@@ -200,6 +200,8 @@ const nextConfig = {
   // accept for image-bearing requests; tune via env if a deployment needs
   // more.
   experimental: {
+    // Release native compiler cache after snapshots on the shared local host.
+    ...(process.env.BP_BATAM_LOW_MEMORY === "1" ? { turbopackMemoryEviction: "full" } : {}),
     serverActions: {
       bodySizeLimit: process.env.OMNIROUTE_SERVER_ACTIONS_BODY_LIMIT || "50mb",
     },

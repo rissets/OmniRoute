@@ -185,7 +185,7 @@ export default function LoginPage() {
           </Card>
 
           <p className="text-center text-xs text-text-muted mt-8">
-            OmniRoute — {t("unifiedProxy")}
+            BP Batam AI Gateway — {t("unifiedProxy")}
           </p>
         </div>
       </div>
@@ -221,7 +221,7 @@ export default function LoginPage() {
           </Card>
 
           <p className="text-center text-xs text-text-muted mt-8">
-            OmniRoute — {t("unifiedAiApiProxy")}
+            BP Batam AI Gateway — {t("unifiedAiApiProxy")}
           </p>
         </div>
       </div>

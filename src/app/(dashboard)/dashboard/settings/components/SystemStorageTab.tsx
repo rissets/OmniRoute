@@ -81,7 +81,7 @@ export default function SystemStorageTab() {
   const tc = useTranslations("common");
   const [storageHealth, setStorageHealth] = useState({
     driver: "sqlite",
-    dbPath: "~/.omniroute/storage.sqlite",
+    dbPath: "",
     sizeBytes: 0,
     retentionDays: {
       app: 7,
@@ -1225,7 +1225,7 @@ export default function SystemStorageTab() {
             {t("databasePath")}
           </p>
           <p className="text-sm font-mono text-text-main break-all">
-            {storageHealth.dbPath || "~/.omniroute/storage.sqlite"}
+            <code>{storageHealth.dbPath || "storage.sqlite"}</code>
           </p>
         </div>
       </div>

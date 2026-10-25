@@ -202,7 +202,7 @@ export default function CustomCliCard({
                 disabled={!hasActiveProviders}
                 hint={translateOrFallback(
                   "customCliDefaultModelHelp",
-                  "Use any OmniRoute model ID or combo. Most OpenAI-compatible CLIs only need the /v1 base URL plus a model string."
+                  "Use any BP Batam AI Gateway model ID or combo. Most OpenAI-compatible CLIs only need the /v1 base URL plus a model string."
                 )}
               >
                 <option value="">
@@ -236,7 +236,7 @@ export default function CustomCliCard({
                 <p className="mt-2 text-xs text-text-muted">
                   {translateOrFallback(
                     "customCliKeyHelper",
-                    "For local installs OmniRoute can use sk_omniroute. In cloud mode, pick one of your management API keys."
+                    "For local installs BP Batam AI Gateway can use sk_omniroute. In cloud mode, pick one of your management API keys."
                   )}
                 </p>
               </Field>
@@ -320,7 +320,7 @@ export default function CustomCliCard({
             <p className="mt-1">
               {translateOrFallback(
                 "customCliEndpointHint",
-                "Point any OpenAI-compatible client to the OmniRoute /v1 base URL. The raw chat completions endpoint is {endpoint}. Use the JSON block when the tool wants a provider object, or the env script when it reads OPENAI_* variables.",
+                "Point any OpenAI-compatible client to the BP Batam AI Gateway /v1 base URL. The raw chat completions endpoint is {endpoint}. Use the JSON block when the tool wants a provider object, or the env script when it reads OPENAI_* variables.",
                 { endpoint: chatCompletionsEndpoint }
               )}
             </p>

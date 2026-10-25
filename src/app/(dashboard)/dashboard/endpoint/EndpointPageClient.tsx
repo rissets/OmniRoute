@@ -854,7 +854,7 @@ export default function APIPageClient({ machineId }: Readonly<APIPageClientProps
           type: "info",
           message: translateOrFallback(
             "tailscaleWaitingForLogin",
-            "Complete the Tailscale login in the opened browser tab. OmniRoute will retry automatically."
+            "Complete the Tailscale login in the opened browser tab. BP Batam AI Gateway will retry automatically."
           ),
         });
 
@@ -882,7 +882,7 @@ export default function APIPageClient({ machineId }: Readonly<APIPageClientProps
           type: "info",
           message: translateOrFallback(
             "tailscaleWaitingForFunnel",
-            "Enable Funnel for this device in the opened browser tab. OmniRoute will keep polling."
+            "Enable Funnel for this device in the opened browser tab. BP Batam AI Gateway will keep polling."
           ),
         });
 
@@ -2148,7 +2148,7 @@ export default function APIPageClient({ machineId }: Readonly<APIPageClientProps
             <p className="text-sm mt-2">
               {translateOrFallback(
                 "cloudUploadWarning",
-                "Cloud sync is disabled by default on new installations. Enabling it uploads provider API keys, OAuth access/refresh tokens, OmniRoute API keys, and configuration to the destination above, now and during future syncs. This is separate from local Storage backups. Only enable it if you trust that server."
+                "Cloud sync is disabled by default on new installations. Enabling it uploads provider API keys, OAuth access/refresh tokens, BP Batam AI Gateway API keys, and configuration to the destination above, now and during future syncs. This is separate from local Storage backups. Only enable it if you trust that server."
               )}
             </p>
             <Checkbox
@@ -2290,7 +2290,7 @@ export default function APIPageClient({ machineId }: Readonly<APIPageClientProps
             <p className="text-sm font-medium text-info">
               {translateOrFallback(
                 "tailscaleInstallIntro",
-                "Installs Tailscale on this machine and prepares OmniRoute to enable Funnel."
+                "Installs Tailscale on this machine and prepares BP Batam AI Gateway to enable Funnel."
               )}
             </p>
             <p className="mt-2 text-sm text-info/80">

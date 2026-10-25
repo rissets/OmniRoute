@@ -2,10 +2,7 @@ import { getMachineId } from "@/shared/utils/machine";
 import { loadHomeSettings } from "./loadHomeSettings";
 import HomePageClient from "../dashboard/HomePageClient";
 import BootstrapBanner from "../dashboard/BootstrapBanner";
-import KimiSponsorBanner from "../dashboard/KimiSponsorBanner";
-import CheaperInferenceSponsorBanner from "../dashboard/CheaperInferenceSponsorBanner";
-import VscodeCopilotBanner from "../dashboard/VscodeCopilotBanner";
-import NewsBanner from "../dashboard/NewsBanner";
+import BpBatamServiceBanner from "../dashboard/BpBatamServiceBanner";
 import FirstRunReadinessCard from "../dashboard/FirstRunReadinessCard";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +15,7 @@ export default async function HomePage() {
     <>
       {isBootstrapped && <BootstrapBanner />}
       <FirstRunReadinessCard setupComplete={Boolean(settings.setupComplete)} />
-      <KimiSponsorBanner />
-      <CheaperInferenceSponsorBanner />
-      <VscodeCopilotBanner />
-      <NewsBanner />
+      <BpBatamServiceBanner />
       <HomePageClient machineId={machineId} />
     </>
   );

@@ -7,9 +7,29 @@ const generatedSource = docs.toFumadocsSource();
 // path. The loader assumes every source entry has a path, and Bun surfaces the
 // resulting failure during Next page-data collection as an opaque ResolveMessage.
 // OpenAPI is consumed by the API route, not the docs page tree, so omit it here.
+const brandText = (value: unknown) =>
+  typeof value === "string"
+    ? value.replace(/\bOmniRouter?\b/g, "BP Batam AI Gateway").replace(/\bKeak\b/g, "BP Batam")
+    : value;
+
 const docsSource = {
   ...generatedSource,
-  files: generatedSource.files.filter((file) => typeof file.path === "string"),
+  files: generatedSource.files
+    .filter((file) => typeof file.path === "string")
+    .map((file) => {
+      if (!("data" in file) || !file.data || typeof file.data !== "object") return file;
+      const data = file.data as Record<string, unknown>;
+      return {
+        ...file,
+        data: {
+          ...data,
+          ...(typeof data.title === "string" ? { title: brandText(data.title) } : {}),
+          ...(typeof data.description === "string"
+            ? { description: brandText(data.description) }
+            : {}),
+        } as typeof file.data,
+      };
+    }),
 };
 
 export const source = loader({

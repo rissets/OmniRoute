@@ -45,13 +45,12 @@ export default async function Layout({ children }: { children: ReactNode }) {
         secondary: true,
       },
     ],
-    githubUrl: "https://github.com/cheaper-inference/OmniRoute",
   };
 
   return (
     <RootProvider
       theme={{
-        defaultTheme: "dark",
+        defaultTheme: "system",
         attribute: "class",
       }}
       search={{

@@ -54,9 +54,7 @@ export function SkillPreviewPane({
     }
   }, [skillId]);
 
-  const githubUrl = skillId
-    ? `https://github.com/cheaper-inference/OmniRoute/blob/main/skills/${skillId}/SKILL.md`
-    : null;
+  const githubUrl = skillId ? `/dashboard/helpskillId}/SKILL.md` : null;
 
   // Empty state
   if (!skillId) {

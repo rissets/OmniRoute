@@ -139,7 +139,7 @@ export default function CoolingConnectionsPanel(props: CoolingConnectionsPanelPr
         {providerText(
           t,
           "coolingConnectionsDescription",
-          "These connections are cooling after their last request. OmniRoute will skip them until the timer expires — no manual disable required."
+          "These connections are cooling after their last request. BP Batam AI Gateway will skip them until the timer expires — no manual disable required."
         )}
       </p>
       <ul className="space-y-1">

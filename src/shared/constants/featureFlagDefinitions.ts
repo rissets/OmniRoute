@@ -459,7 +459,7 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     key: "OMNIROUTE_ALLOW_LOCAL_PROVIDER_URLS",
     label: "Allow Local Provider URLs",
     description:
-      "Allow provider URLs on local/private addresses (127.0.0.1, localhost, LAN). On by default (OmniRoute is local-first): the guard then blocks cloud-metadata endpoints (all of 169.254.0.0/16 plus the known metadata hostnames). Disable for strict public-only blocking: private and loopback hosts are blocked too",
+      "Allow provider URLs on local/private addresses (127.0.0.1, localhost, LAN). On by default (BP Batam AI Gateway is local-first): the guard then blocks cloud-metadata endpoints (all of 169.254.0.0/16 plus the known metadata hostnames). Disable for strict public-only blocking: private and loopback hosts are blocked too",
     descriptionI18nKey: "featureFlagOmnirouteAllowLocalProviderUrlsDescription",
     category: "network",
     defaultValue: "true",
@@ -507,7 +507,7 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     key: "DISABLE_CONTEXT_WINDOW_CHECKS",
     label: "Disable Context Window Checks",
     description:
-      "Skip OmniRoute's local context-window and max-input-token check for direct single-model requests. Upstream providers remain responsible for enforcing their actual limits. Off by default.",
+      "Skip BP Batam AI Gateway's local context-window and max-input-token check for direct single-model requests. Upstream providers remain responsible for enforcing their actual limits. Off by default.",
     descriptionI18nKey: "featureFlagDisableContextWindowChecksDescription",
     category: "policies",
     defaultValue: "false",
@@ -543,7 +543,7 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     key: "RADAR_ENABLED",
     label: "Radar",
     description:
-      "Enable the OmniRoute Radar module (catalog feed screens and sync). Off by default; enabling only unlocks the UI — data sync remains a separate opt-in.",
+      "Enable the BP Batam AI Gateway Radar module (catalog feed screens and sync). Off by default; enabling only unlocks the UI — data sync remains a separate opt-in.",
     descriptionI18nKey: "featureFlagRadarEnabledDescription",
     category: "policies",
     defaultValue: "false",
@@ -555,7 +555,7 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     key: "MODEL_ENDPOINT_CAPABILITY_GATE_ENABLED",
     label: "Model Endpoint Capability Gate",
     description:
-      "Enforce trusted model endpoint tags (declared by the provider catalog, inferred from a specialty model id, or set by the operator): reject a request sent to an endpoint the model does not serve with HTTP 400 before dispatch on /v1/chat/completions, /v1/embeddings, /v1/rerank, /v1/images/generations, /v1/videos/generations, /v1/music/generations and /v1/audio/*; hide models whose tagged endpoints have no OmniRoute adapter from /v1/models; and answer the dashboard model test with 422 for such models. Off by default: endpoint tags stay informational and requests are dispatched exactly as before.",
+      "Enforce trusted model endpoint tags (declared by the provider catalog, inferred from a specialty model id, or set by the operator): reject a request sent to an endpoint the model does not serve with HTTP 400 before dispatch on /v1/chat/completions, /v1/embeddings, /v1/rerank, /v1/images/generations, /v1/videos/generations, /v1/music/generations and /v1/audio/*; hide models whose tagged endpoints have no BP Batam AI Gateway adapter from /v1/models; and answer the dashboard model test with 422 for such models. Off by default: endpoint tags stay informational and requests are dispatched exactly as before.",
     descriptionI18nKey: "featureFlagModelEndpointCapabilityGateEnabledDescription",
     category: "policies",
     defaultValue: "false",
@@ -1022,7 +1022,7 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     key: "LMARENA_SYNTHESIZED_CX_ENABLED",
     label: "Arena Synthesized cx Telemetry",
     description:
-      "Attach a synthesized programmatic cx client-interaction blob (the value arena.ai itself sends for a page with no recorded interaction) to every Arena (lmarena) create-evaluation request that has no operator-supplied providerSpecificData.cx. Off by default: the cx field is an Arena anti-automation signal, so OmniRoute only forwards a value the operator captured from a real browser session (providerSpecificData.cx) and otherwise sends no cx at all. Unproven upstream benefit; enable only if Arena starts rejecting requests without cx.",
+      "Attach a synthesized programmatic cx client-interaction blob (the value arena.ai itself sends for a page with no recorded interaction) to every Arena (lmarena) create-evaluation request that has no operator-supplied providerSpecificData.cx. Off by default: the cx field is an Arena anti-automation signal, so BP Batam AI Gateway only forwards a value the operator captured from a real browser session (providerSpecificData.cx) and otherwise sends no cx at all. Unproven upstream benefit; enable only if Arena starts rejecting requests without cx.",
     descriptionI18nKey: "featureFlagLmarenaSynthesizedCxEnabledDescription",
     category: "runtime",
     defaultValue: "false",
@@ -1071,7 +1071,7 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = [
     key: "CATALOG_MIRROR_REFINEMENTS_ENABLED",
     label: "Catalog Mirror Refinements",
     description:
-      "Refine the claude/ discovery and functional-gateway mirrors on /v1/models. Off by default: both mirror passes behave exactly as before. On: claude/ discovery mirrors also cover listed reasoning-effort variants (-low/-medium/-high/-xhigh), skip built-in auto/* ids the request path cannot materialize and skip an alias already listed; functional-gateway mirrors skip combos and OmniRoute-synthesized ids (claude/, no-think/), take the owner from owned_by, never use the owner as its own gateway, skip gateways disabled in blockedProviders and models outside a gateway's authoritative live catalog.",
+      "Refine the claude/ discovery and functional-gateway mirrors on /v1/models. Off by default: both mirror passes behave exactly as before. On: claude/ discovery mirrors also cover listed reasoning-effort variants (-low/-medium/-high/-xhigh), skip built-in auto/* ids the request path cannot materialize and skip an alias already listed; functional-gateway mirrors skip combos and BP Batam AI Gateway-synthesized ids (claude/, no-think/), take the owner from owned_by, never use the owner as its own gateway, skip gateways disabled in blockedProviders and models outside a gateway's authoritative live catalog.",
     descriptionI18nKey: "featureFlagCatalogMirrorRefinementsEnabledDescription",
     category: "runtime",
     defaultValue: "false",

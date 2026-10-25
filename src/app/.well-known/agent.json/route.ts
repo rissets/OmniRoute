@@ -27,7 +27,7 @@ export async function GET(request?: NextRequest) {
   const fleetSkills = await getFleetSkills();
   const baseUrl = getBaseUrl(request);
   const agentCard = {
-    name: "OmniRoute AI Gateway",
+    name: "BP Batam AI Gateway",
     description:
       "Intelligent AI routing gateway with 36+ providers, smart fallback, quota tracking, " +
       "format translation, and auto-managed combos. Routes AI requests to the optimal " +
@@ -88,7 +88,7 @@ export async function GET(request?: NextRequest) {
       {
         id: "list-capabilities",
         name: "List Capabilities",
-        description: "Returns the full catalog of OmniRoute agent skills.",
+        description: "Returns the full catalog of BP Batam AI Gateway agent skills.",
         tags: ["discovery", "capabilities"],
         examples: ["What can you do?", "List your skills"],
       },

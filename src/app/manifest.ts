@@ -2,17 +2,18 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "OmniRoute AI 网关",
-    short_name: "OmniRoute",
-    description: "OmniRoute 是一个面向多提供者 LLM 的 AI 网关。一个端点连接您所有的 AI 提供者。",
+    name: "BP Batam AI Gateway",
+    short_name: "BP Batam",
+    description:
+      "Gateway AI terpadu BP Batam untuk akses model, routing, dan pengelolaan penggunaan.",
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     orientation: "any",
-    background_color: "#0b0f1a",
-    theme_color: "#0b0f1a",
+    background_color: "#31569B",
+    theme_color: "#31569B",
     categories: ["developer-tools", "productivity", "utilities"],
-    lang: "en",
+    lang: "id",
     dir: "ltr",
     prefer_related_applications: false,
     icons: [
@@ -38,15 +39,6 @@ export default function manifest(): MetadataRoute.Manifest {
         src: "/apple-touch-icon.png",
         sizes: "180x180",
         type: "image/png",
-      },
-    ],
-    screenshots: [
-      {
-        src: "/screenshots/dashboard.png",
-        sizes: "1280x720",
-        type: "image/png",
-        form_factor: "wide",
-        label: "OmniRoute Dashboard",
       },
     ],
   };

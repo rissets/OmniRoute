@@ -22,7 +22,7 @@ export default function Footer() {
             <div className="flex gap-4">
               <a
                 className="text-gray-400 hover:text-white transition-colors"
-                href="https://github.com/cheaper-inference/OmniRoute"
+                href="/dashboard/help"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={t("github")}
@@ -49,7 +49,7 @@ export default function Footer() {
             </a>
             <a
               className="text-gray-400 hover:text-[#E54D5E] text-sm transition-colors"
-              href="https://github.com/cheaper-inference/OmniRoute/releases"
+              href="/dashboard/help"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -68,7 +68,7 @@ export default function Footer() {
             </Link>
             <a
               className="text-gray-400 hover:text-[#E54D5E] text-sm transition-colors"
-              href="https://github.com/cheaper-inference/OmniRoute"
+              href="/dashboard/help"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -76,7 +76,7 @@ export default function Footer() {
             </a>
             <a
               className="text-gray-400 hover:text-[#E54D5E] text-sm transition-colors"
-              href="https://www.npmjs.com/package/omniroute"
+              href="/dashboard/help"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -89,7 +89,7 @@ export default function Footer() {
             <h4 className="font-bold text-white">{t("legal")}</h4>
             <a
               className="text-gray-400 hover:text-[#E54D5E] text-sm transition-colors"
-              href="https://github.com/cheaper-inference/OmniRoute/blob/main/LICENSE"
+              href="/dashboard/help"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -106,7 +106,7 @@ export default function Footer() {
           <div className="flex gap-6">
             <a
               className="text-gray-600 hover:text-white text-sm transition-colors"
-              href="https://github.com/cheaper-inference/OmniRoute"
+              href="/dashboard/help"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -114,7 +114,7 @@ export default function Footer() {
             </a>
             <a
               className="text-gray-600 hover:text-white text-sm transition-colors"
-              href="https://www.npmjs.com/package/omniroute"
+              href="/dashboard/help"
               target="_blank"
               rel="noopener noreferrer"
             >

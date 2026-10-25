@@ -6,10 +6,7 @@ import { Button, Card, ConfirmModal } from "@/shared/components";
 import { useNotificationStore } from "@/store/notificationStore";
 import type { DeprecatedProviderLeftoverGroup } from "@/lib/providers/deprecatedProviderCleanup";
 
-type ProviderMessageTranslator = ((
-  key: string,
-  values?: Record<string, unknown>
-) => string) & {
+type ProviderMessageTranslator = ((key: string, values?: Record<string, unknown>) => string) & {
   has?: (key: string) => boolean;
 };
 
@@ -30,7 +27,6 @@ function providerText(
   }
   return fallback;
 }
-
 
 export default function DeprecatedProviderBanner() {
   const t = useTranslations("providers") as ProviderMessageTranslator;
@@ -70,9 +66,7 @@ export default function DeprecatedProviderBanner() {
       });
       if (res.ok) {
         setLeftovers((prev) => prev.filter((row) => row.provider !== provider));
-        notify.success(
-          providerText(t, "purgeLeftoversSuccess", "Leftover connections removed.")
-        );
+        notify.success(providerText(t, "purgeLeftoversSuccess", "Leftover connections removed."));
       } else {
         notify.error(
           providerText(t, "purgeLeftoversFailed", "Failed to purge leftover connections.")
@@ -98,7 +92,7 @@ export default function DeprecatedProviderBanner() {
               {providerText(
                 t,
                 "deprecatedProviderLeftover",
-                "Provider {name} was removed from OmniRoute. {n} leftover connection(s) are still in the database and cannot be opened from a card. Re-add the account under {migrateTo}, then remove leftovers.",
+                "Provider {name} was removed from BP Batam AI Gateway. {n} leftover connection(s) are still in the database and cannot be opened from a card. Re-add the account under {migrateTo}, then remove leftovers.",
                 { name: row.provider, n, migrateTo: row.migrateTo }
               )}
             </p>
@@ -109,9 +103,7 @@ export default function DeprecatedProviderBanner() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() =>
-                  setDismissed((prev) => ({ ...prev, [row.provider]: true }))
-                }
+                onClick={() => setDismissed((prev) => ({ ...prev, [row.provider]: true }))}
               >
                 {providerText(t, "dismissForSession", "Dismiss for this session")}
               </Button>
