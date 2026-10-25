@@ -86,7 +86,7 @@ export async function omniRouteFetch(path: string, options: RequestInit = {}): P
     // convention. The status is generated here, not upstream, so it always survives.
     const rawText = await response.text().catch(() => "Unknown error");
     const errorText = sanitizeErrorMessage(rawText) || "Unknown error";
-    throw new Error(`OmniRoute API error [${response.status}]: ${errorText}`);
+    throw new Error(`BP Batam AI Gateway API error [${response.status}]: ${errorText}`);
   }
 
   return response.json();

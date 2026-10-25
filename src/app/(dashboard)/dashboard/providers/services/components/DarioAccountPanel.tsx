@@ -316,19 +316,19 @@ export function DarioAccountPanel() {
 
         {/* Import from OmniRoute */}
         <div className="space-y-2 border-t border-border pt-3">
-          <p className="text-xs font-medium">Import from OmniRoute</p>
+          <p className="text-xs font-medium">Import from BP Batam AI Gateway</p>
           <p className="text-xs text-text-muted">
-            Reuse an existing OmniRoute Claude connection&apos;s OAuth tokens instead of logging in
-            again — skips the browser approval step entirely.
+            Reuse an existing BP Batam AI Gateway Claude connection&apos;s OAuth tokens instead of
+            logging in again — skips the browser approval step entirely.
           </p>
           {omniLoading && omniConnections.length === 0 ? (
             <div className="h-8 animate-pulse bg-bg-subtle rounded" />
           ) : omniConnections.length === 0 ? (
             <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
               <p className="text-xs text-text-muted">
-                No eligible OmniRoute Claude connections found.
+                No eligible BP Batam AI Gateway Claude connections found.
               </p>
-              <Tooltip content="Will be active once a Claude connection exists in OmniRoute.">
+              <Tooltip content="Will be active once a Claude connection exists in BP Batam AI Gateway.">
                 <Button size="sm" disabled>
                   Import
                 </Button>

@@ -16,6 +16,6 @@ export const CHATPLAYGROUND_WEB_COOKIE_ENTRY = {
     riskNoticeVariant: "webCookie",
     toolCalling: "emulated",
     authHint:
-      "Paste your Clerk session token or full cookie export containing __client and __session from web.chatplayground.ai. OmniRoute auto-mints fresh short-lived Clerk session JWTs.",
+      "Paste your Clerk session token or full cookie export containing __client and __session from web.chatplayground.ai. BP Batam AI Gateway auto-mints fresh short-lived Clerk session JWTs.",
   },
 } as const;

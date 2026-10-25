@@ -157,7 +157,7 @@ export default function SimpleControls({
             <InfoTooltip
               text={tr(
                 "simpleSendToHint",
-                "Where to actually send the request (a provider connected in OmniRoute)."
+                "Where to actually send the request (a provider connected in BP Batam AI Gateway)."
               )}
             />
           </div>

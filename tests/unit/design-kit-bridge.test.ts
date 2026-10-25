@@ -13,7 +13,7 @@ const block = (selector: string) => {
   return css.slice(start, css.indexOf("\n}", start));
 };
 
-test("globals.css loads the self-hosted Keak fonts and the vendored kit CSS right after Tailwind", () => {
+test("globals.css loads the self-hosted BP Batam fonts and the vendored kit CSS right after Tailwind", () => {
   const order = [
     '@import "tailwindcss" source(none);',
     // Static weights, not `@fontsource-variable/inter`: the variable package registers the
@@ -22,13 +22,8 @@ test("globals.css loads the self-hosted Keak fonts and the vendored kit CSS righ
     '@import "@fontsource/inter/500.css";',
     '@import "@fontsource/inter/600.css";',
     '@import "@fontsource/inter/700.css";',
-    '@import "@fontsource/instrument-serif/400.css";',
-    '@import "@fontsource/instrument-serif/400-italic.css";',
-    '@import "@fontsource/ibm-plex-mono/400.css";',
-    '@import "@fontsource/ibm-plex-mono/500.css";',
-    '@import "@fontsource/ibm-plex-mono/600.css";',
-    '@import "@fontsource/ibm-plex-mono/700.css";',
     '@import "../../packages/ui-kit/src/ci-ui.css";',
+    '@import "./bp-batam.css";',
   ].map((needle) => css.indexOf(needle));
   assert.ok(
     order.every((i) => i >= 0),

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), "utf8");
 
-test("standalone pages use the Keak lockup instead of the gradient hub glyph", () => {
+test("standalone pages use the BP Batam lockup instead of the gradient hub glyph", () => {
   for (const p of [
     "src/app/login/page.tsx",
     "src/shared/components/ErrorPageScaffold.tsx",
@@ -36,6 +36,6 @@ test("the logo wrappers import the kit brand module, not the package barrel", ()
   // The barrel evaluates all kit modules (Radix, charts…) in every importer of the logo;
   // in vitest that alone pushed the Sidebar import past the 5 s test timeout.
   const src = read("src/shared/components/OmniRouteLogo.tsx");
-  assert.match(src, /from "@omniroute\/ui-kit\/keak-brand"/);
+  assert.match(src, /\/brand\/bp-batam-logo\.png/);
   assert.doesNotMatch(src, /from "@omniroute\/ui-kit"/);
 });

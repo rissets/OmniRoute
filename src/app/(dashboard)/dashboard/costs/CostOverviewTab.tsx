@@ -239,7 +239,7 @@ function generateCSV(analytics: UsageAnalyticsPayload, locale: string): string {
   // billed-cost, which is what the API itself does with the query parameter.
   const includesEstimates = analytics.includesFlatRateEstimates === true;
 
-  lines.push("# OmniRoute Cost Report");
+  lines.push("# BP Batam AI Gateway Cost Report");
   lines.push(`# Generated: ${new Date().toISOString()}`);
   if (includesEstimates) {
     lines.push(`# ${FLAT_RATE_ESTIMATE_CSV_NOTE}`);

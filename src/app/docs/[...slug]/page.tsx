@@ -49,7 +49,10 @@ async function tryI18nFallback(slug: string[], locale: string): Promise<string |
   if (!match) return null;
 
   const filePath = path.join(sectionDir, match);
-  const raw = fs.readFileSync(filePath, "utf8");
+  const raw = fs
+    .readFileSync(filePath, "utf8")
+    .replace(/\bOmniRouter?\b/g, "BP Batam AI Gateway")
+    .replace(/\bKeak\b/g, "BP Batam");
 
   // Strip the i18n header (heading + language bar + ---) before rendering.
   // Translated files have: # Title (Native)\n\n🌐 Languages: ...\n\n---\n\nbody
@@ -131,7 +134,13 @@ export async function generateMetadata(props: {
   const t = await getTranslations("docs");
 
   return {
-    title: t("pageMetadataTitle", { title: page.data.title }),
-    description: page.data.description ?? t("pageMetadataDescription", { title: page.data.title }),
+    title: t("pageMetadataTitle", {
+      title: page.data.title.replace(/\bOmniRouter?\b/g, "BP Batam AI Gateway"),
+    }),
+    description:
+      page.data.description ??
+      t("pageMetadataDescription", {
+        title: page.data.title.replace(/\bOmniRouter?\b/g, "BP Batam AI Gateway"),
+      }),
   };
 }

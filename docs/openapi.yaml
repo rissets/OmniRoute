@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
-  title: OmniRoute API
+  title: BP Batam AI Gateway API
   version: 3.8.53
   description: |
-    OmniRoute is a local-first AI API proxy router. It provides an OpenAI-compatible
+    BP Batam AI Gateway is a local-first AI API proxy router. It provides an OpenAI-compatible
     endpoint that routes requests to multiple AI providers with load balancing,
     failover, and usage tracking.
 
@@ -14,7 +14,7 @@ info:
     All proxy endpoints require a Bearer token (API key managed via the dashboard).
     Management endpoints are protected when `requireLogin` is enabled.
   contact:
-    name: OmniRoute
+    name: BP Batam AI Gateway
   license:
     name: MIT
 
@@ -91,7 +91,7 @@ tags:
   - name: Agent Skills
     description: >-
       Agent Skills catalog — 42 SKILL.md files (22 REST API + 20 CLI) for external agents,
-      MCP clients, and A2A orchestrators to discover OmniRoute capabilities.
+      MCP clients, and A2A orchestrators to discover BP Batam AI Gateway capabilities.
   - name: AgentBridge
     description: >-
       MITM proxy manager for 9 IDE agents (Antigravity, Kiro, Copilot, Codex, Cursor, Zed,
@@ -1610,7 +1610,7 @@ paths:
             X-OmniRoute-Version:
               schema:
                 type: string
-              description: OmniRoute build version (always present).
+              description: BP Batam AI Gateway build version (always present).
             X-OmniRoute-Cost-Saved:
               schema:
                 type: string
@@ -5083,7 +5083,7 @@ paths:
       tags: [Embedded Services]
       summary: Toggle 9Router auto-start
       description: >-
-        When enabled, 9Router starts automatically on the next OmniRoute boot.
+        When enabled, 9Router starts automatically on the next BP Batam AI Gateway boot.
         **LOCAL_ONLY** — loopback only.
       requestBody:
         required: true
@@ -5113,8 +5113,8 @@ paths:
       tags: [Embedded Services]
       summary: Toggle 9Router auto-restart-when-adopted
       description: >-
-        When enabled, an externally-adopted (not OmniRoute-spawned) 9Router
-        process is restarted under OmniRoute's own supervisor on the next
+        When enabled, an externally-adopted (not BP Batam AI Gateway-spawned) 9Router
+        process is restarted under BP Batam AI Gateway's own supervisor on the next
         health-check cycle instead of being left as adopted-only.
         **LOCAL_ONLY** — loopback only.
       requestBody:
@@ -5271,7 +5271,7 @@ paths:
       tags: [Embedded Services]
       summary: Toggle CLIProxyAPI auto-start
       description: >-
-        When enabled, CLIProxyAPI starts automatically on the next OmniRoute boot.
+        When enabled, CLIProxyAPI starts automatically on the next BP Batam AI Gateway boot.
         **LOCAL_ONLY** — loopback only.
       requestBody:
         required: true
@@ -5301,8 +5301,8 @@ paths:
       tags: [Embedded Services]
       summary: Toggle CLIProxyAPI auto-restart-when-adopted
       description: >-
-        When enabled, an externally-adopted (not OmniRoute-spawned) CLIProxyAPI
-        process is restarted under OmniRoute's own supervisor on the next
+        When enabled, an externally-adopted (not BP Batam AI Gateway-spawned) CLIProxyAPI
+        process is restarted under BP Batam AI Gateway's own supervisor on the next
         health-check cycle instead of being left as adopted-only.
         **LOCAL_ONLY** — loopback only.
       requestBody:
@@ -5458,7 +5458,7 @@ paths:
       tags: [Embedded Services]
       summary: Toggle Mux auto-start
       description: >-
-        When enabled, Mux starts automatically on the next OmniRoute boot.
+        When enabled, Mux starts automatically on the next BP Batam AI Gateway boot.
         **LOCAL_ONLY** — loopback only.
       requestBody:
         required: true
@@ -5488,8 +5488,8 @@ paths:
       tags: [Embedded Services]
       summary: Toggle Mux auto-restart-when-adopted
       description: >-
-        When enabled, an externally-adopted (not OmniRoute-spawned) Mux
-        process is restarted under OmniRoute's own supervisor on the next
+        When enabled, an externally-adopted (not BP Batam AI Gateway-spawned) Mux
+        process is restarted under BP Batam AI Gateway's own supervisor on the next
         health-check cycle instead of being left as adopted-only.
         **LOCAL_ONLY** — loopback only.
       requestBody:
@@ -5655,7 +5655,7 @@ paths:
       tags: [Embedded Services]
       summary: Toggle open-wa auto-start
       description: >-
-        When enabled, open-wa starts automatically on the next OmniRoute boot.
+        When enabled, open-wa starts automatically on the next BP Batam AI Gateway boot.
         **LOCAL_ONLY** — loopback only.
       requestBody:
         required: true
@@ -5685,8 +5685,8 @@ paths:
       tags: [Embedded Services]
       summary: Toggle open-wa auto-restart-when-adopted
       description: >-
-        When enabled, an externally-adopted (not OmniRoute-spawned) open-wa
-        process is restarted under OmniRoute's own supervisor on the next
+        When enabled, an externally-adopted (not BP Batam AI Gateway-spawned) open-wa
+        process is restarted under BP Batam AI Gateway's own supervisor on the next
         health-check cycle instead of being left as adopted-only.
         **LOCAL_ONLY** — loopback only.
       requestBody:
@@ -5799,7 +5799,7 @@ paths:
       tags: [Embedded Services]
       summary: Toggle Bifrost auto-start
       description: >-
-        When enabled, Bifrost starts automatically on the next OmniRoute boot.
+        When enabled, Bifrost starts automatically on the next BP Batam AI Gateway boot.
         **LOCAL_ONLY** — loopback only.
       requestBody:
         required: true
@@ -5822,8 +5822,8 @@ paths:
       tags: [Embedded Services]
       summary: Toggle Bifrost auto-restart-when-adopted
       description: >-
-        When enabled, an externally-adopted (not OmniRoute-spawned) Bifrost
-        process is restarted under OmniRoute's own supervisor on the next
+        When enabled, an externally-adopted (not BP Batam AI Gateway-spawned) Bifrost
+        process is restarted under BP Batam AI Gateway's own supervisor on the next
         health-check cycle instead of being left as adopted-only.
         **LOCAL_ONLY** — loopback only.
       requestBody:
@@ -5991,7 +5991,7 @@ paths:
       tags: [Embedded Services]
       summary: Toggle Dario auto-start
       description: >-
-        When enabled, Dario starts automatically on the next OmniRoute boot.
+        When enabled, Dario starts automatically on the next BP Batam AI Gateway boot.
         **LOCAL_ONLY** — loopback only.
       requestBody:
         required: true
@@ -6016,8 +6016,8 @@ paths:
       tags: [Embedded Services]
       summary: Toggle Dario auto-restart-when-adopted
       description: >-
-        When enabled, an externally-adopted (not OmniRoute-spawned) Dario process
-        is restarted under OmniRoute's own supervisor on the next health-check
+        When enabled, an externally-adopted (not BP Batam AI Gateway-spawned) Dario process
+        is restarted under BP Batam AI Gateway's own supervisor on the next health-check
         cycle instead of being left as adopted-only.
         **LOCAL_ONLY** — loopback only.
       requestBody:
@@ -6190,9 +6190,9 @@ paths:
   /api/services/dario/admin/import-from-omniroute:
     get:
       tags: [Embedded Services]
-      summary: List OmniRoute claude connections eligible for Dario import
+      summary: List BP Batam AI Gateway claude connections eligible for Dario import
       description: >-
-        Returns eligible OmniRoute `claude` OAuth provider connections (metadata
+        Returns eligible BP Batam AI Gateway `claude` OAuth provider connections (metadata
         only — id/name/email/org tier, never tokens) so the UI can offer a picker
         when more than one exists. **LOCAL_ONLY** — loopback only.
       responses:
@@ -6225,7 +6225,7 @@ paths:
           description: Missing or invalid admin auth
     post:
       tags: [Embedded Services]
-      summary: Import an OmniRoute claude connection's OAuth tokens into Dario
+      summary: Import an BP Batam AI Gateway claude connection's OAuth tokens into Dario
       description: >-
         Writes the source connection's access/refresh token pair directly into
         Dario's own account-file store (`~/.dario/accounts/<alias>.json`), reusing
@@ -6364,7 +6364,7 @@ paths:
       tags: [Embedded Services]
       summary: Toggle LLMLingua auto-start
       description: >-
-        When enabled, LLMLingua starts automatically on the next OmniRoute boot.
+        When enabled, LLMLingua starts automatically on the next BP Batam AI Gateway boot.
         **LOCAL_ONLY** — loopback only.
       requestBody:
         required: true
@@ -6387,8 +6387,8 @@ paths:
       tags: [Embedded Services]
       summary: Toggle LLMLingua auto-restart-when-adopted
       description: >-
-        When enabled, an externally-adopted (not OmniRoute-spawned) LLMLingua
-        process is restarted under OmniRoute's own supervisor on the next
+        When enabled, an externally-adopted (not BP Batam AI Gateway-spawned) LLMLingua
+        process is restarted under BP Batam AI Gateway's own supervisor on the next
         health-check cycle instead of being left as adopted-only.
         **LOCAL_ONLY** — loopback only.
       requestBody:
@@ -6567,7 +6567,7 @@ paths:
     post:
       tags: [Cloud]
       summary: Authenticate with cloud worker
-      description: Authenticates with the OmniRoute cloud worker for remote access.
+      description: Authenticates with the BP Batam AI Gateway cloud worker for remote access.
       requestBody:
         required: true
         content:
@@ -8334,7 +8334,7 @@ paths:
   /api/tools/traffic-inspector/requests/{id}/replay:
     post:
       tags: [Traffic Inspector]
-      summary: Replay a captured request through OmniRoute router
+      summary: Replay a captured request through BP Batam AI Gateway router
       description: Re-executes the original request body against /v1/chat/completions. Consumes quota.
       parameters:
         - name: id
@@ -8718,7 +8718,7 @@ paths:
   /api/openapi/try:
     post:
       tags: [System]
-      summary: Proxy an API Explorer request to an OmniRoute endpoint
+      summary: Proxy an API Explorer request to an BP Batam AI Gateway endpoint
       description: >-
         Executes an API Explorer request through a server-side, same-origin proxy. The target
         must start with `/api/`, `/v1/`, `/v1beta/`, `/a2a`, or
@@ -8749,7 +8749,7 @@ paths:
                   type: string
                   minLength: 1
                   pattern: "^/(?:api/|v1/|v1beta/|a2a|\\.well-known/agent\\.json)"
-                  description: Same-origin OmniRoute API path, optionally including a query string.
+                  description: Same-origin BP Batam AI Gateway API path, optionally including a query string.
                 headers:
                   type: object
                   default: {}
@@ -8821,7 +8821,7 @@ paths:
       summary: List agent skills catalog
       description: |
         Returns the full 42-entry Agent Skills catalog with optional filtering.
-        Skills describe how to use OmniRoute's REST API and CLI — they are structured
+        Skills describe how to use BP Batam AI Gateway's REST API and CLI — they are structured
         SKILL.md documentation files discoverable by external agents, MCP clients, and
         A2A orchestrators. No authentication required.
       parameters:
@@ -9264,7 +9264,7 @@ paths:
         "422":
           description: Native ElevenLabs request validation failed.
         "429":
-          description: OmniRoute policy, provider cooldown or upstream quota exceeded.
+          description: BP Batam AI Gateway policy, provider cooldown or upstream quota exceeded.
         "502":
           description: Could not reach ElevenLabs.
   /api/v1/music:
@@ -9326,7 +9326,7 @@ paths:
         "422":
           description: Native ElevenLabs request validation failed.
         "429":
-          description: OmniRoute policy, provider cooldown or upstream quota exceeded.
+          description: BP Batam AI Gateway policy, provider cooldown or upstream quota exceeded.
         "502":
           description: Could not reach ElevenLabs.
   /api/v1/music/stream:
@@ -9388,7 +9388,7 @@ paths:
         "422":
           description: Native ElevenLabs request validation failed.
         "429":
-          description: OmniRoute policy, provider cooldown or upstream quota exceeded.
+          description: BP Batam AI Gateway policy, provider cooldown or upstream quota exceeded.
         "502":
           description: Could not reach ElevenLabs.
   /api/v1/music/detailed:
@@ -9450,7 +9450,7 @@ paths:
         "422":
           description: Native ElevenLabs request validation failed.
         "429":
-          description: OmniRoute policy, provider cooldown or upstream quota exceeded.
+          description: BP Batam AI Gateway policy, provider cooldown or upstream quota exceeded.
         "502":
           description: Could not reach ElevenLabs.
   /api/v1/music/detailed/stream:
@@ -9512,7 +9512,7 @@ paths:
         "422":
           description: Native ElevenLabs request validation failed.
         "429":
-          description: OmniRoute policy, provider cooldown or upstream quota exceeded.
+          description: BP Batam AI Gateway policy, provider cooldown or upstream quota exceeded.
         "502":
           description: Could not reach ElevenLabs.
   /api/v1/music/plan:
@@ -9564,7 +9564,7 @@ paths:
         "422":
           description: Native ElevenLabs request validation failed.
         "429":
-          description: OmniRoute policy, provider cooldown or upstream quota exceeded.
+          description: BP Batam AI Gateway policy, provider cooldown or upstream quota exceeded.
         "502":
           description: Could not reach ElevenLabs.
   /api/v1/explain/routing:
@@ -9707,9 +9707,9 @@ paths:
     get:
       tags:
         - CLI Tools
-      summary: Read Crush CLI OmniRoute config
+      summary: Read Crush CLI BP Batam AI Gateway config
       x-loopback-only: true
-      description: Local-only. Reads the OmniRoute provider block in Crush's config.
+      description: Local-only. Reads the BP Batam AI Gateway provider block in Crush's config.
       x-internal: true
       responses:
         "200":
@@ -9717,9 +9717,9 @@ paths:
     post:
       tags:
         - CLI Tools
-      summary: Write Crush CLI OmniRoute config
+      summary: Write Crush CLI BP Batam AI Gateway config
       x-loopback-only: true
-      description: Local-only. Registers OmniRoute as an `openai-compat` provider in Crush's config.
+      description: Local-only. Registers BP Batam AI Gateway as an `openai-compat` provider in Crush's config.
       x-internal: true
       responses:
         "200":
@@ -9727,9 +9727,9 @@ paths:
     delete:
       tags:
         - CLI Tools
-      summary: Remove OmniRoute from Crush CLI config
+      summary: Remove BP Batam AI Gateway from Crush CLI config
       x-loopback-only: true
-      description: Local-only. Removes the OmniRoute provider block from Crush's config.
+      description: Local-only. Removes the BP Batam AI Gateway provider block from Crush's config.
       x-internal: true
       responses:
         "200":
@@ -9738,10 +9738,10 @@ paths:
     get:
       tags:
         - CLI Tools
-      summary: Read CodeWhale CLI OmniRoute config
+      summary: Read CodeWhale CLI BP Batam AI Gateway config
       x-loopback-only: true
       description: >-
-        Local-only. Reads the OmniRoute config block from
+        Local-only. Reads the BP Batam AI Gateway config block from
         `~/.codewhale/config.toml` (with `~/.deepseek/config.toml` legacy
         fallback).
       x-internal: true
@@ -9751,9 +9751,9 @@ paths:
     post:
       tags:
         - CLI Tools
-      summary: Write CodeWhale CLI OmniRoute config
+      summary: Write CodeWhale CLI BP Batam AI Gateway config
       x-loopback-only: true
-      description: Local-only. Writes the OmniRoute config block in CodeWhale TOML format.
+      description: Local-only. Writes the BP Batam AI Gateway config block in CodeWhale TOML format.
       x-internal: true
       responses:
         "200":
@@ -9761,9 +9761,9 @@ paths:
     delete:
       tags:
         - CLI Tools
-      summary: Remove OmniRoute from CodeWhale CLI config
+      summary: Remove BP Batam AI Gateway from CodeWhale CLI config
       x-loopback-only: true
-      description: Local-only. Removes the OmniRoute config block from CodeWhale's config.
+      description: Local-only. Removes the BP Batam AI Gateway config block from CodeWhale's config.
       x-internal: true
       responses:
         "200":
@@ -10685,7 +10685,7 @@ paths:
       description: >-
         Replaces the live database with an uploaded `.sqlite` backup (multipart `file` field,
         or the raw bytes with `?filename=`). The upload is checked for SQLite integrity and the
-        required OmniRoute tables first. Operator-only: accepts the dashboard session, the
+        required BP Batam AI Gateway tables first. Operator-only: accepts the dashboard session, the
         local CLI credential, or login disabled; API keys of any scope and `oma_` access tokens
         are refused (403), for the dry run as well.
       parameters:
@@ -10711,7 +10711,7 @@ paths:
             Imported (`imported: true`), or, for a dry run, validated (`dryRun: true,
             valid: true, imported: false`) with the counts the upload would load.
         "400":
-          description: Not a valid OmniRoute SQLite backup (type, size, integrity or tables).
+          description: Not a valid BP Batam AI Gateway SQLite backup (type, size, integrity or tables).
         "401":
           description: No accepted credential.
         "403":
@@ -13192,7 +13192,7 @@ paths:
                   connections:
                     type: integer
                     minimum: 0
-                    description: Distinct OmniRoute connections logged through the pool members.
+                    description: Distinct BP Batam AI Gateway connections logged through the pool members.
                   distinctExits:
                     type: integer
                     minimum: 0
@@ -13674,7 +13674,7 @@ paths:
                 type: object
                 required: [current, latest, updateAvailable, channel, releaseChannel, channels]
                 properties:
-                  current: { type: string, description: Running OmniRoute version. }
+                  current: { type: string, description: Running BP Batam AI Gateway version. }
                   latest:
                     type: string
                     description: Latest published version, or "unavailable" when every lookup failed.
@@ -15529,7 +15529,7 @@ components:
     AgentSkill:
       type: object
       description: >-
-        Single entry in the Agent Skills catalog. Describes one OmniRoute REST API surface
+        Single entry in the Agent Skills catalog. Describes one BP Batam AI Gateway REST API surface
         (category: api) or CLI subcommand group (category: cli) with a canonical ID and a
         link to its SKILL.md documentation file.
       required: [id, name, description, category, area, rawUrl, githubUrl]
@@ -15585,12 +15585,12 @@ components:
           type: string
           format: uri
           description: GitHub raw URL of the SKILL.md file
-          example: "https://raw.githubusercontent.com/diegosouzapw/OmniRoute/refs/heads/main/skills/omni-providers/SKILL.md"
+          example: "https://raw.githubusercontent.com/diegosouzapw/BP Batam AI Gateway/refs/heads/main/skills/omni-providers/SKILL.md"
         githubUrl:
           type: string
           format: uri
           description: GitHub blob URL for viewing the SKILL.md in the browser
-          example: "https://github.com/diegosouzapw/OmniRoute/blob/main/skills/omni-providers/SKILL.md"
+          example: "https://github.com/diegosouzapw/BP Batam AI Gateway/blob/main/skills/omni-providers/SKILL.md"
 
     SkillCoverage:
       type: object
@@ -16570,7 +16570,7 @@ components:
     ModelPricing:
       type: object
       description: >-
-        Model price from the same pricing table OmniRoute uses for cost accounting.
+        Model price from the same pricing table BP Batam AI Gateway uses for cost accounting.
         Omitted when the price is unknown. A combo carries the price of its first
         visible target. A model with no pricing row that the catalog marks free is
         `"0"`. The string fields are OpenRouter-compatible (USD per token, plain

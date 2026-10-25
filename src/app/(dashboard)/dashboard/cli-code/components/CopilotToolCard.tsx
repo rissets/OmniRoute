@@ -149,14 +149,14 @@ export default function CopilotToolCard({
     }));
 
     const config = {
-      name: "OmniRoute",
+      name: "BP Batam AI Gateway",
       vendor: "azure",
       apiKey: `\${input:chat.lm.secret.omniroute}`,
       models,
     };
 
     const responsesConfig = {
-      name: "OmniRoute-responses",
+      name: "BP Batam AI Gateway-responses",
       vendor: "azure",
       apiKey: `\${input:chat.lm.secret.omniroute}`,
       models: responseModels,

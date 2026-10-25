@@ -34,7 +34,9 @@ function asRowError(value: unknown): ImportRowError | null {
   return {
     ...(typeof row.index === "number" && Number.isFinite(row.index) ? { index: row.index } : {}),
     ...(typeof row.name === "string" && row.name.trim() ? { name: row.name.trim() } : {}),
-    ...(typeof row.provider === "string" && row.provider.trim() ? { provider: row.provider.trim() } : {}),
+    ...(typeof row.provider === "string" && row.provider.trim()
+      ? { provider: row.provider.trim() }
+      : {}),
     message: row.message.trim(),
   };
 }
@@ -136,7 +138,7 @@ export function formatImportErrorLine(err: ImportRowError): string {
  * does not create new endpoint nodes. Header names are cosmetic; the parser
  * destructures by index (`provider,name,apiKey,baseUrl,priority`).
  */
-export const PROVIDER_IMPORT_CSV_TEMPLATE = `# OmniRoute provider import (positional columns)
+export const PROVIDER_IMPORT_CSV_TEMPLATE = `# BP Batam AI Gateway provider import (positional columns)
 # Columns: provider, name, apiKey, baseUrl (optional), priority (optional, 1-100)
 # The provider column must be an existing managed provider id (openai, anthropic, …)
 # or an already-registered OpenAI/Anthropic-compatible node id.
@@ -161,5 +163,9 @@ export function downloadTextFile(content: string, filename: string, mimeType: st
 }
 
 export function downloadProviderImportCsvTemplate(): void {
-  downloadTextFile(PROVIDER_IMPORT_CSV_TEMPLATE, "omniroute-provider-import-template.csv", "text/csv");
+  downloadTextFile(
+    PROVIDER_IMPORT_CSV_TEMPLATE,
+    "omniroute-provider-import-template.csv",
+    "text/csv"
+  );
 }

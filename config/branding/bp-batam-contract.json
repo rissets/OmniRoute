@@ -1,0 +1,72 @@
+{
+  "$description": "UI proposal, NOT BP Batam official color codes or typography.",
+  "$version": "2026-10-25",
+  "color": {
+    "brand": {
+      "blue": {
+        "value": "#31569B"
+      },
+      "gold": {
+        "value": "#D49B29"
+      },
+      "navy": {
+        "value": "#142B50"
+      }
+    },
+    "light": {
+      "background": {
+        "value": "#F7F9FC"
+      },
+      "surface": {
+        "value": "#FFFFFF"
+      },
+      "text": {
+        "value": "#142B50"
+      },
+      "border": {
+        "value": "#E2E8F0"
+      }
+    },
+    "dark": {
+      "background": {
+        "value": "#101E35"
+      },
+      "surface": {
+        "value": "#203450"
+      },
+      "text": {
+        "value": "#F8FAFC"
+      },
+      "border": {
+        "value": "#344861"
+      }
+    }
+  },
+  "font": {
+    "display": {
+      "value": "Plus Jakarta Sans"
+    },
+    "body": {
+      "value": "Inter"
+    },
+    "mono": {
+      "value": "JetBrains Mono"
+    }
+  },
+  "radius": {
+    "card": {
+      "value": "12px"
+    },
+    "dialog": {
+      "value": "16px"
+    },
+    "button": {
+      "value": "10px"
+    }
+  },
+  "space": {
+    "base": {
+      "value": "4px"
+    }
+  }
+}

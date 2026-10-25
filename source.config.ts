@@ -1,3 +1,4 @@
+import bpBatamBrand from "./scripts/docs/bp-batam-brand.mjs";
 import { defineDocs, defineConfig } from "fumadocs-mdx/config";
 
 export const docs = defineDocs({
@@ -25,4 +26,4 @@ export const docs = defineDocs({
   },
 });
 
-export default defineConfig();
+export default defineConfig({ mdxOptions: { remarkPlugins: [bpBatamBrand] } });

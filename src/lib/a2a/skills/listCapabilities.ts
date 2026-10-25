@@ -46,7 +46,7 @@ export async function executeListCapabilities(_task: A2ATask): Promise<ListCapab
   const table = buildMarkdownTable(catalog);
 
   const content = [
-    `# OmniRoute Agent Skills Catalog`,
+    `# BP Batam AI Gateway Agent Skills Catalog`,
     ``,
     `Total: ${catalog.length} skills (${coverage.api.total} API + ${coverage.cli.total} CLI + ${coverage.config.total} config)`,
     ``,

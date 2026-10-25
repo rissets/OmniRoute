@@ -907,7 +907,7 @@ function ProvidersPageContent() {
               title={t("addFirstProvider") || "Add your first provider"}
               description={
                 t("addFirstProviderDesc") ||
-                "Connect an AI provider to start routing requests through OmniRoute. You can use free providers, API keys, or OAuth accounts."
+                "Connect an AI provider to start routing requests through BP Batam AI Gateway. You can use free providers, API keys, or OAuth accounts."
               }
               actions={
                 <>
@@ -915,7 +915,7 @@ function ProvidersPageContent() {
                     {providerText(t, "onboardingWizard", "Provider Onboarding Wizard")}
                   </Button>
                   <a
-                    href="https://github.com/cheaper-inference/OmniRoute#-documentation"
+                    href="/dashboard/help"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={buttonVariants({ variant: "outline" })}

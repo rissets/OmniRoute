@@ -135,7 +135,7 @@ export default function PrivacyPage() {
           <p>
             {t("questionsVisit")}{" "}
             <a
-              href="https://github.com/cheaper-inference/OmniRoute"
+              href="/dashboard/help"
               className="text-primary underline underline-offset-2"
               target="_blank"
               rel="noopener noreferrer"

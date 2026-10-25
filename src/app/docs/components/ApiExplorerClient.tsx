@@ -54,7 +54,7 @@ const EXAMPLE_BODIES: Record<string, string> = {
     2
   ),
   "/api/v1/responses": JSON.stringify(
-    { model: "openai/gpt-4o-mini", input: "What is OmniRoute?" },
+    { model: "openai/gpt-4o-mini", input: "What is BP Batam AI Gateway?" },
     null,
     2
   ),

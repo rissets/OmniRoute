@@ -441,9 +441,9 @@ export default function AppearanceTab() {
               <Input
                 type="text"
                 aria-label={t("appName")}
-                value={settings.instanceName || "OmniRoute"}
+                value={settings.instanceName || "BP Batam AI Gateway"}
                 onChange={(e) => updateSetting("instanceName", e.target.value)}
-                placeholder="OmniRoute"
+                placeholder="BP Batam AI Gateway"
                 maxLength={100}
                 className="w-48 shrink-0"
               />

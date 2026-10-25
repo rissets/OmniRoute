@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ComponentProps } from "react";
 import { cn } from "./lib/utils";
-import { BRAND_PATHS, clamp, mix, phase } from "./lib/brand-loader-geometry";
+import { clamp, mix, phase } from "./lib/brand-loader-geometry";
 
 export type BrandLoaderVariant = "progress" | "orbit" | "pulse" | "axis";
 export interface BrandLoaderProps extends Omit<ComponentProps<"div">, "children" | "onAnimationEnd"> {
@@ -38,8 +38,6 @@ function useReducedMotion(force: boolean) {
 
 function Artwork({ frame, variant, id, reduced, indeterminate }: { frame: Frame; variant: BrandLoaderVariant; id: string; reduced: boolean; indeterminate: boolean }) {
   const elapsed = reduced ? 0 : frame.time;
-  const scale = 132 / 160;
-  const x = 360 - 119 * scale, y = 250.76923 - 119 * scale;
   const finish = frame.finish;
   const value = finish === null ? frame.progress : mix(frame.progress,1,reduced ? 1 : phase(finish,0,.5));
   const visible = finish === null ? 1 : reduced ? 0 : 1-phase(finish,.85,1.4);
@@ -50,9 +48,7 @@ function Artwork({ frame, variant, id, reduced, indeterminate }: { frame: Frame;
   return (
     <svg viewBox="150 100 420 320" aria-hidden="true" focusable="false">
       <g fill="currentColor">
-        <g data-brand-mark="" transform={`translate(${x} ${y}) scale(${scale})`}>
-          {BRAND_PATHS.map((d, index) => <path key={index} d={d} />)}
-        </g>
+        <image data-brand-mark="" href="/brand/bp-batam-emblem.svg" x="294" y="184" width="132" height="132"/>
         <g data-brand-treatment="" opacity={visible}>
           {variant === "progress" && <>
             <rect x="256" y="343" width="208" height="3" rx="1.5" opacity=".14"/>

@@ -1,0 +1,3 @@
+# BP Batam AI Gateway
+
+Local operator console for managing AI providers, credentials, models, routing, usage, media, memory and agent protocols for BP Batam. Preserve the existing gateway capabilities and API contracts. Use BP Batam branding throughout the application chrome, embedded-service management, public metadata, help and documentation. Do not imply this local installation is an officially published public service. Use only the supplied brand kit and official BP Batam logo. Commercial partner promotions are replaced with useful gateway guidance and links to BP Batam channels. No newsletter sign-up backend is supplied; link to official information instead of collecting email.

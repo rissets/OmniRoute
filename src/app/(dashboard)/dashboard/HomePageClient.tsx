@@ -164,27 +164,27 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
     if (platform === "darwin") {
       return {
         label: t("downloadDmg"),
-        url: `https://github.com/cheaper-inference/OmniRoute/releases/download/v${cleanLatest}/OmniRoute-${cleanLatest}.dmg`,
+        url: `/dashboard/helpcleanLatest}/BP Batam AI Gateway-${cleanLatest}.dmg`,
         desc: t("downloadDmgDescription", { version: installedVersion }),
       };
     }
     if (platform === "win32") {
       return {
         label: t("downloadExe"),
-        url: `https://github.com/cheaper-inference/OmniRoute/releases/download/v${cleanLatest}/OmniRoute.Setup.${cleanLatest}.exe`,
+        url: `/dashboard/helpcleanLatest}/BP Batam AI Gateway.Setup.${cleanLatest}.exe`,
         desc: t("downloadExeDescription", { version: installedVersion }),
       };
     }
     if (platform === "linux") {
       return {
         label: t("downloadAppImage"),
-        url: `https://github.com/cheaper-inference/OmniRoute/releases/download/v${cleanLatest}/OmniRoute-${cleanLatest}.AppImage`,
+        url: `/dashboard/helpcleanLatest}/BP Batam AI Gateway-${cleanLatest}.AppImage`,
         desc: t("downloadAppImageDescription", { version: installedVersion }),
       };
     }
     return {
       label: t("downloadUpdate"),
-      url: `https://github.com/cheaper-inference/OmniRoute/releases/tag/v${cleanLatest}`,
+      url: `/dashboard/helpcleanLatest}`,
       desc: t("downloadUpdateDescription", { version: installedVersion }),
     };
   }, [platform, t, latestVersion, installedVersion]);
@@ -1035,11 +1035,7 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
                     <Button
                       size="sm"
                       variant="secondary"
-                      onClick={() =>
-                        openExternal(
-                          `https://github.com/cheaper-inference/OmniRoute/releases/tag/v${versionInfo.latest}`
-                        )
-                      }
+                      onClick={() => openExternal(`/dashboard/helpversionInfo.latest}`)}
                       className="font-semibold text-xs py-1"
                     >
                       {t("releaseNotes")}

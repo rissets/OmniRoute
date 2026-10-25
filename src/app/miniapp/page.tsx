@@ -57,7 +57,7 @@ export default function TelegramMiniApp() {
           ...prev,
           {
             role: "assistant",
-            content: `👋 Hi ${user.first_name || "there"}! Send a message to chat through your OmniRoute gateway.`,
+            content: `👋 Hi ${user.first_name || "there"}! Send a message to chat through your BP Batam AI Gateway gateway.`,
           },
         ]);
       }
@@ -104,7 +104,7 @@ export default function TelegramMiniApp() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-[480px] flex-col p-4">
-      <h1 className="ci-heading mb-3 text-lg">OmniRoute Mini App</h1>
+      <h1 className="ci-heading mb-3 text-lg">BP Batam AI Gateway Mini App</h1>
       {error && <p className="mb-3 text-[13px] text-error">{error}</p>}
 
       <div className="mb-3 flex flex-1 flex-col overflow-y-auto">

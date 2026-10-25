@@ -2,40 +2,36 @@
 import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-
-const { default: OmniRouteLogo, OmniRouteLockup } =
-  await import("@/shared/components/OmniRouteLogo");
-
-afterEach(() => cleanup());
-
-describe("brand wrappers → kit ProductIcon / ProductLockup", () => {
-  it("OmniRouteLogo keeps the size/className API and renders the kit product glyph", () => {
-    const { container } = render(<OmniRouteLogo size={22} className="x" />);
-    const svg = container.querySelector("svg")!;
-    expect(svg.classList.contains("ci-keak-product-icon")).toBe(true);
-    expect(svg.classList.contains("x")).toBe(true);
-    expect(svg.getAttribute("width")).toBe("22");
-    // The kit rule `.ci-keak-product-icon { width: 2em; height: 2em }` (@layer components) beats
-    // SVG presentation attributes in a browser, so the size must also travel as inline style.
-    expect(svg.style.width).toBe("22px");
-    expect(svg.style.height).toBe("22px");
-    expect(svg.getAttribute("aria-hidden")).toBe("true");
-    expect(container.querySelector("image, [href^='/brand/']")).toBeNull();
+import OmniRouteLogo, { OmniRouteLockup } from "@/shared/components/OmniRouteLogo";
+afterEach(cleanup);
+describe("BP Batam brand wrappers", () => {
+  it("preserves emblem dimensions and the official asset", () => {
+    render(<OmniRouteLogo size={22} className="x" />);
+    const img = screen.getByRole("img", { name: "BP Batam" });
+    expect(img.getAttribute("src")).toBe("/brand/bp-batam-emblem.svg");
+    expect(img.style.width).toBe("22px");
+    expect(img.classList.contains("x")).toBe(true);
   });
-
-  it("OmniRouteLockup renders the Keak OmniRoute lockup with one accessible name", () => {
+  it("provides the institutional accessible name and original logo", () => {
     render(<OmniRouteLockup />);
-    expect(screen.getByRole("img", { name: "Keak OmniRoute" })).not.toBeNull();
+    expect(screen.getByRole("img", { name: "BP Batam AI Gateway" })).toBeTruthy();
+    expect(screen.getByAltText("BP Batam — Badan Pengusahaan Batam").getAttribute("src")).toBe(
+      "/brand/bp-batam-logo.png"
+    );
   });
-
-  it("OmniRouteLockup honours white-label name/logo", () => {
+  it("keeps the full official lockup when saved branding uses BP Batam assets", () => {
+    render(<OmniRouteLockup name="BP Batam AI Gateway" logoSrc="/brand/bp-batam-logo.png" />);
+    expect(screen.getByAltText("BP Batam — Badan Pengusahaan Batam").getAttribute("width")).toBe(
+      "190"
+    );
+  });
+  it("retains explicit operator-owned white-label support", () => {
     render(<OmniRouteLockup name="Acme Router" logoSrc="data:image/png;base64,AAAA" />);
-    expect(screen.getByRole("img", { name: "Acme Router" })).not.toBeNull();
-    expect(screen.getByText("Acme Router")).not.toBeNull();
+    expect(screen.getByRole("img", { name: "Acme Router" })).toBeTruthy();
   });
-
-  it("OmniRouteLockup never yields an empty accessible name for an empty white-label name", () => {
-    render(<OmniRouteLockup name="" logoSrc="data:image/png;base64,AAAA" />);
-    expect(screen.getByRole("img", { name: "OmniRoute" })).not.toBeNull();
+  it("does not restore legacy branding from an old stored name", () => {
+    render(<OmniRouteLockup name="OmniRoute" />);
+    expect(screen.getByRole("img", { name: "BP Batam AI Gateway" })).toBeTruthy();
+    expect(screen.queryByText("OmniRoute")).toBeNull();
   });
 });

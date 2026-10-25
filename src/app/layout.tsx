@@ -14,19 +14,19 @@ import { HIDDEN_TAB_REVEAL_SCRIPT } from "@/shared/utils/hiddenTabReveal";
 import { BasePathNetworkProvider } from "@/shared/components/BasePathNetworkProvider";
 
 export const viewport: Viewport = {
-  themeColor: "#0b0f1a",
+  themeColor: "#31569B",
   viewportFit: "cover",
 };
 
 export async function generateMetadata() {
   const settings = await getRootLayoutSettings();
-  const instanceName = settings.instanceName;
+  const instanceName = "BP Batam AI Gateway";
   const customFaviconUrl = settings.customFaviconUrl || settings.customFaviconBase64;
 
   return {
-    title: `${instanceName} — AI Gateway for Multi-Provider LLMs`,
+    title: `${instanceName}`,
     description:
-      "OmniRoute is an AI gateway for multi-provider LLMs. One endpoint for all your AI providers.",
+      "BP Batam AI Gateway is an AI gateway for multi-provider LLMs. One endpoint for all your AI providers.",
     manifest: "/manifest.webmanifest",
     applicationName: instanceName,
     appleWebApp: {

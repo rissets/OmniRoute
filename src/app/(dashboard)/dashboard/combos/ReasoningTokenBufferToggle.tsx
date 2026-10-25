@@ -34,7 +34,7 @@ export default function ReasoningTokenBufferToggle({ config, setConfig, t }: Pro
         text={getI18nOrFallback(
           t,
           "advancedHelp.reasoningTokenBuffer",
-          "When enabled (default), OmniRoute may increase max_tokens for reasoning-capable models so they have headroom to think. Turn this off if you need this combo to preserve the client's exact max_tokens."
+          "When enabled (default), BP Batam AI Gateway may increase max_tokens for reasoning-capable models so they have headroom to think. Turn this off if you need this combo to preserve the client's exact max_tokens."
         )}
       />
     </div>
