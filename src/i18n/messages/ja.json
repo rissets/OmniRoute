@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "auto/* リクエストが、解決済みのモデル機能（ビジョン、推論、思考）と観測された品質スコアを使って候補プールを構築できるようにします。これらは一括読み込みで取得されます。既定ではオフ：リクエスト時の候補の重みは以前とまったく同じままです。オン：これらのシグナルがスナップショットの重みに反映されるため、候補の重みと選択が変わる可能性があります。",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "認証情報の健全性スイープが、ゲートウェイによって自動的にオフにされた接続を再テストし（各接続につき最大6時間に1回、1回のスイープにつき5件）、再テストに合格した接続を再びオンにできるようにします。デフォルトではオフです。この場合、オペレーターが対応するまで該当する接続はオフのままになります。オペレーターによって無効化された接続と、恒久的に禁止された接続は再テストされません。",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "ホーム",
     "dashboard": "ダッシュボード",
     "providers": "プロバイダー",

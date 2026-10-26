@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Võimaldab auto/* päringutel koostada kandidaatide kogumi lahendatud mudelivõimekuste (nägemine, arutlemine, mõtlemine) ja täheldatud kvaliteediskooridega, mis loetakse ühe hulgilugemisega. Vaikimisi väljas: kandidaatide kaalud päringu ajal jäävad täpselt samaks nagu varem. Sees: need signaalid lähevad hetktõmmise kaaludesse, nii et kandidaatide kaalud ja valik võivad muutuda.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Luba mandaatide seisundi kontrollil uuesti testida ühendusi, mille lüüs ise välja lülitas (iga ühendust kõige rohkem kord 6 tunni jooksul, 5 ühendust kontrolli kohta), ja lülitada ühendus uuesti sisse, kui kordustest õnnestub. Vaikimisi väljas: sellised ühendused jäävad väljalülitatuks, kuni operaator sekkub. Operaatori poolt keelatud ja jäädavalt blokeeritud ühendusi ei testita kunagi uuesti.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Avaleht",
     "dashboard": "Juhtpaneel",
     "providers": "Pakkujad",

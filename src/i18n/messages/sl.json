@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Zahtevam auto/* omogoči, da sestavijo nabor kandidatov z razrešenimi zmožnostmi modelov (vid, sklepanje, razmišljanje) in opaženimi ocenami kakovosti, prebranimi v enem skupnem branju. Privzeto izklopljeno: uteži kandidatov ob zahtevi ostanejo natanko takšne kot prej. Vklopljeno: ti signali vstopijo v uteži posnetka, zato se lahko uteži kandidatov in izbira spremenijo.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Dovolite, da preverjanje veljavnosti poverilnic znova preizkusi povezave, ki jih je prehod samodejno izklopil (vsako največ enkrat na 6 ur, 5 na preverjanje), in znova vklopi povezavo, ko uspešno prestane ponovni preizkus. Privzeto je izklopljeno: takšne povezave ostanejo izklopljene, dokler ne ukrepa skrbnik. Povezave, ki jih je onemogočil skrbnik, in trajno prepovedane povezave se nikoli ne preizkusijo znova.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Domov",
     "dashboard": "Nadzorna plošča",
     "providers": "Ponudniki",

@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Lar auto/*-forespørsler bygge kandidatpoolen med avklarte modellegenskaper (syn, resonnering, tenkning) og observerte kvalitetspoeng, lest i én samlet lesing. Av som standard: kandidatvektene ved forespørselstidspunktet forblir nøyaktig som før. På: disse signalene inngår i øyeblikksbildevektene, så kandidatvekter og valg kan endres.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "La helsekontrollen for legitimasjon teste på nytt tilkoblinger som gatewayen har slått av automatisk (maksimalt én gang hver 6. time per tilkobling, 5 per kontroll), og slå dem på igjen når den nye testen er vellykket. Av som standard: Slike tilkoblinger forblir av til en operatør griper inn. Tilkoblinger som er deaktivert av en operatør eller permanent utestengt, testes aldri på nytt.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Hjem",
     "dashboard": "Dashbord",
     "providers": "Leverandører",

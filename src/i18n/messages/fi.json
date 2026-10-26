@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Antaa auto/*-pyyntöjen koota ehdokasjoukon ratkaistuilla mallin ominaisuuksilla (näkö, päättely, ajattelu) ja havaituilla laatupisteillä, jotka luetaan yhdellä kertalukemisella. Oletuksena pois: ehdokkaiden painot pyyntöhetkellä pysyvät täsmälleen ennallaan. Päällä: nämä signaalit vaikuttavat tilannekuvan painoihin, joten ehdokkaiden painot ja valinta voivat muuttua.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Salli tunnistetietojen kuntotarkistuksen testata uudelleen yhteydet, jotka yhdyskäytävä on poistanut käytöstä automaattisesti (kukin enintään kerran 6 tunnissa, 5 tarkistusta kohden), ja ottaa yhteys takaisin käyttöön, kun uudelleentestaus onnistuu. Oletusarvoisesti pois käytöstä: tällaiset yhteydet pysyvät pois käytöstä, kunnes operaattori toimii. Operaattorin käytöstä poistamia ja pysyvästi estettyjä yhteyksiä ei koskaan testata uudelleen.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Kotiin",
     "dashboard": "Kojelauta",
     "providers": "Palveluntarjoajat",

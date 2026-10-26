@@ -1,3 +1,4 @@
+import { governedInference } from "@/lib/bpbatam/inference";
 import {
   handleAdobeFireflyImageGeneration,
   handleCodexImageEdit,
@@ -1150,4 +1151,8 @@ async function postHandler(request: Request, _context?: unknown) {
   );
 }
 
-export const POST = postHandler;
+const dispatchPOST = postHandler;
+
+export async function POST(request: Request) {
+  return governedInference(request, dispatchPOST);
+}

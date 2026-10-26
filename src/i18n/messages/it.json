@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Consente alle richieste auto/* di costruire il pool di candidati con le capacità del modello risolte (visione, ragionamento, thinking) e i punteggi di qualità osservati, letti in un'unica lettura in blocco. Disattivato per impostazione predefinita: i pesi dei candidati al momento della richiesta restano esattamente come prima. Attivato: questi segnali alimentano i pesi dello snapshot, quindi i pesi dei candidati e la selezione possono cambiare.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Consenti alla verifica periodica dello stato delle credenziali di testare nuovamente le connessioni disattivate automaticamente dal gateway (al massimo una volta ogni 6 ore per ciascuna connessione, 5 per verifica) e di riattivarle quando superano il nuovo test. Opzione disattivata per impostazione predefinita: tali connessioni rimangono disattivate finché non interviene un operatore. Le connessioni disattivate da un operatore e quelle bloccate in modo permanente non vengono mai testate nuovamente.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Casa",
     "dashboard": "Pannello di controllo",
     "providers": "Fornitori",

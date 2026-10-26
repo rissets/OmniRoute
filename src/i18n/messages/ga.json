@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Ligeann sé d'iarratais auto/* an linn iarrthóirí a thógáil le cumais réitithe múnla (fís, réasúnaíocht, smaointeoireacht) agus scóir cháilíochta breathnaithe, léite in aon léamh mórchóir amháin. As de réir réamhshocraithe: fanann meáchain na n-iarrthóirí ag am an iarratais díreach mar a bhí. Ar siúl: cuireann na comharthaí sin le meáchain an ghrianghraif, mar sin is féidir le meáchain na n-iarrthóirí agus an rogha athrú.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Lig do scuabadh sláinte na ndintiúr naisc a mhúch an geata leis féin a atástáil (uair amháin ar a mhéad gach 6 huaire an chloig do gach ceann acu, 5 cinn in aghaidh an scuabtha) agus ceann acu a chur ar siúl arís nuair a éiríonn leis an atástáil. Díchumasaithe de réir réamhshocraithe: fanann naisc den sórt sin múchta go dtí go ndéanann oibreoir beart. Ní dhéantar naisc atá díchumasaithe ag oibreoir ná naisc atá coiscthe go buan a atástáil riamh.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Baile",
     "dashboard": "Deais",
     "providers": "Soláthraithe",

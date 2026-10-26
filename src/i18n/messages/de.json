@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Lässt auto/*-Anfragen den Kandidatenpool mit aufgelösten Modellfähigkeiten (Vision, Reasoning, Thinking) und beobachteten Qualitätswerten aufbauen, die in einem einzigen Sammellesevorgang geladen werden. Standardmäßig aus: Die Kandidatengewichte zur Anfragezeit bleiben exakt wie bisher. An: Diese Signale fließen in die Snapshot-Gewichte ein, sodass sich Kandidatengewichte und Auswahl ändern können.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Lassen Sie die Überprüfung des Anmeldedatenstatus Verbindungen erneut testen, die das Gateway selbst deaktiviert hat (jeweils höchstens einmal alle 6 Stunden, 5 pro Überprüfung), und sie wieder aktivieren, wenn der erneute Test erfolgreich ist. Standardmäßig deaktiviert: Solche Verbindungen bleiben ausgeschaltet, bis ein Operator eingreift. Von einem Operator deaktivierte und dauerhaft gesperrte Verbindungen werden nie erneut getestet.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Zuhause",
     "dashboard": "Dashboard",
     "providers": "Anbieter",

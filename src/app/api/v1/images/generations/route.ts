@@ -1,3 +1,4 @@
+import { governedInference } from "@/lib/bpbatam/inference";
 import { handleImageGeneration } from "@omniroute/open-sse/handlers/imageGeneration.ts";
 import { getRequestedModelEndpointMismatch } from "@/lib/providerModels/modelEndpointGuard";
 import { withInjectionGuard } from "@/middleware/promptInjectionGuard";
@@ -465,7 +466,7 @@ async function postHandler(request, context) {
 
 const guardedPost = withInjectionGuard(postHandler);
 
-export function POST(request: Request, context?: unknown) {
+function dispatchPOST(request: Request, context?: unknown) {
   // #16260 — the Playground SSE keepalive wrapper is honoured only with
   // IMAGE_GENERATION_LONG_JOBS on; off, the header is ignored and the JSON response is unchanged.
   if (
@@ -475,4 +476,8 @@ export function POST(request: Request, context?: unknown) {
     return createPlaygroundImageStreamResponse(request, context, guardedPost);
   }
   return guardedPost(request, context);
+}
+
+export async function POST(request: Request) {
+  return governedInference(request, dispatchPOST);
 }

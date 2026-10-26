@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Permite cererilor auto/* să construiască grupul de candidați cu capabilitățile de model rezolvate (viziune, raționament, gândire) și scorurile de calitate observate, citite într-o singură citire în bloc. Dezactivat implicit: ponderile candidaților la momentul cererii rămân exact ca înainte. Activat: aceste semnale intră în ponderile instantaneului, astfel încât ponderile candidaților și selecția se pot schimba.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Permite verificării stării credențialelor să retesteze conexiunile pe care gateway-ul le-a dezactivat automat (cel mult o dată la fiecare 6 ore pentru fiecare conexiune, câte 5 per verificare) și să reactiveze o conexiune atunci când aceasta trece retestarea. Dezactivată implicit: astfel de conexiuni rămân dezactivate până când intervine un operator. Conexiunile dezactivate de operator și cele blocate permanent nu sunt retestate niciodată.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Acasă",
     "dashboard": "Tabloul de bord",
     "providers": "Furnizorii",

@@ -73,7 +73,10 @@ export function getLoggedInputTokens(tokens: unknown): number {
   // usage into OpenAI shape there, and may keep input_tokens for compatibility.
   // Treating that input_tokens as raw Claude usage would add cache tokens again.
   if (tokenRecord.prompt_tokens !== undefined && tokenRecord.prompt_tokens !== null) {
-    return toFiniteNumber(tokenRecord.prompt_tokens);
+    const details = getPromptTokenDetails(tokenRecord);
+    const separateWrite =
+      details.cache_creation_in_prompt === false ? getPromptCacheCreationTokens(tokenRecord) : 0;
+    return toFiniteNumber(tokenRecord.prompt_tokens) + separateWrite;
   }
 
   if (tokenRecord.input_tokens !== undefined && tokenRecord.input_tokens !== null) {

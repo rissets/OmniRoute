@@ -1033,6 +1033,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Let auto/* requests build the candidate pool with resolved model capabilities (vision, reasoning, thinking) and observed quality scores, read in one bulk pass. Off by default: request-time candidate weights stay exactly as before. On: those signals feed the snapshot weights, so candidate weights and selection can change.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Let the credential health sweep retest connections the gateway switched off by itself (at most once every 6 hours each, 5 per sweep) and switch one back on when its retest passes. Off by default: such connections stay off until an operator acts. Operator-disabled and permanently banned connections are never retested.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Home",
     "dashboard": "Dashboard",
     "providers": "Providers",

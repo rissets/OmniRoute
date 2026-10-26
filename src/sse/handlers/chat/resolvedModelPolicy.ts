@@ -1,3 +1,5 @@
+import { managedResolvedAllowed } from "@/lib/bpbatam/offers";
+import { getApiKeyMetadata } from "@/lib/db/apiKeys";
 /**
  * Resolved-model API-key policy for handleSingleModelChat (#12886 / #12899).
  *
@@ -78,7 +80,11 @@ export async function rejectUnauthorizedResolvedModels(opts: {
   resolvedModels: Iterable<string>;
   grantedTargets?: Set<string> | null;
 }): Promise<Response | null> {
+  const managedKey = opts.apiKey ? await getApiKeyMetadata(opts.apiKey) : null;
   for (const resolvedModel of opts.resolvedModels) {
+    if (managedKey && (await managedResolvedAllowed(managedKey.id, resolvedModel)) === false) {
+      return markLocalModelPolicyResponse(errorResponse(403, "MANAGED_TARGET_NOT_ASSIGNED"));
+    }
     if (opts.grantedTargets?.has(resolvedModel)) continue;
     const permission = await checkResolvedModelPermission(
       {

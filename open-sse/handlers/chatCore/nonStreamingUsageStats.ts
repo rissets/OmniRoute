@@ -1,3 +1,4 @@
+import { recordGovernedUsage } from "@/lib/bpbatam/context";
 /**
  * chatCore non-streaming usage-stats persistence (Quality Gate v2 / Fase 9 — chatCore god-file
  * decomposition, #3501 — response-handling slice of executeProviderRequest).
@@ -90,8 +91,9 @@ export function recordNonStreamingUsageStats(
   ctx: RecordNonStreamingUsageStatsContext
 ): void {
   if (!usage || typeof usage !== "object") return;
+  recordGovernedUsage(usage);
 
   if (ctx.traceEnabled) logUsageTrace(usage, ctx.provider, ctx.connectionId);
-  persistUsageRow(usage, ctx);
   recordBillableTokens(usage, ctx.apiKeyInfo, ctx.provider, ctx.model);
+  persistUsageRow(usage, ctx);
 }

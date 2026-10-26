@@ -1033,6 +1033,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Permite que as requisições auto/* montem o pool de candidatos com as capacidades de modelo resolvidas (visão, raciocínio, pensamento) e as pontuações de qualidade observadas, lidas em uma única leitura em lote. Desativado por padrão: os pesos dos candidatos no momento da requisição permanecem exatamente como antes. Ativado: esses sinais alimentam os pesos do snapshot, então os pesos dos candidatos e a seleção podem mudar.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Permita que a verificação de integridade das credenciais teste novamente as conexões que o gateway desativou automaticamente (no máximo uma vez a cada 6 horas por conexão, 5 por verificação) e reative uma delas quando o novo teste for bem-sucedido. Desativado por padrão: essas conexões permanecem desativadas até que um operador tome uma ação. Conexões desativadas por um operador e conexões banidas permanentemente nunca são testadas novamente.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Início",
     "dashboard": "Painel",
     "providers": "Provedores",

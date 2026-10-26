@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Omogućuje zahtjevima auto/* da izgrade skup kandidata s razriješenim mogućnostima modela (vid, rasuđivanje, razmišljanje) i uočenim ocjenama kvalitete, učitanima u jednom skupnom čitanju. Isključeno prema zadanim postavkama: težine kandidata u trenutku zahtjeva ostaju točno kao prije. Uključeno: ti signali ulaze u težine snimke, pa se težine kandidata i odabir mogu promijeniti.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Dopustite provjeri valjanosti vjerodajnica da ponovno testira veze koje je pristupnik sam isključio (svaku najviše jednom svakih 6 sati, 5 po provjeri) te ponovno uključi vezu kada uspješno prođe ponovno testiranje. Prema zadanim postavkama isključeno: takve veze ostaju isključene dok operater ne poduzme radnju. Veze koje je operater isključio i trajno zabranjene veze nikada se ponovno ne testiraju.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Početna",
     "dashboard": "Nadzorna ploča",
     "providers": "Pružatelji",

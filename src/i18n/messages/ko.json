@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "auto/* 요청이 확인된 모델 기능(비전, 추론, 사고)과 관측된 품질 점수를 한 번의 일괄 읽기로 불러와 후보 풀을 구성하도록 합니다. 기본값은 꺼짐: 요청 시점의 후보 가중치는 이전과 정확히 동일하게 유지됩니다. 켜짐: 이 신호들이 스냅샷 가중치에 반영되므로 후보 가중치와 선택이 달라질 수 있습니다.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "자격 증명 상태 점검에서 게이트웨이가 자체적으로 비활성화한 연결을 다시 테스트하고(각 연결당 최대 6시간에 한 번, 점검당 5개), 재테스트를 통과하면 다시 활성화하도록 허용합니다. 기본값은 꺼짐입니다. 이 경우 운영자가 조치할 때까지 해당 연결은 비활성화 상태로 유지됩니다. 운영자가 비활성화했거나 영구 차단된 연결은 재테스트하지 않습니다.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "홈",
     "dashboard": "대시보드",
     "providers": "공급자",

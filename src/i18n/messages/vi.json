@@ -1033,6 +1033,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Cho phép các yêu cầu auto/* xây dựng nhóm ứng viên với các khả năng mô hình đã được phân giải (thị giác, suy luận, tư duy) và điểm chất lượng quan sát được, đọc trong một lần đọc hàng loạt. Tắt theo mặc định: trọng số ứng viên tại thời điểm yêu cầu giữ nguyên chính xác như trước. Bật: các tín hiệu đó được đưa vào trọng số của ảnh chụp nhanh, nên trọng số ứng viên và việc lựa chọn có thể thay đổi.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Cho phép quy trình quét tình trạng thông tin xác thực kiểm tra lại các kết nối mà cổng đã tự tắt (tối đa một lần mỗi 6 giờ cho từng kết nối, 5 kết nối mỗi lượt quét) và bật lại kết nối khi kiểm tra lại thành công. Mặc định tắt: các kết nối đó vẫn bị tắt cho đến khi nhân viên vận hành can thiệp. Các kết nối bị nhân viên vận hành vô hiệu hóa và các kết nối bị cấm vĩnh viễn sẽ không bao giờ được kiểm tra lại.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Trang chủ",
     "dashboard": "Trang tổng quan",
     "providers": "Nhà cung cấp",

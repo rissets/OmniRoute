@@ -1,3 +1,4 @@
+import { recordGovernedUsage } from "@/lib/bpbatam/context";
 /**
  * chatCore streaming usage-stats persistence (Quality Gate v2 / Fase 9 — chatCore god-file
  * decomposition, #3501).
@@ -79,6 +80,7 @@ export function recordStreamingUsageStats(
   ctx: RecordStreamingUsageStatsContext
 ): void {
   if (!usage || typeof usage !== "object") return;
-  persistStreamingUsageRow(usage, ctx);
+  recordGovernedUsage(usage);
   recordStreamingBillableTokens(usage, ctx);
+  persistStreamingUsageRow(usage, ctx);
 }

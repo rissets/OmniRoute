@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "让 auto/* 请求使用已解析的模型能力（视觉、推理、思考）和观测到的质量评分构建候选池，这些数据通过一次批量读取获得。默认关闭：请求时的候选权重与之前完全相同。开启后：这些信号会计入快照权重，因此候选权重和选择可能发生变化。",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "允许凭据健康扫描重新测试由网关自动关闭的连接（每个连接最多每 6 小时测试一次，每轮扫描测试 5 个），并在重新测试通过后重新启用该连接。默认关闭：此类连接会保持关闭状态，直到操作员采取措施。操作员禁用和永久封禁的连接不会被重新测试。",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "首页",
     "dashboard": "仪表板",
     "providers": "提供者",

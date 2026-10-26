@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Na-ekwe ka arịrịọ auto/* wuo ọdọ ndị a na-atụle site na ikike ụdị ndị edoziri (ọhụhụ, ntụgharị uche, iche echiche) na akara ogo a hụrụ, a gụrụ n'otu ọgụgụ nnukwu. Agbanyụrụ na ndabara: ibu ndị a na-atụle n'oge arịrịọ ka dị kpọmkwem ka ọ dị na mbụ. Agbanyere: akara ndị ahụ na-abanye n'ibu foto oge ahụ, ya mere ibu ndị a na-atụle na nhọrọ nwere ike ịgbanwe.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Kwe ka nyocha ahụike nzere nwalee njikọ ndị ọnụ ụzọ ahụ gbanyụrụ n'onwe ya ọzọ (nke ọ bụla, ọ kachasị otu ugboro n'ime awa 6 ọ bụla; njikọ 5 n'otu nyocha) ma gbanye otu n'ime ha ọzọ mgbe ule ya gara nke ọma. A na-agbanyụ nke a na ndabara: njikọ ndị dị otu ahụ ga-anọgide na-agbanyụ ruo mgbe onye na-ahụ maka sistemụ mere ihe. A naghị anwale ọzọ njikọ ndị onye na-ahụ maka sistemụ gbanyụrụ ma ọ bụ ndị amachibidoro kpamkpam.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Mbido",
     "dashboard": "Ogwe njikwa",
     "providers": "Ndị Na-enye Ọrụ",

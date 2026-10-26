@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Yana bari buƙatun auto/* su gina rukunin ’yan takara da ƙwarewar samfurin da aka warware (gani, tunani mai zurfi, tunani) da makin inganci da aka lura, waɗanda aka karanta a karatu ɗaya na gaba ɗaya. A kashe ta tsohuwa: nauyin ’yan takara a lokacin buƙata yana nan daidai kamar da. A kunne: waɗannan alamomi suna shiga nauyin hoton lokaci, don haka nauyin ’yan takara da zaɓi na iya canzawa.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Bari binciken lafiyar bayanan shaidarka ya sake gwada haɗin da gateway ya kashe da kansa (aƙalla sau ɗaya kawai a cikin kowane awa 6 ga kowane haɗi, haɗi 5 a kowane bincike), sannan ya sake kunna ɗaya idan ya ci gwajin. Wannan a kashe yake ta tsohuwa: irin waɗannan haɗin za su ci gaba da kasancewa a kashe har sai ma'aikaci ya ɗauki mataki. Ba a taɓa sake gwada haɗin da ma'aikaci ya kashe ko aka haramta na dindindin ba.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Gida",
     "dashboard": "Allon sarrafawa",
     "providers": "Masu samarwa",

@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Ļauj auto/* pieprasījumiem veidot kandidātu kopu ar atrisinātām modeļu iespējām (redze, spriešana, domāšana) un novērotiem kvalitātes rādītājiem, kas nolasīti vienā lielapjoma nolasījumā. Pēc noklusējuma izslēgts: kandidātu svari pieprasījuma laikā paliek tieši tādi paši kā iepriekš. Ieslēgts: šie signāli tiek iekļauti momentuzņēmuma svaros, tāpēc kandidātu svari un izvēle var mainīties.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Ļaut akreditācijas datu stāvokļa pārbaudei atkārtoti testēt savienojumus, kurus vārteja pati izslēdza (katru ne biežāk kā reizi 6 stundās, 5 vienā pārbaudes reizē), un atkal ieslēgt savienojumu, ja atkārtotais tests ir sekmīgs. Pēc noklusējuma izslēgts: šādi savienojumi paliek izslēgti, līdz operators veic darbību. Operatora izslēgti un pastāvīgi bloķēti savienojumi nekad netiek atkārtoti testēti.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Sākums",
     "dashboard": "Panelis",
     "providers": "Nodrošinātāji",

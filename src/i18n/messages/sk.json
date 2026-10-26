@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Umožňuje požiadavkám auto/* zostaviť skupinu kandidátov s vyriešenými schopnosťami modelov (videnie, uvažovanie, premýšľanie) a pozorovaným skóre kvality, načítanými jedným hromadným čítaním. Predvolene vypnuté: váhy kandidátov v čase požiadavky zostávajú presne ako predtým. Zapnuté: tieto signály vstupujú do váh snímky, takže váhy kandidátov a výber sa môžu zmeniť.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Povoľte kontrole stavu poverení opätovne testovať pripojenia, ktoré brána sama vypla (každé najviac raz za 6 hodín, 5 na jednu kontrolu), a znova zapnúť pripojenie, keď úspešne prejde opätovným testom. Predvolene je táto možnosť vypnutá: takéto pripojenia zostanú vypnuté, kým nezasiahne operátor. Pripojenia vypnuté operátorom a natrvalo zakázané pripojenia sa nikdy opätovne netestujú.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Domov",
     "dashboard": "Prehľad",
     "providers": "Poskytovatelia",

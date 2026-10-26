@@ -1,7 +1,9 @@
+import { recordGovernedDispatch } from "@/lib/bpbatam/context";
+import { governedInference } from "@/lib/bpbatam/inference";
 import { z } from "zod";
 import { CORS_HEADERS, handleCorsOptions } from "@/shared/utils/cors";
 import { callCloudWithMachineId } from "@/shared/utils/cloud";
-import { handleChat } from "@/sse/handlers/chat";
+import { handleChat as executeChat } from "@/sse/handlers/chat";
 import { logAdmissionRejection } from "@/sse/handlers/admissionRejectionLog";
 import { generateRequestId } from "@/shared/utils/requestId";
 import { resolveIncomingCorrelationId } from "@/shared/utils/correlationPreserve.ts";
@@ -46,6 +48,9 @@ import {
 } from "@/shared/constants/chatgptWebRetirement";
 import { ensureSemanticCacheDbBridge } from "@/lib/cache/semanticCacheDbBridge";
 
+function handleChat(...args: Parameters<typeof executeChat>): ReturnType<typeof executeChat> {
+  return executeChat(...args);
+}
 let initPromise = null;
 
 // Singleton injection guard instance. `logger: null` — the guardrail registry
@@ -98,7 +103,7 @@ export async function OPTIONS() {
   return handleCorsOptions();
 }
 
-export async function POST(request) {
+async function dispatchPOST(request) {
   await ensureInitialized();
 
   // Defense-in-depth: the authz proxy (src/proxy.ts) is the primary gate, but
@@ -210,6 +215,7 @@ export async function POST(request) {
               return finishAdmission(keyPolicy.rejection);
             }
 
+            recordGovernedDispatch();
             const selfHostedResponse = await handleSelfHostedCompletions(request, parsedBody);
             if (selfHostedResponse) {
               return finishAdmission(selfHostedResponse);
@@ -352,4 +358,8 @@ export async function POST(request) {
     admission.lease?.release();
     throw error;
   }
+}
+
+export async function POST(request: Request) {
+  return governedInference(request, dispatchPOST);
 }

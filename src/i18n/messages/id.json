@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Memungkinkan permintaan auto/* menyusun kumpulan kandidat dengan kapabilitas model yang telah di-resolve (vision, reasoning, thinking) dan skor kualitas yang teramati, dibaca dalam satu pembacaan massal. Nonaktif secara default: bobot kandidat saat permintaan tetap persis seperti sebelumnya. Aktif: sinyal-sinyal tersebut masuk ke bobot snapshot, sehingga bobot kandidat dan pemilihan dapat berubah.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Izinkan pemindaian kesehatan kredensial menguji ulang koneksi yang dinonaktifkan sendiri oleh gateway (maksimal sekali setiap 6 jam untuk tiap koneksi, 5 koneksi per pemindaian) dan mengaktifkan kembali koneksi saat pengujian ulangnya berhasil. Secara default dinonaktifkan: koneksi tersebut tetap nonaktif hingga operator mengambil tindakan. Koneksi yang dinonaktifkan oleh operator dan diblokir secara permanen tidak pernah diuji ulang.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Rumah",
     "dashboard": "Dasbor",
     "providers": "Penyedia",

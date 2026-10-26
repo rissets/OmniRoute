@@ -1,3 +1,4 @@
+import { governedInference } from "@/lib/bpbatam/inference";
 import { handleAudioSpeech } from "@omniroute/open-sse/handlers/audioSpeech.ts";
 import { getRequestedModelEndpointMismatch } from "@/lib/providerModels/modelEndpointGuard";
 import { withInjectionGuard } from "@/middleware/promptInjectionGuard";
@@ -193,4 +194,8 @@ async function postHandler(request, context) {
   return response;
 }
 
-export const POST = withInjectionGuard(postHandler);
+const dispatchPOST = withInjectionGuard(postHandler);
+
+export async function POST(request: Request) {
+  return governedInference(request, dispatchPOST);
+}

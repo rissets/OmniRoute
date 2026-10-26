@@ -1,3 +1,4 @@
+import { bridgeIdentity, bridgeRoles } from "../../../lib/bpbatam/auth";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { isModelSyncInternalRequest } from "../../../shared/services/modelSyncScheduler";
 import { isAuthRequired, isDashboardSessionAuthenticated } from "../../../shared/utils/apiAuth";
@@ -71,6 +72,13 @@ export const managementPolicy: RoutePolicy = {
   routeClass: "MANAGEMENT",
   async evaluate(ctx: PolicyContext): Promise<AuthOutcome> {
     const path = ctx.classification.normalizedPath;
+    // A bridge JWT is valid only within its narrow namespace, never management/finance APIs.
+    if (path.startsWith("/api/bpbatam/")) {
+      const identity = await bridgeIdentity(ctx.request as Request);
+      return identity && bridgeRoles(identity).length
+        ? allow({ kind: "management_key", id: identity.sub!, label: "bpbatam-scoped-service" })
+        : reject(401, "AUTH_REQUIRED", "Bridge authentication required");
+    }
 
     // Codex Responses-over-WS bridge: honor the per-process bridge secret before
     // the loopback/auth gates so the proxy's internal calls aren't 401'd (which

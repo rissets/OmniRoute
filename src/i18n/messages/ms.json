@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Membenarkan permintaan auto/* membina kumpulan calon dengan keupayaan model yang telah diselesaikan (penglihatan, penaakulan, pemikiran) dan skor kualiti yang diperhatikan, dibaca dalam satu bacaan pukal. Dimatikan secara lalai: pemberat calon pada masa permintaan kekal sama seperti sebelum ini. Dihidupkan: isyarat tersebut dimasukkan ke dalam pemberat snapshot, jadi pemberat calon dan pemilihan boleh berubah.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Benarkan imbasan kesihatan kelayakan menguji semula sambungan yang dimatikan sendiri oleh get laluan (paling banyak sekali setiap 6 jam bagi setiap sambungan, 5 bagi setiap imbasan) dan menghidupkan semula sambungan apabila ujian semulanya berjaya. Dilumpuhkan secara lalai: sambungan sedemikian kekal dimatikan sehingga pengendali mengambil tindakan. Sambungan yang dilumpuhkan oleh pengendali dan dilarang secara kekal tidak akan diuji semula.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Rumah",
     "dashboard": "Papan pemuka",
     "providers": "Pembekal",

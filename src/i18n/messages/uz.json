@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "auto/* so‘rovlariga nomzodlar havzasini hal qilingan model imkoniyatlari (ko‘rish, mulohaza, fikrlash) va kuzatilgan sifat ballari bilan, bitta ommaviy o‘qishda, tuzish imkonini beradi. Standart holatda o‘chirilgan: so‘rov vaqtidagi nomzod vaznlari aynan avvalgidek qoladi. Yoqilganda: bu signallar snapshot vaznlariga kiradi, shuning uchun nomzod vaznlari va tanlov o‘zgarishi mumkin.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Hisob ma’lumotlari holatini tekshirish jarayoniga shlyuz o‘zi o‘chirgan ulanishlarni qayta sinashga (har birini ko‘pi bilan 6 soatda bir marta, har bir tekshiruvda 5 tadan) va qayta sinovdan muvaffaqiyatli o‘tgan ulanishni yana yoqishga ruxsat bering. Odatiy holatda o‘chiq: bunday ulanishlar operator chora ko‘rmaguncha o‘chiq qoladi. Operator o‘chirgan va doimiy ravishda taqiqlangan ulanishlar hech qachon qayta sinalmaydi.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Bosh sahifa",
     "dashboard": "Boshqaruv paneli",
     "providers": "Provayderlar",

@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Ó jẹ́ kí àwọn ìbéèrè auto/* kọ́ àkójọ àwọn olùdíje pẹ̀lú àwọn agbára àwòṣe tí a ti yanjú (ìríran, ìrònújinlẹ̀, ìrònú) àti àwọn máàkì dídára tí a ṣàkíyèsí, tí a kà ní ìkàwé ńlá kan ṣoṣo. Ó wà ní pípa ní àìyípadà: ìwọ̀n àwọn olùdíje ní àkókò ìbéèrè dúró gẹ́lẹ́ bí ó ti wà tẹ́lẹ̀. Nígbà tí ó bá wà ní títàn: àwọn àmì wọ̀nyẹn máa ń wọ inú ìwọ̀n àwòrán ìṣẹ́jú, nítorí náà ìwọ̀n àwọn olùdíje àti yíyàn lè yípadà.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Jẹ́ kí àyẹ̀wò ìlera ìwé-ẹ̀rí tún dán àwọn àsopọ̀ tí gateway pa fúnra rẹ̀ wò (ó pọ̀jù lẹ́ẹ̀kan ní gbogbo wákàtí 6 fún ọ̀kọ̀ọ̀kan, márùn-ún fún àyẹ̀wò kọ̀ọ̀kan), kí ó sì tún ọ̀kan tan nígbà tí àyẹ̀wò rẹ̀ bá ṣàṣeyọrí. Ó wà ní pípa láti ìbẹ̀rẹ̀: irú àwọn àsopọ̀ bẹ́ẹ̀ máa dúró ní pípa títí tí olùṣiṣẹ́ yóò fi gbé ìgbésẹ̀. A kì í tún àwọn àsopọ̀ tí olùṣiṣẹ́ pa tàbí tí a fòfin dè pátápátá dán wò láéláé.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Ojúlé",
     "dashboard": "Pátákó Ìṣàkóso",
     "providers": "Àwọn Olùpèsè",

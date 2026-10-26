@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Lader auto/*-anmodninger opbygge kandidatpuljen med afklarede modelfunktioner (vision, ræsonnement, tænkning) og observerede kvalitetsscorer, læst i én samlet læsning. Slået fra som standard: kandidatvægte på anmodningstidspunktet forbliver præcis som før. Slået til: disse signaler indgår i snapshot-vægtene, så kandidatvægte og valg kan ændre sig.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Lad sundhedstjekket af legitimationsoplysninger genteste forbindelser, som gatewayen selv har deaktiveret (højst én gang hver 6. time pr. forbindelse, 5 pr. gennemgang), og aktivere dem igen, når gentesten lykkes. Deaktiveret som standard: Sådanne forbindelser forbliver deaktiveret, indtil en operatør griber ind. Forbindelser, der er deaktiveret af en operatør eller permanent udelukket, gentestes aldrig.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Hjem",
     "dashboard": "Kontrolpanel",
     "providers": "Udbydere",

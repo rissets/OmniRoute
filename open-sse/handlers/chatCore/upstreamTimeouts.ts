@@ -1,14 +1,11 @@
+import { governedAttempt, governedAttemptResult } from "@/lib/bpbatam/context";
 import {
   EXECUTOR_CONTRACT_VIOLATION_CODE,
   FETCH_TIMEOUT_MS,
   HTTP_STATUS,
 } from "../../config/constants.ts";
 import { getModelTimeoutMs } from "../../config/providerModels.ts";
-import {
-  getLoggedInputTokens,
-  getLoggedOutputTokens,
-  getReasoningTokens,
-} from "@/lib/usage/tokenAccounting";
+import { getLoggedInputTokens, getLoggedOutputTokens } from "@/lib/usage/tokenAccounting";
 import { MAX_PROVIDER_SPECIFIC_TIMEOUT_MS } from "@/shared/validation/providerSpecificData";
 
 export function createBodyTimeoutError(timeoutMs: number): Error {
@@ -61,11 +58,8 @@ export function createAbortError(signal: AbortSignal): Error {
 /** Billable token total — mirrors the columns persisted by saveRequestUsage so the
  *  live token-limit counter stays consistent with usage_history seed-on-miss. */
 export function computeBillableTokens(usage: unknown): number {
-  // Cache read/creation tokens are a BREAKDOWN already contained inside
-  // getLoggedInputTokens (prompt_tokens / input_tokens). Adding them here would
-  // double-count. Canonical billable total = input + output + reasoning, matching
-  // the columns persisted by saveRequestUsage and seedWindowUsageFromHistory.
-  return getLoggedInputTokens(usage) + getLoggedOutputTokens(usage) + getReasoningTokens(usage);
+  // Normalized output already includes reasoning; cache counters are input breakdowns.
+  return getLoggedInputTokens(usage) + getLoggedOutputTokens(usage);
 }
 
 /** Resolves the model-level `timeoutMs` registry override, when both
@@ -266,7 +260,21 @@ export async function executeWithUpstreamStartTimeout<T>({
   execute: (signal: AbortSignal) => Promise<T>;
 }): Promise<T> {
   const timeoutMs = getExecutorTimeoutMs(executor, provider, model, connectionTimeoutMs);
-  if (timeoutMs <= 0) return execute(signal);
+  const attempt = governedAttempt(provider, model);
+  const invoke = async (activeSignal: AbortSignal): Promise<T> => {
+    try {
+      const value = await execute(activeSignal);
+      const status =
+        (value as { response?: { status?: number }; status?: number })?.response?.status ??
+        (value as { status?: number })?.status;
+      governedAttemptResult(attempt, provider, model, status);
+      return value;
+    } catch (error) {
+      governedAttemptResult(attempt, provider, model);
+      throw error;
+    }
+  };
+  if (timeoutMs <= 0) return invoke(signal);
   if (signal.aborted) throw createAbortError(signal);
 
   const timeoutController = new AbortController();
@@ -315,7 +323,7 @@ export async function executeWithUpstreamStartTimeout<T>({
   let keepClientAbortLink = false;
   try {
     const result = await Promise.race([
-      execute(combinedController.signal),
+      invoke(combinedController.signal),
       timeoutPromise,
       abortPromise,
     ]);

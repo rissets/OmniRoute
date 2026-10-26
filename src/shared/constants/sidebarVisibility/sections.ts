@@ -20,6 +20,15 @@ const HOME_ITEMS: readonly SidebarItemDefinition[] = [
 
 const OMNI_PROXY_ITEMS: readonly SidebarItemDefinition[] = [
   {
+    id: "bpbatam-pool",
+    href: "/dashboard/bpbatam",
+    i18nKey: "bpBatamPool",
+    labelFallback: "Pool Token BP Batam",
+    subtitleKey: "bpBatamPoolSubtitle",
+    subtitleFallback: "Alokasi organisasi dan batas penerbitan",
+    icon: "account_balance_wallet",
+  },
+  {
     id: "endpoints",
     href: "/dashboard/endpoint",
     i18nKey: "endpoints",

@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Huruhusu maombi ya auto/* kujenga kundi la wagombea kwa kutumia uwezo wa modeli uliotatuliwa (maono, hoja, kufikiri) na alama za ubora zilizoonekana, zinazosomwa kwa usomaji mmoja wa jumla. Imezimwa kwa chaguo-msingi: uzito wa wagombea wakati wa ombi unabaki kama ulivyokuwa hapo awali. Ikiwashwa: ishara hizo huingia kwenye uzito wa picha ya papo hapo, hivyo uzito wa wagombea na uteuzi unaweza kubadilika.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Ruhusu ukaguzi wa afya ya vitambulisho ujaribu upya miunganisho ambayo lango lilizima lenyewe (angalau mara moja tu kila baada ya saa 6 kwa kila muunganisho, miunganisho 5 kwa kila ukaguzi) na uiwashe tena inapofaulu jaribio hilo. Hali hii imezimwa kwa chaguo-msingi: miunganisho hiyo husalia imezimwa hadi opereta achukue hatua. Miunganisho iliyozimwa na opereta na iliyopigwa marufuku kabisa haijaribiwi tena kamwe.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Nyumbani",
     "dashboard": "Dashibodi",
     "providers": "Watoa Huduma",

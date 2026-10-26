@@ -1,3 +1,4 @@
+import { governedInference } from "@/lib/bpbatam/inference";
 import { errorResponse } from "@omniroute/open-sse/utils/error.ts";
 import { getRequestedModelEndpointMismatch } from "@/lib/providerModels/modelEndpointGuard";
 import { HTTP_STATUS } from "@omniroute/open-sse/config/constants.ts";
@@ -100,4 +101,5 @@ async function postHandler(request, context) {
   });
 }
 
-export const POST = withInjectionGuard(postHandler);
+export const POST = (request: Request, context: unknown) =>
+  governedInference(request, (forwarded) => withInjectionGuard(postHandler)(forwarded, context));

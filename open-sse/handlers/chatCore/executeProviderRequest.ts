@@ -1,3 +1,4 @@
+import { withGovernedProviderInput } from "@/lib/bpbatam/context";
 /**
  * One provider send. Lifted out of handleChatCore. The body is the tip
  * implementation; the only change is that closed-over request state arrives
@@ -337,22 +338,24 @@ export async function executeProviderRequest(
                   log,
                   execute: (signal) =>
                     runWithCapture(providerRequestCapture, () =>
-                      executor.execute({
-                        model: modelToCall,
-                        body: bodyToSend,
-                        stream: upstreamStream,
-                        credentials: execCreds,
-                        signal,
-                        log,
-                        extendedContext,
-                        upstreamExtraHeaders: buildUpstreamHeadersForExecute(modelToCall),
-                        clientHeaders: getExecutorClientHeaders(),
-                        clientResponseFormat,
-                        onCredentialsRefreshed,
-                        skipUpstreamRetry,
-                        contextEditing: { enabled: contextEditingEnabled },
-                        correlationId,
-                      })
+                      withGovernedProviderInput(bodyToSend, () =>
+                        executor.execute({
+                          model: modelToCall,
+                          body: bodyToSend,
+                          stream: upstreamStream,
+                          credentials: execCreds,
+                          signal,
+                          log,
+                          extendedContext,
+                          upstreamExtraHeaders: buildUpstreamHeadersForExecute(modelToCall),
+                          clientHeaders: getExecutorClientHeaders(),
+                          clientResponseFormat,
+                          onCredentialsRefreshed,
+                          skipUpstreamRetry,
+                          contextEditing: { enabled: contextEditingEnabled },
+                          correlationId,
+                        })
+                      )
                     ),
                 });
               },
@@ -543,22 +546,24 @@ export async function executeProviderRequest(
                       log,
                       execute: (signal) =>
                         runWithCapture(providerRequestCapture, () =>
-                          executor.execute({
-                            model: modelToCall,
-                            body,
-                            stream: upstreamStream,
-                            credentials: execCreds,
-                            signal,
-                            log,
-                            extendedContext,
-                            upstreamExtraHeaders: buildUpstreamHeadersForExecute(modelToCall),
-                            clientHeaders: getExecutorClientHeaders(),
-                            clientResponseFormat,
-                            onCredentialsRefreshed,
-                            skipUpstreamRetry,
-                            contextEditing: { enabled: contextEditingEnabled },
-                            correlationId,
-                          })
+                          withGovernedProviderInput(body, () =>
+                            executor.execute({
+                              model: modelToCall,
+                              body,
+                              stream: upstreamStream,
+                              credentials: execCreds,
+                              signal,
+                              log,
+                              extendedContext,
+                              upstreamExtraHeaders: buildUpstreamHeadersForExecute(modelToCall),
+                              clientHeaders: getExecutorClientHeaders(),
+                              clientResponseFormat,
+                              onCredentialsRefreshed,
+                              skipUpstreamRetry,
+                              contextEditing: { enabled: contextEditingEnabled },
+                              correlationId,
+                            })
+                          )
                         ),
                     });
                     const retryRes = normalizeExecutorResult(retryRaw);

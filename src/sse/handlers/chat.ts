@@ -1,3 +1,4 @@
+import { recordGovernedFailure } from "@/lib/bpbatam/context";
 import { hasQoderCallerTools } from "@omniroute/open-sse/services/qoderCapabilities";
 import { getRequestedModelEndpointMismatch } from "@/lib/providerModels/modelEndpointGuard";
 import { randomUUID } from "crypto";
@@ -2222,7 +2223,10 @@ async function handleSingleModelChat(
         return execution.localResourcePressureResult.response;
       }
       const { result, tlsFingerprintUsed, wasProviderProbe } = execution;
-      if (!result.success) releaseOAuthSession();
+      if (!result.success) {
+        recordGovernedFailure();
+        releaseOAuthSession();
+      }
       if (result.success && agyLease.isStreamingAntigravityResponse(result.response))
         result.response = inheritProviderProbeResponse(
           result.response,

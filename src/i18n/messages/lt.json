@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Leidžia auto/* užklausoms sudaryti kandidatų telkinį su išspręstomis modelių galimybėmis (regėjimas, samprotavimas, mąstymas) ir stebėtais kokybės balais, nuskaitytais vienu masiniu skaitymu. Pagal numatytuosius nustatymus išjungta: kandidatų svoriai užklausos metu lieka lygiai tokie patys kaip anksčiau. Įjungta: šie signalai patenka į momentinės kopijos svorius, todėl kandidatų svoriai ir pasirinkimas gali pasikeisti.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Leiskite prisijungimo duomenų būklės patikrai iš naujo išbandyti ryšius, kuriuos tinklų sietuvas išjungė automatiškai (kiekvieną ryšį ne dažniau kaip kartą per 6 valandas, po 5 per patikrą), ir vėl įjungti ryšį, jei pakartotinis bandymas sėkmingas. Pagal numatytuosius nustatymus išjungta: tokie ryšiai lieka išjungti, kol operatorius imasi veiksmų. Operatoriaus išjungti ir visam laikui užblokuoti ryšiai niekada pakartotinai nebandomi.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Pradžia",
     "dashboard": "Suvestinė",
     "providers": "Teikėjai",

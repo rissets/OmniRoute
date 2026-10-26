@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Pinapayagan ang mga auto/* request na buuin ang pool ng mga kandidato gamit ang na-resolve na kakayahan ng modelo (vision, reasoning, thinking) at ang naobserbahang quality score, na binabasa sa iisang bulk na pagbasa. Naka-off bilang default: ang timbang ng mga kandidato sa oras ng request ay nananatiling eksaktong tulad ng dati. Naka-on: pumapasok ang mga signal na ito sa timbang ng snapshot, kaya maaaring magbago ang timbang ng mga kandidato at ang pagpili.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Payagan ang pagsusuri sa kalagayan ng kredensyal na muling subukan ang mga koneksiyong awtomatikong pinatay ng gateway (hindi hihigit sa isang beses bawat 6 na oras para sa bawat isa, 5 sa bawat pagsusuri) at muling buksan ang isang koneksiyon kapag pumasa ito sa muling pagsubok. Naka-off bilang default: mananatiling naka-off ang mga naturang koneksiyon hanggang sa kumilos ang isang operator. Hindi kailanman muling sinusubukan ang mga koneksiyong pinatay ng operator at ang mga permanenteng naka-ban.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Bahay",
     "dashboard": "Dashboard",
     "providers": "Mga provider",

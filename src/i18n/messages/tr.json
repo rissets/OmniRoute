@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "auto/* isteklerinin aday havuzunu çözümlenmiş model yetenekleri (görme, akıl yürütme, düşünme) ve gözlemlenen kalite puanlarıyla, tek bir toplu okumada oluşturmasını sağlar. Varsayılan olarak kapalı: istek anındaki aday ağırlıkları tam olarak önceki gibi kalır. Açık: bu sinyaller anlık görüntü ağırlıklarına girer, bu nedenle aday ağırlıkları ve seçim değişebilir.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Kimlik bilgisi durumu taramasının, ağ geçidinin kendiliğinden kapattığı bağlantıları yeniden test etmesine (her biri en fazla 6 saatte bir, tarama başına 5 adet) ve yeniden testi geçen bir bağlantıyı tekrar açmasına izin verin. Varsayılan olarak kapalıdır: bu tür bağlantılar, bir operatör müdahale edene kadar kapalı kalır. Operatör tarafından devre dışı bırakılan ve kalıcı olarak yasaklanan bağlantılar hiçbir zaman yeniden test edilmez.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Ana Sayfa",
     "dashboard": "Kontrol Paneli",
     "providers": "Sağlayıcılar",

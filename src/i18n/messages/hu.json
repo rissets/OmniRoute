@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Lehetővé teszi, hogy az auto/* kérések a jelöltkészletet feloldott modellképességekkel (látás, következtetés, gondolkodás) és megfigyelt minőségi pontszámokkal állítsák össze, egyetlen tömeges olvasással betöltve. Alapértelmezés szerint ki: a jelöltek súlyai a kérés idején pontosan a korábbiak maradnak. Be: ezek a jelek bekerülnek a pillanatkép súlyaiba, így a jelöltek súlyai és a kiválasztás változhat.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Engedélyezze, hogy a hitelesítő adatok állapotának ellenőrzése újratesztelje az átjáró által automatikusan kikapcsolt kapcsolatokat (kapcsolatonként legfeljebb 6 óránként egyszer, ellenőrzésenként 5-öt), és újra bekapcsolja őket, ha sikeresen teljesítik az újratesztelést. Alapértelmezés szerint ki van kapcsolva: az ilyen kapcsolatok mindaddig kikapcsolva maradnak, amíg egy operátor nem intézkedik. Az operátor által letiltott és a véglegesen kitiltott kapcsolatokat a rendszer soha nem teszteli újra.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Otthon",
     "dashboard": "Irányítópult",
     "providers": "Szolgáltatók",

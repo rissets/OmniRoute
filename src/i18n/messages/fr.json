@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Permet aux requêtes auto/* de constituer le pool de candidats avec les capacités de modèle résolues (vision, raisonnement, réflexion) et les scores de qualité observés, lus en une seule lecture groupée. Désactivé par défaut : les poids des candidats au moment de la requête restent exactement comme avant. Activé : ces signaux alimentent les poids de l'instantané, de sorte que les poids des candidats et la sélection peuvent changer.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Autoriser l’analyse de l’état des identifiants à tester de nouveau les connexions que la passerelle a désactivées d’elle-même (au maximum une fois toutes les 6 heures pour chacune, 5 par analyse) et à en réactiver une lorsque son nouveau test réussit. Désactivé par défaut : ces connexions restent désactivées jusqu’à l’intervention d’un opérateur. Les connexions désactivées par un opérateur et celles bannies définitivement ne sont jamais testées de nouveau.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Accueil",
     "dashboard": "Tableau de bord",
     "providers": "Fournisseurs",

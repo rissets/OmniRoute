@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "auto/* sorğularına namizəd hovuzunu həll olunmuş model imkanları (görmə, mühakimə, düşünmə) və müşahidə olunan keyfiyyət balları ilə bir toplu oxumada qurmağa imkan verir. Defolt olaraq söndürülüb: sorğu zamanı namizəd çəkiləri əvvəlki kimi qalır. Aktiv olduqda: bu siqnallar snapshot çəkilərinə daxil olur, buna görə namizəd çəkiləri və seçim dəyişə bilər.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Etimadnamə vəziyyətinin yoxlanılması şlüzün öz-özünə söndürdüyü bağlantıları yenidən sınaqdan keçirsin (hər biri ən çox 6 saatda bir dəfə, hər yoxlamada 5 bağlantı) və yenidən sınaq uğurla keçdikdə bağlantını yenidən aktivləşdirsin. Defolt olaraq söndürülüb: belə bağlantılar operator müdaxilə edənədək söndürülmüş qalır. Operator tərəfindən söndürülmüş və daimi bloklanmış bağlantılar heç vaxt yenidən sınaqdan keçirilmir.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Əsas səhifə",
     "dashboard": "İdarə paneli",
     "providers": "Provayderlər",

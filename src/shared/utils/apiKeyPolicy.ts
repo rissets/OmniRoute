@@ -1,3 +1,4 @@
+import { managedPolicy } from "@/lib/bpbatam/offers";
 /**
  * API Key Policy Enforcement — Shared middleware for all /v1/* endpoints.
  *
@@ -853,6 +854,12 @@ export async function checkApiKeyAuthorization(
   apiKeyInfo: ApiKeyMetadata,
   modelStr: string
 ): Promise<Response | null> {
+  const managedRejection = await managedPolicy(
+    apiKeyInfo.id,
+    new URL(request.url).pathname,
+    modelStr
+  );
+  if (managedRejection) return managedRejection;
   const context = { request, apiKey, apiKeyInfo, modelStr };
   return (
     validateKeyStatus(context) ??
@@ -971,6 +978,12 @@ export async function enforceApiKeyPolicy(
     return { apiKey, apiKeyInfo: null, rejection: unresolvedScopedKeyRejection(selfLoopScope) };
   }
 
+  const managedRejection = await managedPolicy(
+    apiKeyInfo.id,
+    new URL(request.url).pathname,
+    modelStr
+  );
+  if (managedRejection) return { apiKey, apiKeyInfo, rejection: managedRejection };
   const context = { request, apiKey, apiKeyInfo, modelStr };
   const statusRejection = validateKeyStatus(context);
   if (statusRejection) return { apiKey, apiKeyInfo, rejection: statusRejection };

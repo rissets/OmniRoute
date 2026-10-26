@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Umožní požadavkům auto/* sestavit fond kandidátů s vyřešenými schopnostmi modelů (vidění, uvažování, přemýšlení) a pozorovaným skóre kvality, načtenými jedním hromadným čtením. Ve výchozím stavu vypnuto: váhy kandidátů v době požadavku zůstávají přesně jako dříve. Zapnuto: tyto signály vstupují do vah snímku, takže se váhy kandidátů i výběr mohou změnit.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Umožnit kontrole stavu přihlašovacích údajů znovu otestovat připojení, která brána sama vypnula (každé nejvýše jednou za 6 hodin, 5 během jedné kontroly), a po úspěšném opakovaném testu je znovu zapnout. Ve výchozím nastavení vypnuto: taková připojení zůstanou vypnutá, dokud nezasáhne operátor. Připojení zakázaná operátorem a trvale zablokovaná připojení se nikdy znovu netestují.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Domov",
     "dashboard": "Nástěnka",
     "providers": "Poskytovatelé",

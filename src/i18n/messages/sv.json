@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Låter auto/*-förfrågningar bygga kandidatpoolen med fastställda modellförmågor (vision, resonemang, tänkande) och observerade kvalitetspoäng, inlästa i en enda massläsning. Av som standard: kandidatvikterna vid förfrågningstillfället förblir exakt som tidigare. På: dessa signaler matas in i ögonblicksbildens vikter, så kandidatvikter och urval kan ändras.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Låt hälsokontrollen för autentiseringsuppgifter testa anslutningar som gatewayen själv har stängt av på nytt (högst en gång var sjätte timme per anslutning, fem per kontroll) och slå på en anslutning igen när omtestet lyckas. Av som standard: sådana anslutningar förblir avstängda tills en operatör ingriper. Anslutningar som har stängts av av en operatör eller blockerats permanent testas aldrig på nytt.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Hem",
     "dashboard": "Instrumentpanel",
     "providers": "Leverantörer",

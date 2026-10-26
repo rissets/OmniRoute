@@ -1,3 +1,4 @@
+import { governedInference } from "@/lib/bpbatam/inference";
 // Allow large audio/video file uploads — 5min for processing large files (up to 2GB)
 export const maxDuration = 300;
 import { getRequestedModelEndpointMismatch } from "@/lib/providerModels/modelEndpointGuard";
@@ -302,7 +303,7 @@ async function transcribeWithAlias(
  * POST /v1/audio/transcriptions — transcribe audio files
  * OpenAI Whisper API compatible (multipart/form-data)
  */
-export async function POST(request) {
+async function dispatchPOST(request) {
   let formData;
   try {
     formData = await request.formData();
@@ -385,4 +386,8 @@ export async function POST(request) {
     policy.apiKey,
     allowedConnections
   );
+}
+
+export async function POST(request: Request) {
+  return governedInference(request, dispatchPOST);
 }

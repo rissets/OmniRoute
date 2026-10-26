@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Pozwala żądaniom auto/* budować pulę kandydatów z rozwiązanymi możliwościami modeli (wizja, rozumowanie, myślenie) i zaobserwowanymi ocenami jakości, wczytanymi jednym zbiorczym odczytem. Domyślnie wyłączone: wagi kandydatów w momencie żądania pozostają dokładnie takie jak wcześniej. Włączone: te sygnały trafiają do wag migawki, więc wagi kandydatów i wybór mogą się zmienić.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Zezwól, aby kontrola stanu danych uwierzytelniających ponownie testowała połączenia automatycznie wyłączone przez bramę (każde najwyżej raz na 6 godzin, po 5 w ramach jednej kontroli) i ponownie włączała połączenie, jeśli test zakończy się pomyślnie. Domyślnie wyłączone: takie połączenia pozostają wyłączone do czasu interwencji operatora. Połączenia wyłączone przez operatora i trwale zablokowane nigdy nie są ponownie testowane.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Strona główna",
     "dashboard": "Panel",
     "providers": "Dostawcy",

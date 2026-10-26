@@ -1,6 +1,7 @@
 export const HIDEABLE_SIDEBAR_ITEM_IDS = [
   // Home
   "home",
+  "bpbatam-pool",
   // OmniProxy — flat
   "api-manager",
   "endpoints",

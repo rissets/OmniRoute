@@ -1027,6 +1027,8 @@
   "featureFlagAutoRequestResolvedCapabilitiesDescription": "Laat auto/*-verzoeken de kandidatenpool opbouwen met opgeloste modelmogelijkheden (vision, redeneren, denken) en waargenomen kwaliteitsscores, ingelezen in één bulkleesactie. Standaard uit: kandidaatgewichten op het moment van het verzoek blijven precies zoals voorheen. Aan: deze signalen voeden de snapshotgewichten, zodat kandidaatgewichten en selectie kunnen veranderen.",
   "featureFlagCredentialHealthRetestAutoDisabledDescription": "Laat de controle van de status van inloggegevens verbindingen opnieuw testen die de gateway zelf heeft uitgeschakeld (elk maximaal één keer per 6 uur, 5 per controle) en schakel een verbinding weer in wanneer deze de hertest doorstaat. Standaard uitgeschakeld: zulke verbindingen blijven uitgeschakeld totdat een operator ingrijpt. Door een operator uitgeschakelde en permanent geblokkeerde verbindingen worden nooit opnieuw getest.",
   "sidebar": {
+    "bpBatamPool": "Pool Token BP Batam",
+    "bpBatamPoolSubtitle": "Alokasi organisasi dan batas penerbitan",
     "home": "Thuis",
     "dashboard": "Dashboard",
     "providers": "Aanbieders",

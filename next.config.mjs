@@ -200,6 +200,7 @@ const nextConfig = {
   // accept for image-bearing requests; tune via env if a deployment needs
   // more.
   experimental: {
+    workerThreads: true, // Native main deployment: macOS launchd dynamic-route worker support.
     // Release native compiler cache after snapshots on the shared local host.
     ...(process.env.BP_BATAM_LOW_MEMORY === "1" ? { turbopackMemoryEviction: "full" } : {}),
     serverActions: {
