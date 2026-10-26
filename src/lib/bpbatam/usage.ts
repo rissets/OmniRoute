@@ -73,16 +73,23 @@ export function canonicalUsage(value: unknown): CanonicalUsage | null {
     version: 1,
   };
 }
-export function reservationBound(body: Record<string, unknown>): number {
-  const max = body.max_completion_tokens ?? body.max_tokens ?? body.max_output_tokens;
+export function reservationBound(
+  body: Record<string, unknown>,
+  modelInputBounds: Record<string, unknown> = {}
+): number {
+  const max = body.max_completion_tokens ?? body.max_tokens ?? body.max_output_tokens ?? 4096;
   if (!count(max) || max < 1) throw new BoundError("OUTPUT_LIMIT_REQUIRED");
-  // One token cannot encode less than one input byte. Include serialized messages/tools and
-  // conservative framing; image/audio input needs provider-specific bounds and is denied here.
+  // Serialized bytes bound text. Media needs an operator-declared full input
+  // context ceiling for the serving model, independent of client declarations.
   if (
     JSON.stringify(body.messages ?? []).includes("image_url") ||
     JSON.stringify(body.messages ?? []).includes("input_audio")
-  )
-    throw new BoundError("MULTIMODAL_BOUND_REQUIRED");
+  ) {
+    const bound = typeof body.model === "string" ? modelInputBounds[body.model] : undefined;
+    if (!count(bound) || bound < 1 || !Number.isSafeInteger(bound + max))
+      throw new BoundError("MULTIMODAL_BOUND_REQUIRED");
+    return bound + max;
+  }
   return (
     Buffer.byteLength(JSON.stringify(body.messages ?? [])) +
     Buffer.byteLength(JSON.stringify(body.tools ?? [])) +

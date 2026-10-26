@@ -105,7 +105,7 @@ export async function governedInference(
       units ??
       (path === "/v1/embeddings"
         ? new TextEncoder().encode(JSON.stringify(body.input ?? "")).length + 128
-        : reservationBound(body));
+        : reservationBound(body, JSON.parse(process.env.BPBATAM_MODEL_INPUT_TOKEN_BOUNDS ?? "{}")));
     const current = getTokenLimitsForRequest(key.id, "", model).map((limit) => ({
       id: limit.id,
       window: resetWindowIfElapsed(limit).windowStart,
