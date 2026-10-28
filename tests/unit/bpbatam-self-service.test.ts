@@ -80,3 +80,43 @@ test("self-service summaries and keys are owner-scoped and child usage consumes 
     /PRINCIPAL_DISABLED/
   );
 });
+
+test("token requests are idempotent, owner-bound, and never issue or transfer funds", () => {
+  const before = wallet.account("a")!.balance;
+  const issued = pool.poolStatus("bpbatam").issued;
+  const result = self.requestSelfTokens(
+    "subject-a",
+    "00000000-0000-4000-8000-000000000099",
+    1000,
+    "Need analysis capacity"
+  );
+  assert.equal(result.status, "requested");
+  assert.equal(result.amount, 1000);
+  assert.deepEqual(
+    self.requestSelfTokens(
+      "subject-a",
+      "00000000-0000-4000-8000-000000000099",
+      1000,
+      "Need analysis capacity"
+    ),
+    result
+  );
+  assert.throws(
+    () =>
+      self.requestSelfTokens(
+        "subject-b",
+        "00000000-0000-4000-8000-000000000099",
+        1000,
+        "Need analysis capacity"
+      ),
+    /TOPUP_IDEMPOTENCY_CONFLICT/
+  );
+  assert.equal(self.selfTokenRequests("subject-b").length, 0);
+  assert.equal(self.selfTokenRequests("subject-a").length, 1);
+  assert.equal(wallet.account("a")!.balance, before);
+  assert.equal(pool.poolStatus("bpbatam").issued, issued);
+  assert.throws(
+    () => self.requestSelfTokens("subject-a", "invalid", -1, "Need analysis capacity"),
+    /INVALID_TOKEN_REQUEST/
+  );
+});

@@ -1,3 +1,4 @@
+import { governedInference } from "@/lib/bpbatam/inference";
 import { handleRerank } from "@omniroute/open-sse/handlers/rerank.ts";
 import { recordModalCallCost } from "@/domain/costRules";
 import { getRequestedModelEndpointMismatch } from "@/lib/providerModels/modelEndpointGuard";
@@ -428,4 +429,5 @@ export async function handleValidatedRerankRequestBody(
   );
 }
 
-export const POST = withInjectionGuard(postHandler);
+export const POST = (request: Request, context: unknown) =>
+  governedInference(request, (forwarded) => withInjectionGuard(postHandler)(forwarded, context));

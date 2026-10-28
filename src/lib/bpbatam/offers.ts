@@ -18,6 +18,22 @@ export interface Offer {
   targets: string[];
   capabilities?: string[];
 }
+
+function sameOfferScope(left: Offer, right: Offer): boolean {
+  const sameStringList = (a: unknown, b: unknown): boolean =>
+    Array.isArray(a) &&
+    Array.isArray(b) &&
+    a.length === b.length &&
+    a.every((value, index) => typeof value === "string" && value === b[index]);
+
+  return (
+    left.id === right.id &&
+    left.kind === right.kind &&
+    sameStringList(left.targets, right.targets) &&
+    sameStringList(left.capabilities ?? [], right.capabilities ?? [])
+  );
+}
+
 export async function publishedOffers(): Promise<Offer[]> {
   const [combos, nodes, synced, custom, mediaRevision] = await Promise.all([
     getCombos(),
@@ -39,21 +55,17 @@ export async function publishedOffers(): Promise<Offer[]> {
         if (typeof id === "string") ids.add(prefix + "/" + id);
       }
   }
-  const aliases = await getModelAliases();
-  const hash = (x: unknown) =>
+  const hash = (kind: Offer["kind"], id: string, targets: string[], capabilities: string[]) =>
     createHash("sha256")
-      .update(JSON.stringify([x, aliases]))
+      .update(JSON.stringify([kind, id, targets, capabilities]))
       .digest("hex");
-  const modelOffers: Offer[] = [...ids].map((id) => ({
-    id,
-    kind: "model",
-    version: hash(
-      id.startsWith("local-tts/") || id.startsWith("local-stt/") || id.startsWith("local-image/")
-        ? [id, mediaRevision]
-        : id
-    ),
-    targets: [id],
-    capabilities: [
+  const aliases = await getModelAliases();
+  const legacyMediaHash = (id: string) =>
+    createHash("sha256")
+      .update(JSON.stringify([[id, mediaRevision], aliases]))
+      .digest("hex");
+  const modelOffers: Offer[] = [...ids].map((id) => {
+    const capabilities = [
       id.includes("local-tts/")
         ? "tts"
         : id.includes("local-stt/")
@@ -62,9 +74,25 @@ export async function publishedOffers(): Promise<Offer[]> {
             ? "image"
             : id.includes("local-embed/")
               ? "embedding"
-              : "chat",
-    ],
-  }));
+              : id.includes("local-rerank/")
+                ? "rerank"
+                : "chat",
+    ];
+    const targets = [id];
+    const mediaModel =
+      id.startsWith("local-tts/") ||
+      id.startsWith("local-stt/") ||
+      id.startsWith("local-image/") ||
+      id.startsWith("local-embed/") ||
+      id.startsWith("local-rerank/");
+    return {
+      id,
+      kind: "model",
+      version: mediaModel ? legacyMediaHash(id) : hash("model", id, targets, capabilities),
+      targets,
+      capabilities,
+    };
+  });
   const graph = combos.map((c) => ({
     name: String(c.name),
     models: Array.isArray(c.models) ? c.models : [],
@@ -87,22 +115,21 @@ export async function publishedOffers(): Promise<Offer[]> {
   };
   const comboOffers: Offer[] = combos
     .filter((combo) => safeCombo(String(combo.name)))
-    .map((combo) => ({
-      id: String(combo.name),
-      kind: "combo",
-      capabilities: ["chat"],
-      version: hash([
-        combo,
-        resolveNestedComboModels(
-          { name: String(combo.name), models: Array.isArray(combo.models) ? combo.models : [] },
-          graph
-        ),
-      ]),
-      targets: resolveNestedComboModels(
+    .map((combo) => {
+      const id = String(combo.name);
+      const targets = resolveNestedComboModels(
         { name: String(combo.name), models: Array.isArray(combo.models) ? combo.models : [] },
         graph
-      ),
-    }));
+      );
+      const capabilities = ["chat"];
+      return {
+        id,
+        kind: "combo" as const,
+        capabilities,
+        version: hash("combo", id, targets, capabilities),
+        targets,
+      };
+    });
   return [
     ...modelOffers,
     ...comboOffers.filter(
@@ -133,6 +160,7 @@ export async function managedPolicy(
     "/v1/images/generations",
     "/v1/images/edits",
     "/v1/embeddings",
+    "/v1/rerank",
   ];
   if (!covered.includes(path)) return deny(403, "MANAGED_ENDPOINT_NOT_ADMITTED");
   if (path === "/v1/models") return null;
@@ -141,7 +169,10 @@ export async function managedPolicy(
   const current = await publishedOffers();
   const expected = assigned.find((x) => x.id === model)!;
   const live = current.find((x) => x.id === model);
-  if (!live || live.version !== expected.version) return deny(409, "OFFER_VERSION_CHANGED");
+  // Offer versions also change for catalog metadata and alias churn. Enforce the
+  // assigned execution scope directly so unrelated catalog edits do not lock
+  // out users; changed or removed targets still fail closed.
+  if (!live || !sameOfferScope(expected, live)) return deny(409, "OFFER_VERSION_CHANGED");
   return null;
 }
 

@@ -14,6 +14,7 @@ process.env.BPBATAM_MEDIA_CLIENT_SECRET = "synthetic-client-secret";
 process.env.BPBATAM_MEDIA_TOKEN_UNITS = JSON.stringify({
   "/v1/audio/speech": 10,
   "/v1/audio/transcriptions": 20,
+  "/v1/rerank": 1,
 });
 let revision = "a".repeat(64);
 let status = 200;
@@ -25,6 +26,25 @@ const executorFetch: typeof fetch = async (input, options) => {
   if (url.endsWith("/protocol/openid-connect/token"))
     return Response.json({ access_token: "synthetic-machine-jwt", expires_in: 300 });
   if (url.endsWith("/settings")) return Response.json({ revision });
+  if (url.endsWith("/v1/rerank")) {
+    dispatched++;
+    return Response.json(
+      { model: "Qwen/Qwen3-Reranker-0.6B", results: [{ index: 0, relevance_score: 7.7 }] },
+      { headers: { "X-CP-Media-State": "completed" } }
+    );
+  }
+  if (url.endsWith("/v1/embeddings")) {
+    dispatched++;
+    return Response.json(
+      {
+        data: [{ index: 0, embedding: [0.5, -0.5] }],
+        usage: { prompt_tokens: 3, total_tokens: 3 },
+      },
+      {
+        headers: { "X-CP-Media-State": "completed" },
+      }
+    );
+  }
   if (url.endsWith("/v1/audio/transcriptions")) {
     const headers = new Headers(options?.headers);
     assert.equal(headers.get("authorization"), "Bearer synthetic-machine-jwt");
@@ -78,8 +98,18 @@ await providers.createProviderNode({
   name: "Synthetic STT",
 });
 await models.addCustomModel("native-stt-node", "media-stt");
+await providers.createProviderNode({
+  id: "native-embed-node",
+  prefix: "local-embed",
+  type: "openai-compatible",
+  name: "Synthetic embeddings",
+});
+await models.addCustomModel("native-embed-node", "media-embedding");
 await pricing.updatePricing({
   "native-tts-node": { "media-tts": { input_cost_per_character: 0.001 } },
+  "native-embed-node": {
+    "media-embedding": { input: 10000, output: 0 },
+  },
 });
 wallet.createAccount("root", null, "platform");
 let count = 0;
@@ -127,6 +157,26 @@ test("managed media uses machine identity and settles its native receipt once", 
   assert.equal((await invoke(key.key, "success")).status, 409);
   assert.equal(dispatched, before);
 });
+
+test("managed embeddings execute in CP and retain native token and budget accounting", async () => {
+  const { id, key } = await identity();
+  wallet.allocate("embedding-fixture-capacity", null, id, 500, "issuer");
+  const response = await governedInference(
+    new Request("http://router.test/v1/embeddings", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + key.key, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "local-embed/media-embedding", input: "satu" }),
+    }),
+    () => {
+      throw new Error("Legacy embedding provider must not be called");
+    }
+  );
+  assert.equal(response.status, 200);
+  assert.equal(wallet.account(id)?.balance, 597);
+  assert.equal(wallet.account(id)?.reserved, 0);
+  assert.equal(costs.getCostSummary(key.id).totalCostToday, 0.03);
+  assert.equal(response.headers.get("x-omniroute-provider"), "native-embed-node");
+});
 test("trusted rejection releases only the reservation; ambiguous provider failure remains held", async () => {
   const { id, key } = await identity();
   status = 400;
@@ -142,6 +192,16 @@ test("trusted rejection releases only the reservation; ambiguous provider failur
   assert.equal((await invoke(key.key, "blocked")).status, 403);
   assert.equal(wallet.journalBalance(), 0);
   status = 200;
+  state = "completed";
+});
+test("missing completion confirmation retains a traceable receipt", async () => {
+  const { id, key } = await identity();
+  state = "uncertain";
+  const response = await invoke(key.key, "unconfirmed");
+  assert.equal(response.status, 503);
+  assert.equal(response.headers.get("x-bpbatam-receipt"), key.id + ":unconfirmed");
+  assert.equal(wallet.admission(key.id + ":unconfirmed")?.state, "uncertain");
+  assert.equal(wallet.account(id)?.reserved, 10);
   state = "completed";
 });
 test("connection restriction and changed provider revision reject before reservation", async () => {
@@ -245,4 +305,30 @@ test("bounded multipart transcription keeps its file and measured native receipt
   assert.equal(wallet.account(id)?.balance, 80);
   assert.equal(wallet.receipts(id)[0].usage.audio_seconds, 0.1);
   assert.equal(response.headers.get("X-CP-Media-Audio-Seconds"), null);
+});
+
+test("managed rerank is admitted through CP and settles one configured media unit", async () => {
+  const node = await providers.createProviderNode({
+    id: "native-rerank-node",
+    prefix: "local-rerank",
+    type: "openai-compatible",
+    name: "Synthetic rerank",
+  });
+  await models.addCustomModel(String(node.id), "qwen3");
+  const { id, key } = await identity();
+  const response = await governedInference(
+    new Request("http://router.test/v1/rerank", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + key.key, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "local-rerank/qwen3", query: "teknologi", documents: ["AI"] }),
+    }),
+    () => {
+      throw new Error("Legacy rerank executor must not run");
+    }
+  );
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).results[0].relevance_score, 7.7);
+  assert.equal(wallet.account(id)?.balance, 99);
+  assert.equal(wallet.account(id)?.reserved, 0);
+  assert.equal(response.headers.get("x-omniroute-provider"), "native-rerank-node");
 });

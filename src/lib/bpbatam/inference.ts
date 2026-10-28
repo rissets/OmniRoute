@@ -28,6 +28,7 @@ export const GOVERNED_PATHS = new Set([
   "/v1/images/generations",
   "/v1/images/edits",
   "/v1/embeddings",
+  "/v1/rerank",
 ]);
 export async function governedInference(
   request: Request,
@@ -45,7 +46,13 @@ export async function governedInference(
   const path = new URL(request.url).pathname.replace(/^\/api\/v1/, "/v1");
   let id: string | undefined;
   let admitted = false;
+  let operation:
+    { id: string; failed: boolean; dispatched: boolean; outputLimit: number } | undefined;
   let requestedModel: string | null = null;
+  const withReceipt = (response: Response): Response => {
+    if (id && admitted) response.headers.set("x-bpbatam-receipt", id);
+    return response;
+  };
   try {
     if (
       owner &&
@@ -122,7 +129,11 @@ export async function governedInference(
     if (owner && body.stream === true && path === "/v1/chat/completions") {
       const headers = new Headers(request.headers);
       headers.delete("content-length");
-      forwarded = new Request(request, {
+      // Framework adapters can supply a different Request implementation. Pass
+      // the URL and explicit fields instead of relying on constructor identity.
+      forwarded = new Request(request.url, {
+        method: request.method,
+        signal: request.signal,
         headers,
         body: JSON.stringify({
           ...body,
@@ -130,7 +141,7 @@ export async function governedInference(
         }),
       });
     }
-    const operation = {
+    operation = {
       id,
       failed: false,
       dispatched: false,
@@ -156,6 +167,10 @@ export async function governedInference(
       else holdUnsettled(id, "upstream_or_handler_failure");
       return new Response(response.body, { status: response.status, headers });
     }
+    if (mediaRevision && response.headers.get("X-CP-Media-State") !== "completed") {
+      holdUnsettled(id, "media_execution_confirmation_missing");
+      return withReceipt(errorResponse(503, "MEDIA_EXECUTION_CONFIRMATION_MISSING"));
+    }
     if (path === "/v1/embeddings") {
       const receipt = await response
         .clone()
@@ -170,10 +185,6 @@ export async function governedInference(
       return new Response(response.body, { status: response.status, headers });
     }
     if (units) {
-      if (mediaRevision && response.headers.get("X-CP-Media-State") !== "completed") {
-        holdUnsettled(id, "media_execution_confirmation_missing");
-        return errorResponse(503, "MEDIA_EXECUTION_CONFIRMATION_MISSING");
-      }
       const seconds = Number(response.headers.get("X-CP-Media-Audio-Seconds") ?? 0);
       settle(id, units, {
         unit: "router-media-token-equivalent",
@@ -214,7 +225,11 @@ export async function governedInference(
     headers.delete("content-length");
     return new Response(stream, { status: response.status, headers });
   } catch (error) {
-    if (id && admitted) holdUnsettled(id, "dispatch_interrupted");
+    if (id && admitted) {
+      if (path === "/v1/chat/completions" && !operation?.dispatched)
+        settle(id, 0, { reason: "trusted_local_rejection_before_dispatch" });
+      else holdUnsettled(id, "dispatch_interrupted");
+    }
     const denial =
       error instanceof TokenPolicyError
         ? { code: error.code, status: error.status }
@@ -231,10 +246,11 @@ export async function governedInference(
       response.headers.set("X-BPbatam-Request", requestId);
       return response;
     }
-    if (error instanceof TokenPolicyError) return errorResponse(error.status, error.code);
-    if (error instanceof BoundError) return errorResponse(400, error.code);
+    if (error instanceof TokenPolicyError)
+      return withReceipt(errorResponse(error.status, error.code));
+    if (error instanceof BoundError) return withReceipt(errorResponse(400, error.code));
     if (error instanceof RequestBodyTooLargeError)
-      return errorResponse(413, "MEDIA_INPUT_TOO_LARGE");
-    return errorResponse(503, "TOKEN_ADMISSION_UNAVAILABLE");
+      return withReceipt(errorResponse(413, "MEDIA_INPUT_TOO_LARGE"));
+    return withReceipt(errorResponse(503, "TOKEN_ADMISSION_UNAVAILABLE"));
   }
 }

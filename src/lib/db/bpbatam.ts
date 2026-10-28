@@ -501,12 +501,23 @@ export function topupRequests(): Array<{
   account_id: string;
   amount: number;
   status: string;
+  actor: string;
+  reason: string;
+  created_at: string;
 }> {
   return db()
     .prepare(
-      "SELECT id,account_id,amount,status FROM bp_topup_requests ORDER BY created_at DESC LIMIT 1000"
+      "SELECT id,account_id,amount,status,actor,reason,created_at FROM bp_topup_requests ORDER BY created_at DESC"
     )
-    .all() as Array<{ id: string; account_id: string; amount: number; status: string }>;
+    .all() as Array<{
+    id: string;
+    account_id: string;
+    amount: number;
+    status: string;
+    actor: string;
+    reason: string;
+    created_at: string;
+  }>;
 }
 export function requestTopup(
   id: string,

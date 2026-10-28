@@ -1,7 +1,7 @@
 /** Native policy, ledger and financial accounting stay here; CP only executes providers. */
 import { integratedMedia, mediaCatalogRevision, mediaToken } from "./media";
 import { principalForKey, TokenPolicyError } from "@/lib/db/bpbatam";
-import { calculateModalCost } from "@/lib/usage/costCalculator";
+import { calculateModalCost, calculateCostDetailed } from "@/lib/usage/costCalculator";
 import { recordModalCallCost, recordUnpricedBudgetUsage } from "@/domain/costRules";
 import { getProviderNodes } from "@/lib/db/providers/nodes";
 import { getPricingForModel } from "@/lib/db/settings/pricing";
@@ -16,6 +16,8 @@ const prefixes: Record<string, string> = {
   "/v1/audio/transcriptions": "local-stt/",
   "/v1/images/generations": "local-image/",
   "/v1/images/edits": "local-image/",
+  "/v1/embeddings": "local-embed/",
+  "/v1/rerank": "local-rerank/",
 };
 
 export function usesMediaExecutor(path: string, model: string): boolean {
@@ -105,7 +107,35 @@ export async function executeMedia(
     governedAttemptResult(attempt, provider, localModel);
     throw error;
   }
-  if (response.ok && response.headers.get("X-CP-Media-State") === "completed") {
+  if (
+    path === "/v1/embeddings" &&
+    response.ok &&
+    response.headers.get("X-CP-Media-State") === "completed"
+  ) {
+    const body = (await response.clone().json()) as {
+      usage?: { prompt_tokens?: number; total_tokens?: number };
+    };
+    const usage = body.usage;
+    if (usage && Number.isSafeInteger(usage.total_tokens) && Number(usage.total_tokens) >= 0) {
+      const cost = await calculateCostDetailed(provider, localModel, usage);
+      if (!cost.priced) recordUnpricedBudgetUsage(key.id, { provider, model: localModel });
+      recordModalCallCost(key.id, { provider, model: localModel, costUsd: cost.costUsd });
+      response = attachOmniRouteMetaToResponse(response, {
+        provider,
+        model: localModel,
+        usage,
+        costUsd: cost.costUsd,
+        latencyMs: Date.now() - start,
+        requestId: randomUUID(),
+      });
+    }
+  }
+  if (
+    path !== "/v1/embeddings" &&
+    path !== "/v1/rerank" &&
+    response.ok &&
+    response.headers.get("X-CP-Media-State") === "completed"
+  ) {
     const transcription = path.includes("transcriptions");
     const seconds = Number(response.headers.get("X-CP-Media-Audio-Seconds") ?? 0);
     const dimensions = path.includes("images")
@@ -136,6 +166,15 @@ export async function executeMedia(
       provider,
       model: localModel,
       costUsd,
+      latencyMs: Date.now() - start,
+      requestId: randomUUID(),
+    });
+  }
+  if (path === "/v1/rerank" && response.ok) {
+    recordUnpricedBudgetUsage(key.id, { provider, model: localModel });
+    response = attachOmniRouteMetaToResponse(response, {
+      provider,
+      model: localModel,
       latencyMs: Date.now() - start,
       requestId: randomUUID(),
     });

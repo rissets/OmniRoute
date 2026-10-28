@@ -1,4 +1,6 @@
 import {
+  requestSelfTokens,
+  selfTokenRequests,
   ownedSelfKey,
   renameSelfKey,
   selfAccount,
@@ -58,6 +60,15 @@ import {
 } from "@/lib/db/bpbatam";
 
 const schema = z.discriminatedUnion("op", [
+  z
+    .object({
+      op: z.literal("self-topup-request"),
+      subject: z.string().uuid(),
+      request_id: z.string().uuid(),
+      amount: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      reason: z.string().trim().min(10).max(1000),
+    })
+    .strict(),
   z.object({
     op: z.literal("pool-config"),
     command_id: z.string().uuid(),
@@ -199,12 +210,16 @@ async function handle(request: Request) {
   };
   try {
     if (request.method === "GET") {
-      if (["self-account", "self-keys"].includes(action ?? "") && has("resolve")) {
+      if (["self-account", "self-keys", "self-topups"].includes(action ?? "") && has("resolve")) {
         const subject = url.searchParams.get("subject") ?? "";
         const person = selfPrincipal(subject);
         scope(person.account_id);
         return Response.json(
-          action === "self-account" ? selfAccount(subject) : { keys: selfKeys(subject) },
+          action === "self-account"
+            ? selfAccount(subject)
+            : action === "self-topups"
+              ? { requests: selfTokenRequests(subject) }
+              : { keys: selfKeys(subject) },
           { headers: { "Cache-Control": "no-store" } }
         );
       }
@@ -376,6 +391,15 @@ async function handle(request: Request) {
       setPoolCap(root, body.ceiling);
       return Response.json(poolStatus(root));
     }
+    if (body.op === "self-topup-request") {
+      if (!has("resolve")) return errorResponse(403, "BRIDGE_SCOPE_DENIED");
+      const person = selfPrincipal(body.subject);
+      scope(person.account_id);
+      return Response.json(
+        requestSelfTokens(person.subject, body.request_id, body.amount, body.reason),
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
     if (body.op === "self-key-reveal" || body.op === "self-key-rename") {
       if (!has("resolve")) return errorResponse(403, "BRIDGE_SCOPE_DENIED");
       const person = selfPrincipal(body.subject);
@@ -426,7 +450,7 @@ async function handle(request: Request) {
         modelAccessMode: "restricted",
         allowedModels: offers.filter((o) => o.kind === "model").map((o) => o.id),
         allowedCombos: offers.filter((o) => o.kind === "combo").map((o) => o.id),
-        allowedEndpoints: ["chat", "audio", "images", "models", "embeddings"],
+        allowedEndpoints: ["chat", "audio", "images", "models", "embeddings", "rerank"],
         allowAutoCombos: false,
       });
       const key = await getApiKeyById(prior.key_id);
@@ -553,7 +577,7 @@ async function handle(request: Request) {
         modelAccessMode: "restricted",
         allowedModels: selected.filter((o) => o.kind === "model").map((o) => o.id),
         allowedCombos: selected.filter((o) => o.kind === "combo").map((o) => o.id),
-        allowedEndpoints: ["chat", "audio", "images", "models", "embeddings"],
+        allowedEndpoints: ["chat", "audio", "images", "models", "embeddings", "rerank"],
         allowAutoCombos: false,
       });
       const key = await getApiKeyById(prior.key_id);
@@ -602,7 +626,7 @@ async function handle(request: Request) {
         modelAccessMode: "restricted",
         allowedModels: offers.filter((o) => o.kind === "model").map((o) => o.id),
         allowedCombos: offers.filter((o) => o.kind === "combo").map((o) => o.id),
-        allowedEndpoints: ["chat", "audio", "images", "models", "embeddings"],
+        allowedEndpoints: ["chat", "audio", "images", "models", "embeddings", "rerank"],
         allowAutoCombos: false,
         isActive: !!p.active,
       });
@@ -633,7 +657,7 @@ async function handle(request: Request) {
       modelAccessMode: "restricted",
       allowedModels: offers.filter((x) => x.kind === "model").map((x) => x.id),
       allowedCombos: offers.filter((x) => x.kind === "combo").map((x) => x.id),
-      allowedEndpoints: ["chat", "audio", "images", "models", "embeddings"],
+      allowedEndpoints: ["chat", "audio", "images", "models", "embeddings", "rerank"],
       allowAutoCombos: false,
     });
     for (const child of followingKeys(p.subject)) {
@@ -641,7 +665,7 @@ async function handle(request: Request) {
         modelAccessMode: "restricted",
         allowedModels: offers.filter((o) => o.kind === "model").map((o) => o.id),
         allowedCombos: offers.filter((o) => o.kind === "combo").map((o) => o.id),
-        allowedEndpoints: ["chat", "audio", "images", "models", "embeddings"],
+        allowedEndpoints: ["chat", "audio", "images", "models", "embeddings", "rerank"],
         allowAutoCombos: false,
       });
     }

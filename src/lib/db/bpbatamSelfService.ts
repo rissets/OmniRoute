@@ -1,3 +1,4 @@
+import { requestTopup, topupRequests } from "./bpbatam";
 import { getDbInstance } from "./core";
 import { account, principal, TokenPolicyError } from "./bpbatam";
 import { userLimits } from "./bpbatamQuotas";
@@ -87,4 +88,36 @@ export function selfAccount(subject: string) {
       (o) => ({ id: o.id, capabilities: o.capabilities ?? [] })
     ),
   };
+}
+
+/** Requests use the caller subject's wallet and never issue or transfer tokens. */
+export function requestSelfTokens(
+  subject: string,
+  requestId: string,
+  amount: number,
+  reason: string
+) {
+  const person = selfPrincipal(subject);
+  if (
+    !Number.isSafeInteger(amount) ||
+    amount <= 0 ||
+    reason.trim().length < 10 ||
+    reason.length > 1000
+  )
+    throw new TokenPolicyError("INVALID_TOKEN_REQUEST", 422);
+  const id = "chat:" + requestId;
+  requestTopup(id, person.account_id, amount, person.subject, reason.trim());
+  return selfTokenRequests(subject).find((row) => row.id === id)!;
+}
+export function selfTokenRequests(subject: string) {
+  const person = selfPrincipal(subject);
+  return topupRequests()
+    .filter((row) => row.account_id === person.account_id && row.actor === person.subject)
+    .map(({ id, amount, status, reason, created_at }) => ({
+      id,
+      amount,
+      status,
+      reason,
+      created_at,
+    }));
 }

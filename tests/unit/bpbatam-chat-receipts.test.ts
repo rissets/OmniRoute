@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { Request as AdapterRequest } from "undici";
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), "bp-chat-receipts-"));
 process.env.DATA_DIR = directory;
@@ -157,4 +158,64 @@ test("a rejection before provider dispatch releases its unused reservation", asy
   assert.equal(wallet.admission(receipt)?.state, "settled");
   assert.equal(wallet.admission(receipt)?.actual, 0);
   assert.equal(wallet.account(id)?.reserved, 0);
+});
+
+test("streaming requests from another Request implementation keep their usage receipt", async () => {
+  const id = "user-" + ++sequence;
+  const key = await keys.createApiKey(id, "unit-test");
+  wallet.createAccount(id, "root", "user");
+  wallet.allocate("grant-" + id, null, id, 20000, "issuer");
+  wallet.bindPrincipal(id, "issuer", id, key.id);
+  wallet.setOffers(id, await offers.publishedOffers());
+  let dispatched = false;
+  const request = new AdapterRequest("http://router.test/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + key.key, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "receipt-test/chat",
+      max_tokens: 1000,
+      messages: [{ role: "user", content: "Hello" }],
+      stream: true,
+    }),
+  });
+  const response = await governedInference(request as unknown as Request, async (forwarded) => {
+    dispatched = true;
+    const body = await forwarded.json();
+    assert.equal(body.stream_options.include_usage, true);
+    assert.equal(body.messages[0].content, "Hello");
+    recordGovernedDispatch();
+    recordGovernedUsage({ prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 });
+    return new Response("data: [DONE]\n\n", { headers: { "Content-Type": "text/event-stream" } });
+  });
+  assert.equal(response.status, 200);
+  assert.equal(dispatched, true);
+  await response.text();
+  const receipt = response.headers.get("x-bpbatam-receipt")!;
+  assert.equal(wallet.admission(receipt)?.state, "settled");
+  assert.equal(wallet.account(id)?.reserved, 0);
+});
+
+test("an exception before provider dispatch releases an unused chat reservation", async () => {
+  const { id, receipt } = await invoke(
+    () => {
+      throw new Error("Synthetic pre-dispatch exception");
+    },
+    true,
+    503
+  );
+  assert.equal(wallet.admission(receipt)?.state, "settled");
+  assert.equal(wallet.admission(receipt)?.actual, 0);
+  assert.equal(wallet.account(id)?.reserved, 0);
+});
+
+test("an exception after provider dispatch retains its uncertain reservation", async () => {
+  const { id, receipt } = await invoke(
+    () => {
+      recordGovernedDispatch();
+      throw new Error("Synthetic post-dispatch exception");
+    },
+    true,
+    503
+  );
+  assertHeld(id, receipt);
 });

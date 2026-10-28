@@ -202,7 +202,9 @@ const nextConfig = {
   experimental: {
     workerThreads: true, // Native main deployment: macOS launchd dynamic-route worker support.
     // Release native compiler cache after snapshots on the shared local host.
-    ...(process.env.BP_BATAM_LOW_MEMORY === "1" ? { turbopackMemoryEviction: "full" } : {}),
+    ...(process.env.BP_BATAM_LOW_MEMORY === "1"
+      ? { turbopackMemoryEviction: "full", cpus: 1 }
+      : {}),
     serverActions: {
       bodySizeLimit: process.env.OMNIROUTE_SERVER_ACTIONS_BODY_LIMIT || "50mb",
     },
