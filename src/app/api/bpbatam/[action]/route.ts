@@ -45,6 +45,8 @@ import {
   setPrincipalActive,
   rotatePrincipal,
   receipts,
+  receiptPage,
+  topupPage,
   journalBalance,
   reconcile,
   TokenPolicyError,
@@ -251,6 +253,8 @@ async function handle(request: Request) {
                 limits: userLimits(p.account_id),
                 active_keys: keys.filter((k) => !k.revoked_at).length,
                 key_ids: keys.map((k) => k.key_id),
+                primary_key_id: p.key_id,
+                keys,
               };
             }),
           },
@@ -297,10 +301,34 @@ async function handle(request: Request) {
           ),
         });
       }
-      if (action === "topups" && has("read"))
+      if (action === "topups" && has("read")) {
+        if (url.searchParams.has("page")) {
+          const parsed = z
+            .object({
+              page: z.coerce.number().int().min(1).max(1000000).default(1),
+              page_size: z.coerce.number().int().min(1).max(100).default(10),
+              search: z.string().max(200).default(""),
+              sort_by: z.string().max(80).default("created_at"),
+              sort_order: z.enum(["asc", "desc"]).default("desc"),
+              filter_by: z.string().max(80).default(""),
+              filter_value: z.string().max(200).default(""),
+            })
+            .safeParse(Object.fromEntries(url.searchParams));
+          if (!parsed.success) return errorResponse(422, "INVALID_PAGE");
+          const ids = url.searchParams.get("accounts");
+          if (ids && ids.length > 100000) return errorResponse(422, "INVALID_ACCOUNTS");
+          return Response.json(
+            topupPage(
+              parsed.data,
+              ids === null ? undefined : ids.split(",").filter(Boolean),
+              has("root") ? undefined : root
+            )
+          );
+        }
         return Response.json({
           requests: topupRequests().filter((r) => has("root") || within(r.account_id, root)),
         });
+      }
       if (action === "media-settings" && has("read")) return Response.json(await mediaSettings());
       if (action === "events" && has("read")) {
         const parsed = z
@@ -352,6 +380,21 @@ async function handle(request: Request) {
         const id = url.searchParams.get("account");
         if (!id) return errorResponse(400, "ACCOUNT_REQUIRED");
         scope(id);
+        if (url.searchParams.has("page")) {
+          const parsed = z
+            .object({
+              page: z.coerce.number().int().min(1).max(1000000).default(1),
+              page_size: z.coerce.number().int().min(1).max(100).default(10),
+              search: z.string().max(200).default(""),
+              sort_by: z.string().max(80).default("created_at"),
+              sort_order: z.enum(["asc", "desc"]).default("desc"),
+              filter_by: z.string().max(80).default(""),
+              filter_value: z.string().max(200).default(""),
+            })
+            .safeParse(Object.fromEntries(url.searchParams));
+          if (!parsed.success) return errorResponse(422, "INVALID_PAGE");
+          return Response.json(receiptPage(id, parsed.data));
+        }
         return Response.json({ receipts: receipts(id) });
       }
       if (action === "resolve" && has("resolve")) {

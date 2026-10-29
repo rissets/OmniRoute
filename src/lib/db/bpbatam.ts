@@ -360,6 +360,67 @@ export function receipts(accountId?: string) {
     created_at: r.created_at,
   }));
 }
+
+export function receiptPage(
+  accountId: string,
+  query: {
+    page: number;
+    page_size: number;
+    search: string;
+    sort_by: string;
+    sort_order: string;
+    filter_by: string;
+    filter_value: string;
+  }
+) {
+  const fields = new Set([
+    "id",
+    "account_id",
+    "model",
+    "endpoint",
+    "reserved",
+    "actual",
+    "state",
+    "created_at",
+  ]);
+  const conditions = ["account_id IN (SELECT id FROM scope_accounts)"];
+  const params: Array<string | number> = [accountId];
+  const pattern = (value: string) => "%" + value.replace(/[\\%_]/g, "\\$&") + "%";
+  if (query.search) {
+    conditions.push(
+      "(id LIKE ? ESCAPE '\\' OR model LIKE ? ESCAPE '\\' OR state LIKE ? ESCAPE '\\')"
+    );
+    params.push(...Array(3).fill(pattern(query.search)));
+  }
+  if (query.filter_value && fields.has(query.filter_by)) {
+    conditions.push(`${query.filter_by} LIKE ? ESCAPE '\\'`);
+    params.push(pattern(query.filter_value));
+  }
+  const scope =
+    "WITH RECURSIVE scope_accounts(id) AS (SELECT id FROM bp_token_accounts WHERE id=? UNION ALL SELECT a.id FROM bp_token_accounts a JOIN scope_accounts s ON a.parent_id=s.id)";
+  const where = conditions.join(" AND ");
+  const total = (
+    db()
+      .prepare(`${scope} SELECT count(*) AS total FROM bp_token_admissions WHERE ${where}`)
+      .get(...params) as { total: number }
+  ).total;
+  const sort = fields.has(query.sort_by) ? query.sort_by : "created_at";
+  const order = query.sort_order === "asc" ? "ASC" : "DESC";
+  const rows = db()
+    .prepare(
+      `${scope} SELECT id,account_id,endpoint,model,reserved,actual,state,usage_json,created_at FROM bp_token_admissions WHERE ${where} ORDER BY ${sort} ${order},id LIMIT ? OFFSET ?`
+    )
+    .all(...params, query.page_size, (query.page - 1) * query.page_size);
+  return {
+    receipts: (rows as Array<Record<string, unknown>>).map(({ usage_json, ...row }) => ({
+      ...row,
+      usage: safeUsage(String(usage_json)),
+    })),
+    total,
+    page: query.page,
+    page_size: query.page_size,
+  };
+}
 export function journalBalance(): number {
   return (
     db().prepare("SELECT COALESCE(SUM(delta),0) AS total FROM bp_token_postings").get() as {
@@ -494,6 +555,61 @@ export function principals(subject?: string): Principal[] {
   return subject
     ? (db().prepare("SELECT * FROM bp_principals WHERE subject=?").all(subject) as Principal[])
     : (db().prepare("SELECT * FROM bp_principals").all() as Principal[]);
+}
+
+export function topupPage(
+  query: {
+    page: number;
+    page_size: number;
+    search: string;
+    sort_by: string;
+    sort_order: string;
+    filter_by: string;
+    filter_value: string;
+  },
+  accountIds?: string[],
+  root?: string
+) {
+  const fields = new Set(["id", "account_id", "amount", "status", "actor", "reason", "created_at"]);
+  const conditions: string[] = [];
+  const params: Array<string | number> = [];
+  if (accountIds) {
+    conditions.push(
+      accountIds.length ? `account_id IN (${accountIds.map(() => "?").join(",")})` : "0"
+    );
+    params.push(...accountIds);
+  }
+  const scope = root
+    ? "WITH RECURSIVE scope_accounts(id) AS (SELECT id FROM bp_token_accounts WHERE id=? UNION ALL SELECT a.id FROM bp_token_accounts a JOIN scope_accounts s ON a.parent_id=s.id) "
+    : "";
+  if (root) {
+    conditions.push("account_id IN (SELECT id FROM scope_accounts)");
+    params.unshift(root);
+  }
+  const pattern = (v: string) => "%" + v.replace(/[\\%_]/g, "\\$&") + "%";
+  if (query.search) {
+    conditions.push(
+      "(reason LIKE ? ESCAPE '\\' OR actor LIKE ? ESCAPE '\\' OR account_id LIKE ? ESCAPE '\\')"
+    );
+    params.push(...Array(3).fill(pattern(query.search)));
+  }
+  if (query.filter_value && fields.has(query.filter_by)) {
+    conditions.push(`${query.filter_by} LIKE ? ESCAPE '\\'`);
+    params.push(pattern(query.filter_value));
+  }
+  const where = conditions.length ? " WHERE " + conditions.join(" AND ") : "";
+  const total = (
+    db()
+      .prepare(`${scope}SELECT count(*) AS n FROM bp_topup_requests${where}`)
+      .get(...params) as { n: number }
+  ).n;
+  const sort = fields.has(query.sort_by) ? query.sort_by : "created_at";
+  const rows = db()
+    .prepare(
+      `${scope}SELECT id,account_id,amount,status,actor,reason,created_at FROM bp_topup_requests${where} ORDER BY ${sort} ${query.sort_order === "asc" ? "ASC" : "DESC"},id LIMIT ? OFFSET ?`
+    )
+    .all(...params, query.page_size, (query.page - 1) * query.page_size);
+  return { requests: rows, total, page: query.page, page_size: query.page_size };
 }
 
 export function topupRequests(): Array<{
