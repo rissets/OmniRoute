@@ -80,6 +80,96 @@ test("changing a combo's assigned target remains denied", async () => {
   assert.match(await response!.text(), /OFFER_VERSION_CHANGED/);
 });
 
+// Payload persisted by the dashboard's standard Create Combo form.
+const dashboardConfig = {
+  maxRetries: 1,
+  retryDelayMs: 2000,
+  fallbackDelayMs: 0,
+  handoffThreshold: 0.85,
+  handoffModel: "",
+  maxMessagesForSummary: 30,
+  maxComboDepth: 3,
+  trackMetrics: true,
+  reasoningTokenBufferEnabled: true,
+  zeroLatencyOptimizationsEnabled: false,
+};
+
+test("new dashboard priority combos publish immediately with their default config", async () => {
+  const combo = await combos.createCombo({
+    name: "dashboard-defaults-combo",
+    strategy: "priority",
+    models: [{ model: modelId, providerId }],
+    config: dashboardConfig,
+  });
+  const published = (await offers.publishedOffers()).find((item) => item.id === combo.name);
+  assert.ok(published, "a valid dashboard-created combo must be available for assignment");
+  assert.deepEqual(published.targets, [modelId]);
+  wallet.setOffers(subject, [published]);
+  assert.equal(
+    await offers.managedPolicy(apiKey.id, "/v1/chat/completions", String(combo.name)),
+    null
+  );
+
+  await combos.updateCombo(String(combo.id), { config: {} });
+  const legacy = (await offers.publishedOffers()).find((item) => item.id === combo.name);
+  assert.equal(legacy?.version, published.version, "explicit defaults preserve execution scope");
+});
+
+test("nested combos accept dashboard defaults but retain target validation", async () => {
+  const child = await combos.createCombo({
+    name: "dashboard-nested-child",
+    strategy: "priority",
+    models: [modelId],
+    config: dashboardConfig,
+  });
+  const parent = await combos.createCombo({
+    name: "dashboard-nested-parent",
+    strategy: "priority",
+    models: [String(child.name)],
+    config: dashboardConfig,
+  });
+  const published = (await offers.publishedOffers()).find((item) => item.id === parent.name);
+  assert.deepEqual(published?.targets, [modelId]);
+  await combos.updateCombo(String(child.id), { models: ["unknown-provider/missing"] });
+  assert.equal(
+    (await offers.publishedOffers()).some((item) => item.id === parent.name),
+    false
+  );
+});
+
+test("nondefault execution overrides and other strategies remain unpublished", async () => {
+  for (const [name, config] of Object.entries({
+    handoff: { ...dashboardConfig, handoffModel: "unassigned/summary" },
+    hedging: { ...dashboardConfig, zeroLatencyOptimizationsEnabled: true, hedging: true },
+    retries: { ...dashboardConfig, maxRetries: 5 },
+    unknown: { ...dashboardConfig, unreviewedOption: true },
+    // Same literal default, but native config interprets this as an explicit opt-in.
+    explicitFailover: { ...dashboardConfig, failoverBeforeRetry: true },
+  })) {
+    const combo = await combos.createCombo({
+      name: `restricted-${name}`,
+      strategy: "priority",
+      models: [modelId],
+      config,
+    });
+    assert.equal(
+      (await offers.publishedOffers()).some((item) => item.id === combo.name),
+      false,
+      name
+    );
+  }
+  const combo = await combos.createCombo({
+    name: "restricted-fusion",
+    strategy: "fusion",
+    models: [modelId],
+    config: {},
+  });
+  assert.equal(
+    (await offers.publishedOffers()).some((item) => item.id === combo.name),
+    false
+  );
+});
+
 test("a model removed from the live catalog remains denied by the stored policy", async () => {
   const offer = (await offers.publishedOffers()).find((item) => item.id === modelId);
   assert.ok(offer);

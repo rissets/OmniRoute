@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from "node:util";
+import { resolveComboConfig } from "@omniroute/open-sse/services/comboConfig.ts";
 import { deniedRequest } from "@/lib/db/bpbatamEvents";
 import { mediaCatalogRevision } from "./media";
 import { normalizeModelEntry } from "@omniroute/open-sse/services/combo/targetSorters.ts";
@@ -97,13 +99,17 @@ export async function publishedOffers(): Promise<Offer[]> {
     name: String(c.name),
     models: Array.isArray(c.models) ? c.models : [],
   }));
+  const defaultConfig = resolveComboConfig({}, {});
   const safeCombo = (name: string, seen = new Set<string>()): boolean => {
     if (seen.has(name) || seen.size >= 8) return false;
     const combo = combos.find((c) => c.name === name);
     if (!combo) return false;
     if (
       (combo.strategy ?? "priority") !== "priority" ||
-      (combo.config && Object.keys(combo.config as object).length)
+      // The dashboard persists explicit defaults on new combos. Compare native
+      // execution semantics, including opt-in flags, rather than rejecting every
+      // nonempty config. Nondefault/unknown overrides still fail closed.
+      !isDeepStrictEqual(resolveComboConfig(combo, {}), defaultConfig)
     )
       return false;
     const next = new Set(seen);
