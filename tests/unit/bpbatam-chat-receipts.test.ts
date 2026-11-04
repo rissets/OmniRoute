@@ -28,7 +28,12 @@ await providers.createProviderNode({
 await models.addCustomModel("receipt-test-node", "chat");
 wallet.createAccount("root", null, "platform");
 let sequence = 0;
-async function invoke(dispatch: () => Response, stream = true, expectedStatus = 200) {
+async function invoke(
+  dispatch: (request: Request) => Response | Promise<Response>,
+  stream = true,
+  expectedStatus = 200,
+  maxTokens: number | null = 1000
+) {
   const id = "user-" + ++sequence;
   const key = await keys.createApiKey(id, "unit-test");
   wallet.createAccount(id, "root", "user");
@@ -44,7 +49,7 @@ async function invoke(dispatch: () => Response, stream = true, expectedStatus = 
       },
       body: JSON.stringify({
         model: "receipt-test/chat",
-        max_tokens: 1000,
+        ...(maxTokens == null ? {} : { max_tokens: maxTokens }),
         messages: [{ role: "user", content: "Hello" }],
         stream,
       }),
@@ -56,6 +61,22 @@ async function invoke(dispatch: () => Response, stream = true, expectedStatus = 
   assert.ok(receipt);
   return { id, response, receipt };
 }
+
+test("a curl chat without an output limit forwards the same default used by its reservation", async () => {
+  const { id, receipt } = await invoke(
+    async (request) => {
+      assert.equal((await request.json()).max_tokens, 4096);
+      recordGovernedDispatch();
+      recordGovernedUsage({ prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 });
+      return Response.json({ choices: [{ message: { content: "OK" } }] });
+    },
+    false,
+    200,
+    null
+  );
+  assert.equal(wallet.admission(receipt)?.state, "settled");
+  assert.equal(wallet.account(id)?.reserved, 0);
+});
 function assertHeld(id: string, receipt: string) {
   assert.equal(wallet.admission(receipt)?.state, "uncertain");
   assert.equal(wallet.admission(receipt)?.actual, null);

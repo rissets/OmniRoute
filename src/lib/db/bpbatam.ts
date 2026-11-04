@@ -203,13 +203,22 @@ export function reserve(
       throw new TokenPolicyError("POLICY_CHANGED_RETRY", 409);
     if (owner && !owner.active) throw new TokenPolicyError("PRINCIPAL_DISABLED", 403);
     if (owner) checkUserLimits(owner.account_id, amount);
+    // Hold mode preserves uncertain reservations in both wallet and window checks,
+    // allowing unrelated requests to use only the still-available allocation.
     if (
       owner &&
       db()
         .prepare(
-          "SELECT 1 FROM bp_token_admissions WHERE account_id=? AND state='uncertain' LIMIT 1"
+          `SELECT 1 FROM bp_token_admissions WHERE account_id=? AND state='uncertain'
+           AND (? != 'hold' OR endpoint != '/v1/chat/completions'
+             OR COALESCE(json_extract(usage_json, '$.total'), 0) > reserved
+             OR COALESCE(json_extract(usage_json, '$.reason'), '') NOT IN (
+               'upstream_or_handler_failure', 'dispatch_interrupted',
+               'provider_receipt_not_recorded', 'stream_interrupted',
+               'client_disconnect', 'provider_usage_missing_or_estimated'
+             )) LIMIT 1`
         )
-        .get(owner.account_id)
+        .get(owner.account_id, process.env.BPBATAM_UNCERTAIN_USAGE_POLICY ?? "block")
     )
       throw new TokenPolicyError("ACCOUNT_RECONCILIATION_REQUIRED", 403);
 

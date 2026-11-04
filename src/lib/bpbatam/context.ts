@@ -40,7 +40,7 @@ export function recordGovernedUsage(usage: unknown): void {
 }
 export function holdUnsettled(id: string, reason: string): void {
   const row = admission(id);
-  if (row && row.state !== "settled") settle(id, null, { reason });
+  if (row && row.state === "reserved") settle(id, null, { reason });
 }
 
 export function recordGovernedFailure(): void {

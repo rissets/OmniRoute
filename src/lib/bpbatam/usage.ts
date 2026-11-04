@@ -3,6 +3,7 @@ export class BoundError extends Error {
     super(code);
   }
 }
+export const DEFAULT_CHAT_OUTPUT_LIMIT = 4096;
 export interface CanonicalUsage {
   input: number;
   output: number;
@@ -77,7 +78,11 @@ export function reservationBound(
   body: Record<string, unknown>,
   modelInputBounds: Record<string, unknown> = {}
 ): number {
-  const max = body.max_completion_tokens ?? body.max_tokens ?? body.max_output_tokens ?? 4096;
+  const max =
+    body.max_completion_tokens ??
+    body.max_tokens ??
+    body.max_output_tokens ??
+    DEFAULT_CHAT_OUTPUT_LIMIT;
   if (!count(max) || max < 1) throw new BoundError("OUTPUT_LIMIT_REQUIRED");
   // Serialized bytes bound text. Media needs an operator-declared full input
   // context ceiling for the serving model, independent of client declarations.

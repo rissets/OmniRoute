@@ -11,7 +11,7 @@ import { getCurrentWindowUsage } from "@omniroute/open-sse/services/tokenLimitCo
 import { errorResponse } from "@omniroute/open-sse/utils/error.ts";
 import { enforceApiKeyPolicy } from "@/shared/utils/apiKeyPolicy";
 import { principalForKey, reserve, settle, TokenPolicyError } from "@/lib/db/bpbatam";
-import { reservationBound, BoundError } from "./usage";
+import { reservationBound, BoundError, DEFAULT_CHAT_OUTPUT_LIMIT } from "./usage";
 import { usesMediaExecutor, prepareMediaExecution, executeMedia } from "./mediaExecutor";
 import { integratedMedia } from "./media";
 import {
@@ -94,6 +94,12 @@ export async function governedInference(
       body = { model: form.get("model") };
     }
     const model = typeof body.model === "string" ? body.model : "";
+    const needsOutputLimit =
+      path === "/v1/chat/completions" &&
+      body.max_completion_tokens == null &&
+      body.max_tokens == null &&
+      body.max_output_tokens == null;
+    if (needsOutputLimit) body = { ...body, max_tokens: DEFAULT_CHAT_OUTPUT_LIMIT };
     requestedModel = model;
     const policy = await enforceApiKeyPolicy(request, model);
     if (policy.rejection) return policy.rejection;
@@ -126,7 +132,8 @@ export async function governedInference(
     reserve(id, key.id, amount, path, model, current, owner?.policy_revision);
     admitted = true;
     let forwarded = request;
-    if (owner && body.stream === true && path === "/v1/chat/completions") {
+    const needsStreamUsage = owner && body.stream === true && path === "/v1/chat/completions";
+    if (needsOutputLimit || needsStreamUsage) {
       const headers = new Headers(request.headers);
       headers.delete("content-length");
       // Framework adapters can supply a different Request implementation. Pass
@@ -137,7 +144,11 @@ export async function governedInference(
         headers,
         body: JSON.stringify({
           ...body,
-          stream_options: { ...((body.stream_options as object) ?? {}), include_usage: true },
+          ...(needsStreamUsage
+            ? {
+                stream_options: { ...((body.stream_options as object) ?? {}), include_usage: true },
+              }
+            : {}),
         }),
       });
     }
