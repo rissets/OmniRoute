@@ -1,0 +1,1 @@
+- **feat(bpbatam):** Add the internal Meeting copilot inference and metadata-only usage contracts, preserving native admission, exact receipts, explicit serving policy and private-content boundaries. Local provider-edge fixtures do not qualify production model quality or capacity ([ai-gateway spec #3](https://github.com/rissets/ai-gateway/issues/3)).

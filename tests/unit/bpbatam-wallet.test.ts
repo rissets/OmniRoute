@@ -19,7 +19,9 @@ test("permanent allocation, reservation, replay and rollback conserve tokens", (
   w.createAccount("user", "dept", "user");
   w.allocate("grant", null, "root", 2000, "issuer");
   w.allocate("dept-allocation", "root", "dept", 1000, "admin");
+  assert.equal(w.initialAllocation("user"), null);
   w.allocate("user-allocation", "dept", "user", 1000, "operator");
+  assert.equal(w.initialAllocation("user"), 1000);
   assert.equal(w.allocate("user-allocation", "dept", "user", 1000, "operator"), "replayed");
   assert.throws(() => w.allocate("user-allocation", "dept", "user", 1001, "operator"));
   w.bindPrincipal("subject", "issuer", "user", "key");
@@ -39,6 +41,8 @@ test("permanent allocation, reservation, replay and rollback conserve tokens", (
     assert.equal(w.settle("r" + i, 20), "replayed");
   }
   assert.equal(w.account("user")?.balance, 340);
+  w.allocate("user-topup", "root", "user", 100, "admin");
+  assert.equal(w.initialAllocation("user"), 1000);
   assert.equal(w.account("user")?.reserved, 0);
   w.reserve("missing", "key", 30, "/v1/chat/completions", "test", []);
   assert.equal(w.settle("missing", null), "uncertain");

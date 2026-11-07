@@ -163,6 +163,7 @@ export async function managedPolicy(
     "/v1/chat/completions",
     "/v1/audio/speech",
     "/v1/audio/transcriptions",
+    "/v1/audio/diarizations",
     "/v1/images/generations",
     "/v1/images/edits",
     "/v1/embeddings",

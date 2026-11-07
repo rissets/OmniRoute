@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import http from "node:http";
+import { fetch as transportFetch } from "undici";
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), "bp-media-"));
 process.env.DATA_DIR = directory;
@@ -49,8 +51,15 @@ const executorFetch: typeof fetch = async (input, options) => {
     const headers = new Headers(options?.headers);
     assert.equal(headers.get("authorization"), "Bearer synthetic-machine-jwt");
     assert.equal(wallet.admission(headers.get("x-bpbatam-receipt")!)?.state, "reserved");
-    assert.ok(options?.body instanceof FormData);
-    assert.ok((options.body as FormData).get("file") instanceof Blob);
+    const received = new Request(url, {
+      method: "POST",
+      headers,
+      body: options?.body,
+    });
+    assert.match(received.headers.get("content-type") ?? "", /^multipart\/form-data; boundary=/);
+    const upload = (await received.formData()).get("file");
+    assert.ok(upload instanceof Blob);
+    assert.equal(await upload.text(), "synthetic-audio");
     dispatched++;
     return Response.json(
       { text: "selamat pagi" },
@@ -305,6 +314,70 @@ test("bounded multipart transcription keeps its file and measured native receipt
   assert.equal(wallet.account(id)?.balance, 80);
   assert.equal(wallet.receipts(id)[0].usage.audio_seconds, 0.1);
   assert.equal(response.headers.get("X-CP-Media-Audio-Seconds"), null);
+});
+
+test("transcription crosses the real undici transport with multipart bytes intact", async () => {
+  const server = http.createServer(async (request, response) => {
+    const chunks: Buffer[] = [];
+    for await (const chunk of request) chunks.push(Buffer.from(chunk));
+    const contentType = String(request.headers["content-type"] ?? "");
+    if (!contentType.startsWith("multipart/form-data; boundary=")) {
+      response.writeHead(415, { "X-CP-Media-State": "rejected" });
+      return response.end("{}");
+    }
+    const received = new Request("http://executor.test/transcribe", {
+      method: "POST",
+      headers: { "Content-Type": contentType },
+      body: Buffer.concat(chunks),
+    });
+    const form = await received.formData();
+    const file = form.get("file");
+    if (!(file instanceof Blob) || (await file.text()) !== "synthetic-wire-audio") {
+      response.writeHead(400, { "X-CP-Media-State": "rejected" });
+      return response.end("{}");
+    }
+    response.writeHead(200, {
+      "Content-Type": "application/json",
+      "X-CP-Media-State": "completed",
+      "X-CP-Media-Audio-Seconds": "0.1",
+    });
+    response.end(JSON.stringify({ text: "selamat pagi" }));
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = (server.address() as import("node:net").AddressInfo).port;
+  globalThis.fetch = async (input, options) => {
+    if (!String(input).endsWith("/v1/audio/transcriptions")) return executorFetch(input, options);
+    const result = await transportFetch(`http://127.0.0.1:${port}`, {
+      method: "POST",
+      headers: Object.fromEntries(new Headers(options?.headers)),
+      body: options?.body,
+    });
+    return new Response(await result.arrayBuffer(), {
+      status: result.status,
+      headers: Object.fromEntries(result.headers),
+    });
+  };
+  try {
+    const { key } = await identity();
+    const form = new FormData();
+    form.set("model", "local-stt/media-stt");
+    form.set("file", new Blob(["synthetic-wire-audio"]), "frame.wav");
+    const response = await governedInference(
+      new Request("http://router.test/v1/audio/transcriptions", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + key.key },
+        body: form,
+      }),
+      () => {
+        throw new Error("Legacy executor must not be used");
+      }
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).text, "selamat pagi");
+  } finally {
+    globalThis.fetch = executorFetch;
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
 });
 
 test("managed rerank is admitted through CP and settles one configured media unit", async () => {

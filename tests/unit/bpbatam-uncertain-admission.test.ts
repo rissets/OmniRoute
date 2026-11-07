@@ -106,3 +106,27 @@ test("hold policy fails closed for unknown reconciliation reasons", () => {
     { message: "ACCOUNT_RECONCILIATION_REQUIRED" }
   );
 });
+
+test("hold policy keeps a fixed-unit ASR reservation without blocking the next meeting or chat", () => {
+  process.env.BPBATAM_UNCERTAIN_USAGE_POLICY = "hold";
+  const id = "uncertain-asr-" + ++sequence;
+  wallet.createAccount(id, null, "user");
+  wallet.allocate("grant-" + id, null, id, 1000, "issuer");
+  wallet.bindPrincipal(id, "issuer", id, id);
+  wallet.reserve("failed-" + id, id, 20, "/v1/audio/transcriptions", "local-stt/media-stt", []);
+  wallet.settle("failed-" + id, null, { reason: "upstream_or_handler_failure" });
+  core.resetDbInstance();
+  wallet.reserve("next-asr-" + id, id, 20, "/v1/audio/transcriptions", "local-stt/media-stt", []);
+  wallet.settle("next-asr-" + id, 20, { total: 20, unit: "router-media-token-equivalent" });
+  wallet.reserve("next-chat-" + id, id, 100, "/v1/chat/completions", "flash", []);
+  assert.equal(wallet.admission("failed-" + id)?.state, "uncertain");
+  assert.equal(wallet.admission("failed-" + id)?.actual, null);
+  assert.equal(wallet.account(id)?.reserved, 120);
+  assert.equal(wallet.account(id)?.balance, 980);
+  assert.throws(
+    () => wallet.reserve("overspend-" + id, id, 861, "/v1/chat/completions", "flash", []),
+    {
+      message: "INSUFFICIENT_TOKENS",
+    }
+  );
+});

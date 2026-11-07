@@ -54,11 +54,54 @@ export interface LimitSnapshot {
   limit: number;
   used: number;
 }
+export interface MeetingAdmission {
+  operation_id: string;
+  attempt_id: string;
+  subject: string;
+  policy_revision: string;
+  operation_kind?: string;
+  provenance?: Record<string, string>;
+}
+export function meetingAdmission(receipt: string): MeetingAdmission | undefined {
+  const row = db()
+    .prepare(
+      "SELECT operation_id,attempt_id,subject,policy_revision,operation_kind,provenance_json FROM bp_meeting_attempts WHERE receipt_id=?"
+    )
+    .get(receipt) as (MeetingAdmission & { provenance_json: string }) | undefined;
+  if (!row) return undefined;
+  const { provenance_json, ...link } = row;
+  return { ...link, provenance: JSON.parse(provenance_json) };
+}
+export function meetingAttempt(
+  attempt: string
+): (MeetingAdmission & { receipt_id: string; provenance_json: string }) | undefined {
+  return db().prepare("SELECT * FROM bp_meeting_attempts WHERE attempt_id=?").get(attempt) as
+    (MeetingAdmission & { receipt_id: string; provenance_json: string }) | undefined;
+}
+
+export function recordMeetingTransport(receipt: string, values: Record<string, string>): void {
+  const row = db()
+    .prepare("SELECT provenance_json FROM bp_meeting_attempts WHERE receipt_id=?")
+    .get(receipt) as { provenance_json: string } | undefined;
+  if (row)
+    db()
+      .prepare("UPDATE bp_meeting_attempts SET provenance_json=? WHERE receipt_id=?")
+      .run(JSON.stringify({ ...JSON.parse(row.provenance_json), ...values }), receipt);
+}
+
 const db = () => getDbInstance();
 const stamp = () => new Date().toISOString();
 export function account(id: string): TokenAccount | undefined {
   return db().prepare("SELECT * FROM bp_token_accounts WHERE id=?").get(id) as
     TokenAccount | undefined;
+}
+export function initialAllocation(id: string): number | null {
+  const row = db()
+    .prepare(
+      "SELECT delta FROM bp_token_postings WHERE account_id=? AND delta>0 AND kind IN ('transfer','grant') ORDER BY rowid LIMIT 1"
+    )
+    .get(id) as { delta: number } | undefined;
+  return row?.delta ?? null;
 }
 export function accounts(): TokenAccount[] {
   return db().prepare("SELECT * FROM bp_token_accounts ORDER BY id").all() as TokenAccount[];
@@ -192,12 +235,18 @@ export function reserve(
   endpoint: string,
   model: string,
   limits: LimitSnapshot[],
-  expectedPolicyRevision?: number
+  expectedPolicyRevision?: number,
+  meeting?: MeetingAdmission
 ): Admission {
   if (!Number.isSafeInteger(amount) || amount <= 0)
     throw new TokenPolicyError("INVALID_RESERVATION", 400);
   return db().transaction(() => {
     if (admission(id)) throw new TokenPolicyError("DUPLICATE_INFERENCE", 409);
+    if (
+      meeting &&
+      db().prepare("SELECT 1 FROM bp_meeting_attempts WHERE attempt_id=?").get(meeting.attempt_id)
+    )
+      throw new TokenPolicyError("DUPLICATE_INFERENCE", 409);
     const owner = principalForKey(key);
     if (owner && expectedPolicyRevision != null && owner.policy_revision !== expectedPolicyRevision)
       throw new TokenPolicyError("POLICY_CHANGED_RETRY", 409);
@@ -205,12 +254,13 @@ export function reserve(
     if (owner) checkUserLimits(owner.account_id, amount);
     // Hold mode preserves uncertain reservations in both wallet and window checks,
     // allowing unrelated requests to use only the still-available allocation.
+    // ASR settles fixed router media units; its held reservation remains the full bound.
     if (
       owner &&
       db()
         .prepare(
           `SELECT 1 FROM bp_token_admissions WHERE account_id=? AND state='uncertain'
-           AND (? != 'hold' OR endpoint != '/v1/chat/completions'
+           AND (? != 'hold' OR endpoint NOT IN ('/v1/chat/completions', '/v1/audio/transcriptions')
              OR COALESCE(json_extract(usage_json, '$.total'), 0) > reserved
              OR COALESCE(json_extract(usage_json, '$.reason'), '') NOT IN (
                'upstream_or_handler_failure', 'dispatch_interrupted',
@@ -264,6 +314,23 @@ export function reserve(
         owner?.policy_revision ?? null
       );
     if (owner) bindUserLimitAdmission(owner.account_id, id);
+    if (meeting) {
+      if (!owner || owner.subject !== meeting.subject)
+        throw new TokenPolicyError("MEETING_PRINCIPAL_MISMATCH", 403);
+      db()
+        .prepare(
+          "INSERT INTO bp_meeting_attempts(attempt_id,operation_id,subject,receipt_id,policy_revision,operation_kind,provenance_json) VALUES(?,?,?,?,?,?,?)"
+        )
+        .run(
+          meeting.attempt_id,
+          meeting.operation_id,
+          meeting.subject,
+          id,
+          meeting.policy_revision,
+          meeting.operation_kind ?? "stt",
+          JSON.stringify(meeting.provenance ?? {})
+        );
+    }
     return admission(id)!;
   })();
 }

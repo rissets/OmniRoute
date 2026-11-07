@@ -94,6 +94,9 @@ const EXPECTED: Record<InventoryKind, Record<string, number>> = {
     // remotes) look up an in-scope connection for a connection-scoped API key
     // before running (chat's #9057 rule) — one extra scoped lookup per site.
     "src/lib/embeddings/service.ts": 5,
+    // Meeting completion selects only policy-attested connection IDs through the
+    // canonical quota-preflight picker, whose unmanaged path excludes active leases (B).
+    "src/lib/bpbatam/meetingCompletion.ts": 1,
     "src/lib/images/adobeFireflyEdit.ts": 1,
     // PR #11390: second site is the generic derived-provider listing fallback —
     // read-only key presence probe used to decide whether a configured chat
@@ -222,6 +225,9 @@ const EXPECTED: Record<InventoryKind, Record<string, number>> = {
     "src/app/api/v1beta/models/route.ts": 1,
     "src/instrumentation-node.ts": 1,
     "src/lib/a2a/skills/providerDiscovery.ts": 1,
+    // wireIdentity re-reads the attested/selected connection only to validate its
+    // active state and transport before dispatch; it never chooses credentials (C).
+    "src/lib/bpbatam/meetingCompletion.ts": 1,
     "src/lib/chaos/chaosExecutor.ts": 1,
     "src/lib/cloudAgent/api.ts": 1,
     "src/lib/cloudSync.ts": 1,

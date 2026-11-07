@@ -85,7 +85,14 @@ export async function executeMedia(
         { error: { code: "SECURITY_001" } },
         { status: 400, headers: { "X-CP-Media-State": "rejected" } }
       );
-    payload = form;
+    // The router transport uses a separate undici instance. Its FormData
+    // implementation can differ from the framework Request's implementation,
+    // causing an object body to become "[object FormData]" on the wire.
+    // Serialize once with the matching Request implementation and carry its
+    // boundary together with the bytes across the transport boundary.
+    const encoded = new Request(request.url, { method: "POST", body: form });
+    headers.set("Content-Type", encoded.headers.get("Content-Type")!);
+    payload = new Uint8Array(await encoded.arrayBuffer());
   }
   const [prefix, ...parts] = model.split("/");
   const provider = String(

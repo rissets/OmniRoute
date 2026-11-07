@@ -31,6 +31,7 @@ import {
 import { getConsistentMachineId } from "@/shared/utils/machineId";
 import {
   account,
+  initialAllocation,
   accounts,
   within,
   placeAccount,
@@ -59,6 +60,7 @@ import {
   allocationReceipt,
   admission,
   principalForKey,
+  meetingAdmission,
 } from "@/lib/db/bpbatam";
 
 const schema = z.discriminatedUnion("op", [
@@ -247,6 +249,9 @@ async function handle(request: Request) {
                 active: !!p.active,
                 desired_revision: p.desired_revision,
                 offers: JSON.parse(p.offers_json),
+                initial_balance: wallet
+                  ? (initialAllocation(p.account_id)?.toString() ?? null)
+                  : null,
                 balance: wallet ? String(wallet.balance) : null,
                 reserved: wallet ? String(wallet.reserved) : null,
                 available: wallet ? String(wallet.balance - wallet.reserved) : null,
@@ -282,6 +287,8 @@ async function handle(request: Request) {
           endpoint: row.endpoint,
           model: row.model,
           subject: owner?.subject,
+          issuer: owner?.issuer,
+          meeting: meetingAdmission(receipt) ?? null,
           department_id: row.department_id,
           current_binding:
             !!owner?.active &&

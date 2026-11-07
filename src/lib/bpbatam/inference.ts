@@ -20,6 +20,13 @@ import {
   getBodySizeLimit,
 } from "@/shared/middleware/bodySizeGuard";
 import { getCachedSettings } from "@/lib/db/readCache";
+import { isMeetingCompletionDispatch } from "./meetingCompletion";
+import {
+  DIARIZATION_PATH,
+  isMeetingDiarizationDispatch,
+  meetingDiarizationProvider,
+} from "./meetingDiarization";
+import type { MeetingAdmission } from "@/lib/db/bpbatam";
 
 export const GOVERNED_PATHS = new Set([
   "/v1/chat/completions",
@@ -32,7 +39,8 @@ export const GOVERNED_PATHS = new Set([
 ]);
 export async function governedInference(
   request: Request,
-  dispatch: (request: Request) => Response | Promise<Response>
+  dispatch: (request: Request) => Response | Promise<Response>,
+  meeting?: MeetingAdmission
 ): Promise<Response> {
   const secret =
     request.headers.get("authorization")?.match(/^Bearer (.+)$/i)?.[1] ??
@@ -44,6 +52,10 @@ export async function governedInference(
   const allLimits = listTokenLimits(key.id);
   if (!owner && !allLimits.length) return dispatch(request);
   const path = new URL(request.url).pathname.replace(/^\/api\/v1/, "/v1");
+  const directDiarization =
+    path === DIARIZATION_PATH &&
+    meeting?.operation_kind === "diarization" &&
+    isMeetingDiarizationDispatch(dispatch);
   let id: string | undefined;
   let admitted = false;
   let operation:
@@ -104,7 +116,7 @@ export async function governedInference(
     const policy = await enforceApiKeyPolicy(request, model);
     if (policy.rejection) return policy.rejection;
     const mediaRevision =
-      owner && usesMediaExecutor(path, model)
+      owner && !directDiarization && usesMediaExecutor(path, model)
         ? await prepareMediaExecution(key, path, model)
         : undefined;
     let units: number | undefined;
@@ -119,7 +131,11 @@ export async function governedInference(
       (path === "/v1/embeddings"
         ? new TextEncoder().encode(JSON.stringify(body.input ?? "")).length + 128
         : reservationBound(body, JSON.parse(process.env.BPBATAM_MODEL_INPUT_TOKEN_BOUNDS ?? "{}")));
-    const current = getTokenLimitsForRequest(key.id, "", model).map((limit) => ({
+    const current = getTokenLimitsForRequest(
+      key.id,
+      directDiarization ? meetingDiarizationProvider(dispatch)! : "",
+      model
+    ).map((limit) => ({
       id: limit.id,
       window: resetWindowIfElapsed(limit).windowStart,
       limit: limit.tokenLimit,
@@ -129,7 +145,18 @@ export async function governedInference(
     if (supplied && (supplied.length > 128 || !/^[a-zA-Z0-9:_-]+$/.test(supplied)))
       return errorResponse(400, "INVALID_IDEMPOTENCY_KEY");
     id = key.id + ":" + (supplied ?? randomUUID());
-    reserve(id, key.id, amount, path, model, current, owner?.policy_revision);
+    if (
+      meeting &&
+      !mediaRevision &&
+      !directDiarization &&
+      !(
+        path === "/v1/chat/completions" &&
+        meeting.operation_kind === "completion" &&
+        isMeetingCompletionDispatch(dispatch)
+      )
+    )
+      throw new TokenPolicyError("MEETING_EXECUTION_PATH_DENIED", 403);
+    reserve(id, key.id, amount, path, model, current, owner?.policy_revision, meeting);
     admitted = true;
     let forwarded = request;
     const needsStreamUsage = owner && body.stream === true && path === "/v1/chat/completions";
@@ -172,13 +199,16 @@ export async function governedInference(
     if (!response.ok) {
       if (
         (mediaRevision && response.headers.get("X-CP-Media-State") === "rejected") ||
-        (path === "/v1/chat/completions" && !operation.dispatched)
+        ((path === "/v1/chat/completions" || directDiarization) && !operation.dispatched)
       )
         settle(id, 0, { reason: "trusted_local_rejection_before_dispatch" });
       else holdUnsettled(id, "upstream_or_handler_failure");
       return new Response(response.body, { status: response.status, headers });
     }
-    if (mediaRevision && response.headers.get("X-CP-Media-State") !== "completed") {
+    if (
+      (mediaRevision || directDiarization) &&
+      response.headers.get("X-CP-Media-State") !== "completed"
+    ) {
       holdUnsettled(id, "media_execution_confirmation_missing");
       return withReceipt(errorResponse(503, "MEDIA_EXECUTION_CONFIRMATION_MISSING"));
     }
@@ -201,7 +231,9 @@ export async function governedInference(
         unit: "router-media-token-equivalent",
         version: 1,
         total: units,
-        ...(path === "/v1/audio/transcriptions" && Number.isFinite(seconds) && seconds > 0
+        ...(["/v1/audio/transcriptions", DIARIZATION_PATH].includes(path) &&
+        Number.isFinite(seconds) &&
+        seconds > 0
           ? { audio_seconds: seconds }
           : {}),
       });
@@ -237,7 +269,7 @@ export async function governedInference(
     return new Response(stream, { status: response.status, headers });
   } catch (error) {
     if (id && admitted) {
-      if (path === "/v1/chat/completions" && !operation?.dispatched)
+      if ((path === "/v1/chat/completions" || directDiarization) && !operation?.dispatched)
         settle(id, 0, { reason: "trusted_local_rejection_before_dispatch" });
       else holdUnsettled(id, "dispatch_interrupted");
     }
