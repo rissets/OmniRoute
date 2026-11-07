@@ -20,7 +20,7 @@ import {
 import { operationalEvents } from "@/lib/db/bpbatamEvents";
 import { z } from "zod";
 import { bridgeIdentity, bridgeRoles } from "@/lib/bpbatam/auth";
-import { publishedOffers } from "@/lib/bpbatam/offers";
+import { availableMediaOffers, publishedOffers } from "@/lib/bpbatam/offers";
 import { errorResponse } from "@omniroute/open-sse/utils/error.ts";
 import {
   createApiKey,
@@ -411,13 +411,25 @@ async function handle(request: Request) {
         if (!within(p.account_id, root)) return errorResponse(403, "ACCOUNT_SCOPE_DENIED");
         const key = await getApiKeyById(p.key_id);
         if (!key?.key || key.isActive === false) return errorResponse(403, "KEY_UNAVAILABLE");
+        const assigned = JSON.parse(p.offers_json) as { id: string; capabilities?: string[] }[];
+        const includeMedia = url.searchParams.get("include_media") === "1";
+        const media = includeMedia ? await availableMediaOffers() : [];
         return Response.json(
           {
             subject: p.subject,
             issuer: p.issuer,
             key: key.key,
             key_id: p.key_id,
-            offers: JSON.parse(p.offers_json),
+            offers: [
+              ...assigned.filter(
+                (offer) =>
+                  !includeMedia ||
+                  !offer.capabilities?.some((capability) =>
+                    ["tts", "transcribe", "image", "embedding", "rerank"].includes(capability)
+                  )
+              ),
+              ...media,
+            ],
             account: account(p.account_id),
           },
           { headers: { "cache-control": "no-store" } }

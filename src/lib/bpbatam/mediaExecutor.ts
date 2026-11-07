@@ -38,14 +38,9 @@ export async function prepareMediaExecution(
   const owner = principalForKey(key.id);
   if (!owner?.active) throw new TokenPolicyError("PRINCIPAL_DISABLED", 403);
   // Repeat catalog validation using the exact configuration snapshot passed to the executor.
-  const { publishedOffers } = await import("./offers");
-  const assigned = JSON.parse(owner.offers_json) as { id: string; version: string }[];
-  const current = await publishedOffers();
-  if (
-    assigned.find((o) => o.id === model)?.version !==
-      current.find((o) => o.id === model)?.version ||
-    revision !== (await mediaCatalogRevision())
-  )
+  const { availableMediaOffers } = await import("./offers");
+  const current = await availableMediaOffers(path);
+  if (!current.some((offer) => offer.id === model) || revision !== (await mediaCatalogRevision()))
     throw new TokenPolicyError("OFFER_VERSION_CHANGED", 409);
   return revision;
 }

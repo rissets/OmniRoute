@@ -19,6 +19,9 @@ process.env.BPBATAM_MEDIA_TOKEN_UNITS = JSON.stringify({
   "/v1/rerank": 1,
 });
 let revision = "a".repeat(64);
+let mediaEnabled = true;
+let mediaConfigured = true;
+let changeRevisionAfterRead = false;
 let status = 200;
 let state = "completed";
 let dispatched = 0;
@@ -27,7 +30,22 @@ const executorFetch: typeof fetch = async (input, options) => {
   const url = String(input);
   if (url.endsWith("/protocol/openid-connect/token"))
     return Response.json({ access_token: "synthetic-machine-jwt", expires_in: 300 });
-  if (url.endsWith("/settings")) return Response.json({ revision });
+  if (url.endsWith("/settings")) {
+    const current = revision;
+    if (changeRevisionAfterRead) {
+      revision = "b".repeat(64);
+      changeRevisionAfterRead = false;
+    }
+    return Response.json({
+      revision: current,
+      effective: Object.fromEntries(
+        ["tts", "stt", "generate", "edit", "embeddings", "rerank"].map((kind) => [
+          kind,
+          { enabled: mediaEnabled, model: "configured-model", key_configured: mediaConfigured },
+        ])
+      ),
+    });
+  }
   if (url.endsWith("/v1/rerank")) {
     dispatched++;
     return Response.json(
@@ -153,6 +171,77 @@ test.after(() => {
   fs.rmSync(directory, { recursive: true, force: true });
 });
 
+test("active media is available without assignment while catalog and disabled media remain denied", async () => {
+  const { id, key } = await identity();
+  wallet.setOffers(id, []);
+  await keys.updateApiKeyPermissions(key.id, {
+    modelAccessMode: "restricted",
+    allowedModels: [],
+    allowedCombos: [],
+  });
+  assert.equal(await offers.managedPolicy(key.id, "/v1/audio/speech", "local-tts/media-tts"), null);
+  assert.equal((await invoke(key.key, "global-media")).status, 200);
+  assert.equal(wallet.account(id)?.balance, 90);
+  assert.equal(
+    (await offers.managedPolicy(key.id, "/v1/chat/completions", "local-tts/media-tts"))?.status,
+    403
+  );
+  assert.equal(
+    (await offers.managedPolicy(key.id, "/v1/audio/speech", "local-tts/not-published"))?.status,
+    403
+  );
+  wallet.setPrincipalActive(id, false);
+  assert.equal(
+    (await offers.managedPolicy(key.id, "/v1/audio/speech", "local-tts/media-tts"))?.status,
+    403
+  );
+  wallet.setPrincipalActive(id, true);
+  wallet.setOffers(id, await offers.publishedOffers());
+  mediaEnabled = false;
+  mediaConfigured = false;
+  try {
+    assert.equal(
+      (await offers.managedPolicy(key.id, "/v1/audio/speech", "local-tts/media-tts"))?.status,
+      403
+    );
+  } finally {
+    mediaEnabled = true;
+    mediaConfigured = true;
+  }
+});
+
+test("global media never widens additional primary-key restrictions", async () => {
+  const { id, key } = await identity();
+  wallet.setOffers(id, []);
+  await keys.updateApiKeyPermissions(key.id, {
+    modelAccessMode: "restricted",
+    allowedModels: [],
+    allowedCombos: [],
+    blockedModels: ["local-tts/*"],
+  });
+  assert.equal((await invoke(key.key, "blocked-scope")).status, 403);
+  assert.equal(wallet.account(id)?.reserved, 0);
+  await keys.updateApiKeyPermissions(key.id, {
+    blockedModels: [],
+    allowedModels: ["different/model"],
+  });
+  assert.equal((await invoke(key.key, "changed-scope")).status, 403);
+  assert.equal(wallet.account(id)?.reserved, 0);
+});
+
+test("global media does not widen a subject child key", async () => {
+  const { id } = await identity();
+  wallet.setOffers(id, []);
+  const child = await keys.createApiKey("limited-child", "unit-machine", [], {
+    modelAccessMode: "restricted",
+    allowedModels: [],
+    allowedCombos: [],
+  });
+  wallet.bindSubjectKey(id, child.id, "child-" + id, "limited-child");
+  assert.equal((await invoke(child.key, "child-scope")).status, 403);
+  assert.equal(wallet.account(id)?.reserved, 0);
+});
+
 test("managed media uses machine identity and settles its native receipt once", async () => {
   const { id, key } = await identity();
   const response = await invoke(key.key, "success");
@@ -213,15 +302,16 @@ test("missing completion confirmation retains a traceable receipt", async () => 
   assert.equal(wallet.account(id)?.reserved, 10);
   state = "completed";
 });
-test("connection restriction and changed provider revision reject before reservation", async () => {
+test("connection restriction and concurrent configuration changes fail closed", async () => {
   const restricted = await identity(["explicit-provider-connection"]);
   const before = dispatched;
   assert.equal((await invoke(restricted.key.key, "scope")).status, 403);
   assert.equal(wallet.account(restricted.id)?.reserved, 0);
-  const person = await identity();
-  revision = "b".repeat(64);
-  assert.equal((await invoke(person.key.key, "changed")).status, 409);
-  assert.equal(wallet.account(person.id)?.reserved, 0);
+  changeRevisionAfterRead = true;
+  await assert.rejects(
+    offers.availableMediaOffers("/v1/audio/speech"),
+    /MEDIA_CONFIGURATION_CHANGED/
+  );
   assert.equal(dispatched, before);
   revision = "a".repeat(64);
 });

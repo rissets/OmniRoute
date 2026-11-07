@@ -1,4 +1,4 @@
-import { managedPolicy } from "@/lib/bpbatam/offers";
+import { managedPolicy, projectedPrimaryMediaAccess } from "@/lib/bpbatam/offers";
 /**
  * API Key Policy Enforcement — Shared middleware for all /v1/* endpoints.
  *
@@ -398,7 +398,8 @@ async function validateStandardRoutingTarget(
   if (
     !requestedComboName &&
     hasModelRestrictions &&
-    !(await isModelAllowedForKey(apiKey, modelStr))
+    !(await isModelAllowedForKey(apiKey, modelStr)) &&
+    !(await projectedPrimaryMediaAccess(apiKeyInfo, new URL(request.url).pathname, modelStr))
   ) {
     return policyErrorResponse(
       request,
@@ -658,6 +659,8 @@ async function validateModelAccess(context: PolicyContext): Promise<Response | n
   }
   if (requestedComboName || !hasModelRestrictions) return null;
   if (await isModelAllowedForKey(apiKey, modelStr)) return null;
+  if (await projectedPrimaryMediaAccess(apiKeyInfo, new URL(request.url).pathname, modelStr))
+    return null;
   return policyErrorResponse(
     request,
     HTTP_STATUS.FORBIDDEN,

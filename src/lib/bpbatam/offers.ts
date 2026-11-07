@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { resolveComboConfig } from "@omniroute/open-sse/services/comboConfig.ts";
 import { deniedRequest } from "@/lib/db/bpbatamEvents";
-import { mediaCatalogRevision } from "./media";
+import { integratedMedia, mediaCatalogRevision, mediaSettings } from "./media";
 import { normalizeModelEntry } from "@omniroute/open-sse/services/combo/targetSorters.ts";
 import { getModelAliases } from "@/lib/db/models";
 import { resolveNestedComboModels } from "@omniroute/open-sse/services/combo/comboStructure.ts";
@@ -10,7 +10,7 @@ import { getCombos } from "@/lib/db/combos";
 import { getProviderNodes } from "@/lib/db/providers/nodes";
 import { getAllActiveSyncedModels } from "@/lib/db/models/activeSyncedCatalog";
 import { getAllCustomModels } from "@/lib/db/models";
-import { principalForKey } from "@/lib/db/bpbatam";
+import { principal, principalForKey } from "@/lib/db/bpbatam";
 import { errorResponse } from "@omniroute/open-sse/utils/error.ts";
 
 export interface Offer {
@@ -143,6 +143,86 @@ export async function publishedOffers(): Promise<Offer[]> {
     ),
   ];
 }
+const mediaRoutes: Record<string, { kind: string; prefix: string; capability: string }> = {
+  "/v1/audio/speech": { kind: "tts", prefix: "local-tts/", capability: "tts" },
+  "/v1/audio/transcriptions": { kind: "stt", prefix: "local-stt/", capability: "transcribe" },
+  "/v1/images/generations": { kind: "generate", prefix: "local-image/", capability: "image" },
+  "/v1/images/edits": { kind: "edit", prefix: "local-image/", capability: "image" },
+  "/v1/embeddings": { kind: "embeddings", prefix: "local-embed/", capability: "embedding" },
+  "/v1/rerank": { kind: "rerank", prefix: "local-rerank/", capability: "rerank" },
+};
+
+export async function availableMediaOffers(path?: string): Promise<Offer[]> {
+  if (!integratedMedia()) return [];
+  const settings = await mediaSettings();
+  const catalog = await publishedOffers();
+  if (settings.revision !== (await mediaCatalogRevision()))
+    throw new Error("MEDIA_CONFIGURATION_CHANGED");
+  const routes = path ? [mediaRoutes[path]].filter(Boolean) : Object.values(mediaRoutes);
+  return catalog.filter(
+    (offer) =>
+      offer.kind === "model" &&
+      offer.targets.length === 1 &&
+      offer.targets[0] === offer.id &&
+      routes.some(
+        (route) =>
+          settings.effective?.[route.kind]?.key_configured === true &&
+          typeof settings.effective?.[route.kind]?.model === "string" &&
+          settings.effective[route.kind].model.length > 0 &&
+          offer.id.startsWith(route.prefix) &&
+          offer.capabilities?.includes(route.capability)
+      )
+  );
+}
+
+export async function projectedPrimaryMediaAccess(
+  key: {
+    id: string;
+    modelAccessMode?: string;
+    allowedModels?: string[];
+    allowedCombos?: string[];
+    blockedModels?: string[];
+    allowedQuotas?: string[];
+    disableNonPublicModels?: boolean;
+    catalogScope?: string;
+    forcedModel?: string | null;
+  },
+  path: string,
+  model: string
+): Promise<boolean> {
+  const owner = principalForKey(key.id);
+  if (
+    !owner?.active ||
+    principal(owner.subject)?.key_id !== key.id ||
+    key.modelAccessMode !== "restricted" ||
+    key.blockedModels?.length ||
+    key.allowedQuotas?.length ||
+    key.disableNonPublicModels ||
+    (key.catalogScope && key.catalogScope !== "all") ||
+    key.forcedModel ||
+    !key.allowedModels ||
+    !key.allowedCombos
+  )
+    return false;
+  const assigned = JSON.parse(owner.offers_json) as Offer[];
+  const same = (a: string[], b: string[]) =>
+    a.length === b.length && [...a].sort().every((v, i) => v === [...b].sort()[i]);
+  if (
+    !same(
+      key.allowedModels,
+      assigned.filter((o) => o.kind === "model").map((o) => o.id)
+    ) ||
+    !same(
+      key.allowedCombos,
+      assigned.filter((o) => o.kind === "combo").map((o) => o.id)
+    )
+  )
+    return false;
+  const normalized = path.replace(/^\/api\/v1/, "/v1");
+  if (!mediaRoutes[normalized]) return false;
+  return (await availableMediaOffers(normalized)).some((offer) => offer.id === model);
+}
+
 export async function managedPolicy(
   keyId: string,
   pathname: string,
@@ -171,6 +251,12 @@ export async function managedPolicy(
   ];
   if (!covered.includes(path)) return deny(403, "MANAGED_ENDPOINT_NOT_ADMITTED");
   if (path === "/v1/models") return null;
+  if (mediaRoutes[path] && integratedMedia()) {
+    const available = await availableMediaOffers(path);
+    return model && available.some((offer) => offer.id === model)
+      ? null
+      : deny(403, "MODEL_NOT_ASSIGNED");
+  }
   const assigned = JSON.parse(owner.offers_json) as Offer[];
   if (!model || !assigned.some((x) => x.id === model)) return deny(403, "MODEL_NOT_ASSIGNED");
   const current = await publishedOffers();
