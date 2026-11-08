@@ -260,7 +260,7 @@ export function reserve(
       db()
         .prepare(
           `SELECT 1 FROM bp_token_admissions WHERE account_id=? AND state='uncertain'
-           AND (? != 'hold' OR endpoint NOT IN ('/v1/chat/completions', '/v1/audio/transcriptions')
+           AND (? != 'hold' OR endpoint NOT IN ('/v1/chat/completions', '/v1/audio/transcriptions', '/v1/audio/speech', '/v1/images/generations', '/v1/images/edits', '/v1/embeddings', '/v1/rerank')
              OR COALESCE(json_extract(usage_json, '$.total'), 0) > reserved
              OR COALESCE(json_extract(usage_json, '$.reason'), '') NOT IN (
                'upstream_or_handler_failure', 'dispatch_interrupted',
