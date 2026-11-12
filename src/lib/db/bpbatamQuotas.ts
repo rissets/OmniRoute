@@ -97,25 +97,23 @@ export function changeUserLimits(
     }
     defaultUserLimits(account);
     if (userLimits(account).revision !== revision) throw new TokenPolicyError("REVISION_CONFLICT");
-    if (
-      body.reset?.length &&
-      db()
-        .prepare(
-          "SELECT 1 FROM bp_token_admissions WHERE account_id=? AND state IN ('reserved','uncertain') LIMIT 1"
-        )
-        .get(account)
-    )
-      throw new TokenPolicyError("PENDING_RECEIPTS_PREVENT_LIMIT_RESET");
     for (const row of body.limits ?? [])
       db()
         .prepare("UPDATE bp_user_windows SET token_limit=? WHERE account_id=? AND seconds=?")
         .run(row.tokens, account, USER_WINDOWS[row.window]);
-    for (const name of body.reset ?? [])
+    for (const name of body.reset ?? []) {
+      const seconds = USER_WINDOWS[name];
       db()
         .prepare(
           "UPDATE bp_user_windows SET anchor_ms=?,epoch=epoch+1 WHERE account_id=? AND seconds=?"
         )
-        .run(Date.now(), account, USER_WINDOWS[name]);
+        .run(Date.now(), account, seconds);
+      db()
+        .prepare(
+          "INSERT OR REPLACE INTO bp_user_window_admissions SELECT a.id,a.account_id,w.seconds,w.epoch,0 FROM bp_token_admissions a JOIN bp_user_windows w ON w.account_id=a.account_id WHERE a.account_id=? AND w.seconds=? AND a.state IN ('reserved','uncertain')"
+        )
+        .run(account, seconds);
+    }
     db()
       .prepare("UPDATE bp_user_quota_profiles SET revision=revision+1 WHERE account_id=?")
       .run(account);

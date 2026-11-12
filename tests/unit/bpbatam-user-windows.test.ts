@@ -53,12 +53,11 @@ test("all three windows are account-scoped, survive rollover and reset without r
       () => w.reserve("r2", "child", 60, "/v1/chat/completions", "model", []),
       /USER_TOKEN_WINDOW_EXHAUSTED/
     );
-    assert.throws(
-      () => q.changeUserLimits("reset-pending", "user", 1, { reset: ["5h"] }),
-      /PENDING_RECEIPTS_PREVENT_LIMIT_RESET/
-    );
+    q.changeUserLimits("reset-pending", "user", 1, { reset: ["5h"] });
+    assert.equal(q.userLimits("user").windows[0].reserved, "50");
     w.settle("r1", 40);
-    q.changeUserLimits("raise", "user", 1, { limits: config(150, 200, 300) });
+    assert.equal(q.userLimits("user").windows[0].used, "40");
+    q.changeUserLimits("raise", "user", 2, { limits: config(150, 200, 300) });
     assert.equal(q.userLimits("user").windows[0].used, "40");
     w.reserve("r3", "child", 100, "/v1/chat/completions", "model", []);
     w.settle("r3", 90);
@@ -68,7 +67,7 @@ test("all three windows are account-scoped, survive rollover and reset without r
       () => w.reserve("weekly", "primary", 80, "/v1/chat/completions", "model", []),
       /USER_TOKEN_WINDOW_EXHAUSTED/
     );
-    q.changeUserLimits("raise-week", "user", 2, { limits: config(150, 250, 300) });
+    q.changeUserLimits("raise-week", "user", 3, { limits: config(150, 250, 300) });
     w.reserve("r4", "primary", 110, "/v1/chat/completions", "model", []);
     w.settle("r4", 110);
     now += 604800001;
@@ -77,18 +76,33 @@ test("all three windows are account-scoped, survive rollover and reset without r
       /USER_TOKEN_WINDOW_EXHAUSTED/
     );
     const balance = w.account("user")!.balance;
-    const reset = q.changeUserLimits("reset", "user", 3, { reset: ["5h", "7d", "30d"] });
+    const reset = q.changeUserLimits("reset", "user", 4, { reset: ["5h", "7d", "30d"] });
     assert.equal(
       reset.windows.every((r: { used: string }) => r.used === "0"),
       true
     );
-    assert.deepEqual(q.changeUserLimits("reset", "user", 3, { reset: ["5h", "7d", "30d"] }), reset);
+    assert.deepEqual(q.changeUserLimits("reset", "user", 4, { reset: ["5h", "7d", "30d"] }), reset);
     assert.equal(w.account("user")!.balance, balance);
     assert.equal(q.poolStatus("bpbatam").issued, "1000000000");
     assert.equal(w.journalBalance(), 0);
   } finally {
     Date.now = original;
   }
+});
+
+test("reset keeps uncertain usage reserved and charges it when reconciled", () => {
+  w.createAccount("pending-user", "dept", "user");
+  w.allocate("pending-fund", "dept", "pending-user", 1000, "owner");
+  w.bindPrincipal("pending-subject", "issuer", "pending-user", "pending-key");
+  w.reserve("pending-receipt", "pending-key", 100, "/v1/chat/completions", "model", []);
+  w.settle("pending-receipt", null);
+  const balance = w.account("pending-user")!.balance;
+  q.changeUserLimits("pending-reset", "pending-user", 0, { reset: ["5h", "7d", "30d"] });
+  assert.equal(w.account("pending-user")!.balance, balance);
+  assert.ok(q.userLimits("pending-user").windows.every((row) => row.reserved === "100"));
+  w.reconcile("pending-reconcile", "pending-receipt", 80, "owner", "verified", "provider-ref");
+  assert.ok(q.userLimits("pending-user").windows.every((row) => row.used === "80"));
+  assert.equal(w.account("pending-user")!.balance, balance - 80);
 });
 
 test("an existing principal cannot bypass default windows after upgrade or lose an operator override", () => {

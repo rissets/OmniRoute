@@ -590,8 +590,10 @@ async function handle(request: Request) {
     }
     if (body.op === "principal") {
       scope(body.account);
-      if (body.issuer !== process.env.BPBATAM_OIDC_ISSUER)
-        return errorResponse(400, "ISSUER_MISMATCH");
+      const isOidcIssuer = body.issuer === process.env.BPBATAM_OIDC_ISSUER;
+      const isLocalIssuer =
+        body.issuer === (process.env.BPBATAM_LOCAL_ISSUER ?? "https://bpchat.local");
+      if (!isOidcIssuer && !isLocalIssuer) return errorResponse(400, "ISSUER_MISMATCH");
       let p = principal(body.subject);
       if (!p) {
         const key = await createApiKey(
