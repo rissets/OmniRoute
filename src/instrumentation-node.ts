@@ -9,6 +9,7 @@
 import { markServerReady, markServerStarting } from "@/lib/serverLifecycle";
 import { normalizeBootError } from "@/lib/instrumentationBootError";
 import { isHeadless, skipInHeadless } from "@/lib/system/headless";
+import { initQuotaDefaultsScheduler } from "@/lib/db/bpbatamQuotas";
 
 function getRandomBytes(byteLength: number): Uint8Array {
   const bytes = new Uint8Array(byteLength);
@@ -831,6 +832,14 @@ export async function registerNodejs(): Promise<void> {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn("[STARTUP] Could not start cleanup scheduler (non-fatal):", msg);
+  }
+  // BP Batam quota defaults next-month scheduler: catch-up on boot and run interval
+  try {
+    initQuotaDefaultsScheduler();
+    console.log("[STARTUP] BP Batam quota defaults scheduler initialized");
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[STARTUP] Could not initialize quota defaults scheduler (non-fatal):", msg);
   }
 
   if (!isBackgroundServicesDisabled()) {

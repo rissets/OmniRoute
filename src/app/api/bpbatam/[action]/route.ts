@@ -16,6 +16,8 @@ import {
   poolStatus,
   setPoolCap,
   configurePool,
+  quotaDefaults,
+  changeQuotaDefaults,
 } from "@/lib/db/bpbatamQuotas";
 import { operationalEvents } from "@/lib/db/bpbatamEvents";
 import { z } from "zod";
@@ -125,6 +127,20 @@ const schema = z.discriminatedUnion("op", [
       .min(1)
       .max(3)
       .optional(),
+  }),
+  z.object({
+    op: z.literal("quota-defaults"),
+    command_id: z.string().max(200),
+    expected_revision: z.number().int().nonnegative().optional(),
+    limits: z
+      .array(
+        z.object({
+          window: z.enum(["5h", "7d", "30d"]),
+          tokens: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+        })
+      )
+      .length(3),
+    apply_to_existing_next_month: z.boolean().optional(),
   }),
   z.object({
     op: z.literal("topup-request"),
@@ -272,6 +288,9 @@ async function handle(request: Request) {
         if (!person) return errorResponse(404, "PRINCIPAL_NOT_FOUND");
         scope(person.account_id);
         return Response.json(userLimits(person.account_id));
+      }
+      if (action === "quota-defaults" && has("read")) {
+        return Response.json(quotaDefaults(), { headers: { "Cache-Control": "no-store" } });
       }
       if (action === "media-admission" && has("read")) {
         const receipt = url.searchParams.get("receipt") ?? "";
@@ -536,6 +555,15 @@ async function handle(request: Request) {
         changeUserLimits(body.command_id, p.account_id, body.expected_revision, {
           limits: body.limits,
           reset: body.reset,
+        })
+      );
+    }
+    if (body.op === "quota-defaults") {
+      if (!has("write")) return errorResponse(403, "BRIDGE_SCOPE_DENIED");
+      return Response.json(
+        changeQuotaDefaults(body.command_id, body.limits, {
+          expectedRevision: body.expected_revision,
+          applyNextMonth: body.apply_to_existing_next_month,
         })
       );
     }

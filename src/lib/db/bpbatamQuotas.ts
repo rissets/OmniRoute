@@ -6,14 +6,273 @@ export const USER_WINDOWS = { "5h": 18000, "7d": 604800, "30d": 2592000 } as con
 type WindowName = keyof typeof USER_WINDOWS;
 type WindowRow = { seconds: number; token_limit: number; anchor_ms: number; epoch: number };
 const db = () => getDbInstance();
+const DEFAULT_LIMITS: Record<WindowName, number> = {
+  "5h": 1000000,
+  "7d": 10000000,
+  "30d": 30000000,
+};
+
+export function getNextMonthAsiaJakarta(nowMs = Date.now()): { ms: number; iso: string } {
+  const JAKARTA_OFFSET_MS = 7 * 60 * 60 * 1000;
+  const jakartaDate = new Date(nowMs + JAKARTA_OFFSET_MS);
+  const year = jakartaDate.getUTCFullYear();
+  const month = jakartaDate.getUTCMonth();
+  const nextMonth = month === 11 ? 0 : month + 1;
+  const nextYear = month === 11 ? year + 1 : year;
+  const nextMonthUtcMs = Date.UTC(nextYear, nextMonth, 1, 0, 0, 0, 0) - JAKARTA_OFFSET_MS;
+  const iso = `${nextYear}-${String(nextMonth + 1).padStart(2, "0")}-01T00:00:00+07:00`;
+  return { ms: nextMonthUtcMs, iso };
+}
+
+export function getQuotaDefaultLimits(): { window: WindowName; tokens: number }[] {
+  try {
+    const rows = db()
+      .prepare("SELECT seconds, token_limit FROM bp_quota_defaults ORDER BY seconds")
+      .all() as { seconds: number; token_limit: number }[];
+    if (rows.length === 3) {
+      return rows.map((r) => ({
+        window: Object.entries(USER_WINDOWS).find(([, s]) => s === r.seconds)![0] as WindowName,
+        tokens: r.token_limit,
+      }));
+    }
+  } catch {}
+  return (Object.entries(DEFAULT_LIMITS) as [WindowName, number][]).map(([window, tokens]) => ({
+    window,
+    tokens,
+  }));
+}
+
 export function defaultUserLimits(account: string) {
   db().prepare("INSERT OR IGNORE INTO bp_user_quota_profiles(account_id) VALUES(?)").run(account);
-  for (const [name, tokens] of Object.entries({ "5h": 1000000, "7d": 10000000, "30d": 30000000 }))
+  for (const { window, tokens } of getQuotaDefaultLimits())
     db()
       .prepare(
         "INSERT OR IGNORE INTO bp_user_windows(account_id,seconds,token_limit,anchor_ms) VALUES(?,?,?,?)"
       )
-      .run(account, USER_WINDOWS[name as WindowName], tokens, Date.now());
+      .run(account, USER_WINDOWS[window], tokens, Date.now());
+}
+
+export function quotaDefaults() {
+  let revision = 0;
+  try {
+    const meta = db()
+      .prepare("SELECT revision FROM bp_quota_defaults_meta WHERE key='global'")
+      .get() as { revision: number } | undefined;
+    if (meta) revision = meta.revision;
+  } catch {}
+
+  const windows = getQuotaDefaultLimits();
+
+  let scheduled_next_month: {
+    effective_at: string;
+    windows: { window: WindowName; tokens: number }[];
+    eligible_accounts_count: number;
+  } | null = null;
+
+  try {
+    const sched = db()
+      .prepare(
+        "SELECT * FROM bp_quota_defaults_schedules WHERE status='pending' ORDER BY effective_at_ms ASC LIMIT 1"
+      )
+      .get() as
+      | {
+          id: string;
+          effective_at_iso: string;
+          limits_json: string;
+          accounts_json: string;
+        }
+      | undefined;
+    if (sched) {
+      const accounts = JSON.parse(sched.accounts_json) as string[];
+      scheduled_next_month = {
+        effective_at: sched.effective_at_iso,
+        windows: JSON.parse(sched.limits_json),
+        eligible_accounts_count: accounts.length,
+      };
+    }
+  } catch {}
+
+  return { revision, windows, scheduled_next_month };
+}
+
+export function changeQuotaDefaults(
+  id: string,
+  limits: { window: WindowName; tokens: number }[],
+  options?: { expectedRevision?: number; applyNextMonth?: boolean }
+) {
+  if (
+    !Array.isArray(limits) ||
+    limits.length !== 3 ||
+    new Set(limits.map((l) => l.window)).size !== 3 ||
+    limits.some(
+      (l) =>
+        !(l.window in USER_WINDOWS) ||
+        typeof l.tokens !== "number" ||
+        l.tokens <= 0 ||
+        !Number.isInteger(l.tokens) ||
+        l.tokens > Number.MAX_SAFE_INTEGER
+    )
+  ) {
+    throw new TokenPolicyError("INVALID_USER_WINDOWS", 422);
+  }
+
+  return db().transaction(() => {
+    const hash = createHash("sha256")
+      .update(JSON.stringify([limits, options?.applyNextMonth ?? false]))
+      .digest("hex");
+    const prior = db().prepare("SELECT * FROM bp_quota_defaults_commands WHERE id=?").get(id) as
+      { payload_hash: string; result_json: string } | undefined;
+    if (prior) {
+      if (prior.payload_hash !== hash) throw new TokenPolicyError("IDEMPOTENCY_CONFLICT", 409);
+      return JSON.parse(prior.result_json);
+    }
+
+    db()
+      .prepare("INSERT OR IGNORE INTO bp_quota_defaults_meta(key, revision) VALUES('global', 0)")
+      .run();
+
+    const current = quotaDefaults();
+    if (options?.expectedRevision !== undefined && current.revision !== options.expectedRevision) {
+      throw new TokenPolicyError("REVISION_CONFLICT", 409);
+    }
+
+    for (const lim of limits) {
+      db()
+        .prepare(
+          "INSERT INTO bp_quota_defaults(seconds, token_limit) VALUES(?, ?) ON CONFLICT(seconds) DO UPDATE SET token_limit=excluded.token_limit"
+        )
+        .run(USER_WINDOWS[lim.window], lim.tokens);
+    }
+
+    db().prepare("UPDATE bp_quota_defaults_meta SET revision=revision+1 WHERE key='global'").run();
+
+    if (options?.applyNextMonth) {
+      const { ms: effectiveAtMs, iso: effectiveAtIso } = getNextMonthAsiaJakarta();
+      const accounts = (
+        db()
+          .prepare(
+            "SELECT DISTINCT account_id FROM bp_user_quota_profiles UNION SELECT DISTINCT account_id FROM bp_user_windows UNION SELECT DISTINCT account_id FROM bp_principals"
+          )
+          .all() as { account_id: string }[]
+      ).map((r) => r.account_id);
+
+      db().prepare("DELETE FROM bp_quota_defaults_schedules WHERE status='pending'").run();
+      db()
+        .prepare(
+          "INSERT INTO bp_quota_defaults_schedules(id, command_id, effective_at_ms, effective_at_iso, limits_json, accounts_json, status, created_at_ms) VALUES(?, ?, ?, ?, ?, ?, 'pending', ?)"
+        )
+        .run(
+          id + ":schedule",
+          id,
+          effectiveAtMs,
+          effectiveAtIso,
+          JSON.stringify(limits),
+          JSON.stringify(accounts),
+          Date.now()
+        );
+    }
+
+    const result = quotaDefaults();
+    db()
+      .prepare(
+        "INSERT INTO bp_quota_defaults_commands(id, payload_hash, result_json) VALUES(?, ?, ?)"
+      )
+      .run(id, hash, JSON.stringify(result));
+    return result;
+  })();
+}
+
+export function applyPendingQuotaDefaultsNextMonth(nowMs = Date.now()): {
+  appliedSchedules: number;
+  affectedAccounts: number;
+} {
+  let pending: { id: string; limits_json: string; accounts_json: string }[] = [];
+  try {
+    pending = db()
+      .prepare(
+        "SELECT * FROM bp_quota_defaults_schedules WHERE status='pending' AND effective_at_ms <= ? ORDER BY effective_at_ms ASC"
+      )
+      .all(nowMs) as { id: string; limits_json: string; accounts_json: string }[];
+  } catch {
+    return { appliedSchedules: 0, affectedAccounts: 0 };
+  }
+
+  if (pending.length === 0) {
+    return { appliedSchedules: 0, affectedAccounts: 0 };
+  }
+
+  let totalAccounts = 0;
+  for (const item of pending) {
+    db().transaction(() => {
+      const limits = JSON.parse(item.limits_json) as { window: WindowName; tokens: number }[];
+      const accounts = JSON.parse(item.accounts_json) as string[];
+      for (const accountId of accounts) {
+        db()
+          .prepare("INSERT OR IGNORE INTO bp_user_quota_profiles(account_id) VALUES(?)")
+          .run(accountId);
+        for (const lim of limits) {
+          const seconds = USER_WINDOWS[lim.window];
+          db()
+            .prepare(
+              "INSERT INTO bp_user_windows(account_id, seconds, token_limit, anchor_ms, epoch) VALUES(?, ?, ?, ?, 1) ON CONFLICT(account_id, seconds) DO UPDATE SET token_limit=excluded.token_limit"
+            )
+            .run(accountId, seconds, lim.tokens, Date.now());
+        }
+        db()
+          .prepare("UPDATE bp_user_quota_profiles SET revision=revision+1 WHERE account_id=?")
+          .run(accountId);
+        totalAccounts++;
+      }
+      db()
+        .prepare(
+          "UPDATE bp_quota_defaults_schedules SET status='applied', applied_at_ms=? WHERE id=?"
+        )
+        .run(Date.now(), item.id);
+    })();
+  }
+  return { appliedSchedules: pending.length, affectedAccounts: totalAccounts };
+}
+
+let quotaDefaultsTimer: NodeJS.Timeout | null = null;
+
+export function initQuotaDefaultsScheduler(intervalMs = 60_000): void {
+  try {
+    applyPendingQuotaDefaultsNextMonth();
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[QuotaDefaults] Error in catch-up execution:", msg);
+  }
+
+  if (
+    process.env.OMNIROUTE_DISABLE_BACKGROUND_SERVICES === "1" ||
+    process.env.OMNIROUTE_DISABLE_BACKGROUND_SERVICES === "true"
+  ) {
+    return;
+  }
+
+  if (quotaDefaultsTimer) return;
+  quotaDefaultsTimer = setInterval(() => {
+    try {
+      applyPendingQuotaDefaultsNextMonth();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("[QuotaDefaults] Error in scheduled tick:", msg);
+    }
+  }, intervalMs);
+  if (
+    typeof quotaDefaultsTimer === "object" &&
+    quotaDefaultsTimer &&
+    "unref" in quotaDefaultsTimer
+  ) {
+    quotaDefaultsTimer.unref();
+  }
+}
+
+export function stopQuotaDefaultsScheduler(): void {
+  if (quotaDefaultsTimer) {
+    clearInterval(quotaDefaultsTimer);
+    quotaDefaultsTimer = null;
+  }
 }
 function usage(account: string, row: WindowRow, now = Date.now()) {
   const period = Math.max(0, Math.floor((now - row.anchor_ms) / (row.seconds * 1000)));
