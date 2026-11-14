@@ -236,10 +236,12 @@ export function reserve(
   model: string,
   limits: LimitSnapshot[],
   expectedPolicyRevision?: number,
-  meeting?: MeetingAdmission
+  meeting?: MeetingAdmission,
+  options?: { quotaExempt?: boolean }
 ): Admission {
   if (!Number.isSafeInteger(amount) || amount <= 0)
     throw new TokenPolicyError("INVALID_RESERVATION", 400);
+  const quotaExempt = Boolean(options?.quotaExempt);
   return db().transaction(() => {
     if (admission(id)) throw new TokenPolicyError("DUPLICATE_INFERENCE", 409);
     if (
@@ -251,15 +253,17 @@ export function reserve(
     if (owner && expectedPolicyRevision != null && owner.policy_revision !== expectedPolicyRevision)
       throw new TokenPolicyError("POLICY_CHANGED_RETRY", 409);
     if (owner && !owner.active) throw new TokenPolicyError("PRINCIPAL_DISABLED", 403);
-    if (owner) checkUserLimits(owner.account_id, amount);
+    if (owner && !quotaExempt) checkUserLimits(owner.account_id, amount);
     // Hold mode preserves uncertain reservations in both wallet and window checks,
     // allowing unrelated requests to use only the still-available allocation.
     // ASR settles fixed router media units; its held reservation remains the full bound.
     if (
       owner &&
+      !quotaExempt &&
       db()
         .prepare(
           `SELECT 1 FROM bp_token_admissions WHERE account_id=? AND state='uncertain'
+           AND COALESCE(json_extract(limits_json, '$.quota_exempt'), 0) != 1
            AND (? != 'hold' OR endpoint NOT IN ('/v1/chat/completions', '/v1/audio/transcriptions', '/v1/audio/speech', '/v1/images/generations', '/v1/images/edits', '/v1/embeddings', '/v1/rerank')
              OR COALESCE(json_extract(usage_json, '$.total'), 0) > reserved
              OR COALESCE(json_extract(usage_json, '$.reason'), '') NOT IN (
@@ -273,31 +277,41 @@ export function reserve(
       throw new TokenPolicyError("ACCOUNT_RECONCILIATION_REQUIRED", 403);
 
     // Outstanding reservations survive process restarts; no timeout-based refund.
-    const open = db()
-      .prepare(
-        "SELECT reserved,limits_json FROM bp_token_admissions WHERE key_id=? AND state IN ('reserved','uncertain')"
-      )
-      .all(key) as Array<{ reserved: number; limits_json: string }>;
-    for (const limit of limits) {
-      const held = open
-        .filter((r) =>
-          (JSON.parse(r.limits_json) as LimitSnapshot[]).some(
-            (l) => l.id === limit.id && l.window === limit.window
-          )
-        )
-        .reduce((s, r) => s + r.reserved, 0);
-      if (limit.used + held + amount > limit.limit)
-        throw new TokenPolicyError("TOKEN_RESERVATION_LIMIT", 429);
-    }
-    if (
-      owner &&
-      !db()
+    if (!quotaExempt) {
+      const open = db()
         .prepare(
-          "UPDATE bp_token_accounts SET reserved=reserved+? WHERE id=? AND balance-reserved>=?"
+          "SELECT reserved,limits_json FROM bp_token_admissions WHERE key_id=? AND state IN ('reserved','uncertain')"
         )
-        .run(amount, owner.account_id, amount).changes
-    )
-      throw new TokenPolicyError("INSUFFICIENT_TOKENS", 429);
+        .all(key) as Array<{ reserved: number; limits_json: string }>;
+      for (const limit of limits) {
+        const held = open
+          .filter((r) => {
+            try {
+              const parsed = JSON.parse(r.limits_json);
+              if (parsed?.quota_exempt || parsed?.exempt) return false;
+              const items = Array.isArray(parsed) ? parsed : (parsed.limits ?? []);
+              return items.some((l: any) => l.id === limit.id && l.window === limit.window);
+            } catch {
+              return false;
+            }
+          })
+          .reduce((s, r) => s + r.reserved, 0);
+        if (limit.used + held + amount > limit.limit)
+          throw new TokenPolicyError("TOKEN_RESERVATION_LIMIT", 429);
+      }
+      if (
+        owner &&
+        !db()
+          .prepare(
+            "UPDATE bp_token_accounts SET reserved=reserved+? WHERE id=? AND balance-reserved>=?"
+          )
+          .run(amount, owner.account_id, amount).changes
+      )
+        throw new TokenPolicyError("INSUFFICIENT_TOKENS", 429);
+    }
+    const limitsPayload = quotaExempt
+      ? JSON.stringify({ quota_exempt: true, limits })
+      : JSON.stringify(limits);
     db()
       .prepare(
         "INSERT INTO bp_token_admissions(id,key_id,account_id,reserved,state,endpoint,model,limits_json,department_id,policy_revision) VALUES(?,?,?,?,'reserved',?,?,?,?,?)"
@@ -309,11 +323,11 @@ export function reserve(
         amount,
         endpoint,
         model,
-        JSON.stringify(limits),
+        limitsPayload,
         owner?.department_id ?? null,
         owner?.policy_revision ?? null
       );
-    if (owner) bindUserLimitAdmission(owner.account_id, id);
+    if (owner && !quotaExempt) bindUserLimitAdmission(owner.account_id, id);
     if (meeting) {
       if (!owner || owner.subject !== meeting.subject)
         throw new TokenPolicyError("MEETING_PRINCIPAL_MISMATCH", 403);
@@ -341,6 +355,30 @@ export function settle(id: string, actual: number | null, usage: object = {}): s
     if (row.state === "settled") {
       if (row.actual !== actual) throw new TokenPolicyError("SETTLEMENT_CONFLICT");
       return "replayed";
+    }
+    const isExempt = (() => {
+      try {
+        const parsed = JSON.parse(row.limits_json);
+        return Boolean(parsed?.quota_exempt || parsed?.exempt);
+      } catch {
+        return false;
+      }
+    })();
+    if (isExempt) {
+      if (actual === null || !Number.isSafeInteger(actual) || actual < 0) {
+        db()
+          .prepare(
+            "UPDATE bp_token_admissions SET actual=NULL,state='settled',usage_json=?,updated_at=? WHERE id=?"
+          )
+          .run(JSON.stringify({ ...(usage as object), unknown: true }), stamp(), id);
+        return "settled";
+      }
+      db()
+        .prepare(
+          "UPDATE bp_token_admissions SET actual=?,state='settled',usage_json=?,updated_at=? WHERE id=?"
+        )
+        .run(actual, JSON.stringify(usage), stamp(), id);
+      return "settled";
     }
     if (actual === null || !Number.isSafeInteger(actual) || actual < 0) {
       db()
@@ -846,6 +884,18 @@ export function ensureReservation(receipt: string, bound: number): void {
     const row = admission(receipt);
     if (!row || row.state !== "reserved") throw new TokenPolicyError("RESERVATION_NOT_ACTIVE", 409);
     if (bound <= row.reserved) return;
+    const isExempt = (() => {
+      try {
+        const parsed = JSON.parse(row.limits_json);
+        return Boolean(parsed?.quota_exempt || parsed?.exempt);
+      } catch {
+        return false;
+      }
+    })();
+    if (isExempt) {
+      db().prepare("UPDATE bp_token_admissions SET reserved=? WHERE id=?").run(bound, receipt);
+      return;
+    }
     const extra = bound - row.reserved;
     if (row.account_id) checkUserLimits(row.account_id, extra);
     if (

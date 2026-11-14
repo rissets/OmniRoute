@@ -12,6 +12,10 @@ import { getAllActiveSyncedModels } from "@/lib/db/models/activeSyncedCatalog";
 import { getAllCustomModels } from "@/lib/db/models";
 import { principal, principalForKey } from "@/lib/db/bpbatam";
 import { errorResponse } from "@omniroute/open-sse/utils/error.ts";
+import {
+  getActiveCustomEndpointOffers,
+  getDisabledCustomModelIds,
+} from "@/lib/db/bpbatamCustomEndpoints";
 
 export interface Offer {
   id: string;
@@ -49,13 +53,26 @@ export async function publishedOffers(): Promise<Offer[]> {
     const prefix = nodes.find((n) => n?.id === provider)?.prefix ?? provider;
     for (const model of models) ids.add(prefix + "/" + model.id);
   }
+  const disabledCustom = getDisabledCustomModelIds();
   for (const [provider, models] of Object.entries(custom)) {
     const prefix = nodes.find((n) => n?.id === provider)?.prefix ?? provider;
     if (Array.isArray(models))
       for (const model of models) {
         const id = typeof model === "string" ? model : model?.id;
-        if (typeof id === "string") ids.add(prefix + "/" + id);
+        if (typeof id === "string") {
+          const fullId = prefix + "/" + id;
+          if (!disabledCustom.has(fullId) && !disabledCustom.has(id)) {
+            ids.add(fullId);
+          }
+        }
       }
+  }
+  const activeCustom = getActiveCustomEndpointOffers();
+  for (const model of activeCustom) {
+    ids.add(model.id);
+  }
+  for (const disabledId of disabledCustom) {
+    ids.delete(disabledId);
   }
   const hash = (kind: Offer["kind"], id: string, targets: string[], capabilities: string[]) =>
     createHash("sha256")
@@ -136,10 +153,28 @@ export async function publishedOffers(): Promise<Offer[]> {
         targets,
       };
     });
+  const managedCustomCombos: Offer[] = activeCustom.map((m) => {
+    const comboId = "combo/" + m.id;
+    const targets = [m.id];
+    const capabilities = ["chat"];
+    return {
+      id: comboId,
+      kind: "combo" as const,
+      capabilities,
+      version: hash("combo", comboId, targets, capabilities),
+      targets,
+    };
+  });
+  const allCombos = [
+    ...comboOffers,
+    ...managedCustomCombos.filter((mc) => !comboOffers.some((c) => c.id === mc.id)),
+  ];
   return [
     ...modelOffers,
-    ...comboOffers.filter(
-      (offer) => offer.targets.length > 0 && offer.targets.every((id) => ids.has(id))
+    ...allCombos.filter(
+      (offer) =>
+        offer.targets.length > 0 &&
+        offer.targets.every((id) => ids.has(id) && !disabledCustom.has(id))
     ),
   ];
 }

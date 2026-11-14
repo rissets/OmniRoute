@@ -1,3 +1,4 @@
+import { isManagedCustomEndpoint, safePinnedFetch } from "@/lib/bpbatam/customTransport";
 import { isLocalProvider, isSelfHostedChatProvider } from "@/shared/constants/providers";
 import {
   parseAndValidateNonMetadataUrl,
@@ -79,6 +80,9 @@ export function dispatchGuarded(
   init: RequestInit,
   credentials?: DispatchCredentials
 ): Promise<Response> {
+  if (isManagedCustomEndpoint(provider, url, credentials)) {
+    return safePinnedFetch(url, init);
+  }
   const override = credentials?.providerSpecificData?.baseUrl;
   const guard = getProviderValidationGuard();
   if (

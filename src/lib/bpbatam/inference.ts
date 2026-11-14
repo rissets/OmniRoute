@@ -1,3 +1,4 @@
+import { isCustomModelQuotaExempt } from "@/lib/db/bpbatamCustomEndpoints";
 import { deniedRequest } from "@/lib/db/bpbatamEvents";
 import { admissionContext, holdUnsettled } from "./context";
 import { randomUUID } from "node:crypto";
@@ -156,7 +157,10 @@ export async function governedInference(
       )
     )
       throw new TokenPolicyError("MEETING_EXECUTION_PATH_DENIED", 403);
-    reserve(id, key.id, amount, path, model, current, owner?.policy_revision, meeting);
+    const quotaExempt = isCustomModelQuotaExempt(model);
+    reserve(id, key.id, amount, path, model, current, owner?.policy_revision, meeting, {
+      quotaExempt,
+    });
     admitted = true;
     let forwarded = request;
     const needsStreamUsage = owner && body.stream === true && path === "/v1/chat/completions";

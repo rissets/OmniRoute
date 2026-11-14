@@ -15,6 +15,7 @@ const runtime = globalThis as typeof globalThis & {
     dispatched: boolean;
     attempts?: number;
     outputLimit?: number;
+    targetModel?: string;
   }>;
 };
 export const admissionContext = (runtime.__bpbatamAdmission ??= new AsyncLocalStorage<{
@@ -23,6 +24,7 @@ export const admissionContext = (runtime.__bpbatamAdmission ??= new AsyncLocalSt
   dispatched: boolean;
   attempts?: number;
   outputLimit?: number;
+  targetModel?: string;
 }>());
 /** Only trusted provider usage reaches this hook; client-visible fallback estimates cannot debit. */
 export function recordGovernedUsage(usage: unknown): void {
@@ -57,6 +59,7 @@ export function governedAttempt(provider: string, model: string): number | null 
   const op = admissionContext.getStore();
   if (!op) return null;
   op.dispatched = true;
+  op.targetModel = `${provider}/${model}`;
   op.attempts = (op.attempts ?? 0) + 1;
   if (op.attempts > 1) op.failed = true; // Multiple billable attempts require an authoritative aggregate before release.
   appendAttemptEvent(op.id, "attempt.started", op.attempts, provider, model);
