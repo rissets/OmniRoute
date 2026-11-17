@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
+import { withBasePath } from "@/shared/utils/basePath";
 export default function OmniRouteLogo({
   size = 24,
   className = "",
@@ -11,7 +12,7 @@ export default function OmniRouteLogo({
   return (
     <Image
       unoptimized
-      src="/brand/bp-batam-emblem.svg"
+      src={withBasePath("/brand/bp-batam-emblem.svg")}
       alt="BP Batam"
       width={size}
       height={size}
@@ -54,7 +55,7 @@ export function OmniRouteLockup({
     <span role="img" aria-label="BP Batam AI Gateway" className={cn("bp-brand-lockup", className)}>
       <Image
         unoptimized
-        src={logoSrc || "/brand/bp-batam-logo.png"}
+        src={logoSrc || withBasePath("/brand/bp-batam-logo.png")}
         alt="BP Batam — Badan Pengusahaan Batam"
         loading="eager"
         width={190}
