@@ -15189,5 +15189,89 @@
     "importButton": "Import",
     "importFailed": "Import failed.",
     "importSuccess": "Imported {connections} accounts and {nodes} provider nodes; {skipped} skipped."
+  },
+  "bpbatam": {
+    "neverSynced": "Never synced",
+    "accountKind": {
+      "platform": "Organization Pool",
+      "department": "Department",
+      "user": "User"
+    },
+    "errors": {
+      "ownerRequired": "BP Route owner access is required to read credit pool status.",
+      "loadFailed": "Credit pool status could not be loaded.",
+      "syncFailed": "Balance sync from Digi Route failed.",
+      "syncFailedWithCode": "Digi Route sync failed ({code}).",
+      "syncExecutionFailed": "Failed to run balance sync from Digi Route."
+    },
+    "notices": {
+      "syncAdded": "Sync complete: {credits} new Credits added from Digi Route.",
+      "syncUpToDate": "BP Route pool balance is already in sync with Digi Route."
+    },
+    "header": {
+      "eyebrow": "BP Route · Credit Control",
+      "title": "BP Batam Credit Pool",
+      "description": "Organization credit balance is sourced exclusively from Digi Route. Manual balance additions and overrides are disabled."
+    },
+    "actions": {
+      "syncNow": "Sync Balance from Digi Route Now",
+      "syncing": "Syncing…",
+      "topUp": "Top-Up Credit Pool",
+      "reload": "Reload"
+    },
+    "alerts": {
+      "errorTitle": "Failed to load or sync pool",
+      "syncUpdatedTitle": "Sync status updated",
+      "lowBalanceTitle": "Credit pool balance running low (10% or less)",
+      "lowBalanceDescription": "Remaining pool balance {credits} Credits (≈ {tokens} Tokens). Top up via the Digi Route portal so user services are not interrupted."
+    },
+    "stats": {
+      "issuedLabel": "Total Credits Received",
+      "remainingLabel": "Remaining Credit Balance",
+      "consumedLabel": "Credits Consumed",
+      "estimatedTokensLabel": "Estimated Token Equivalent",
+      "creditSuffix": " Credits",
+      "tokenSuffix": " Tokens",
+      "issuedHint": "{micro} micro_credits from Digi Route",
+      "remainingHint": "≈ {tokens} Token Equivalent",
+      "consumedHint": "Active reservation: {reserved} Credits",
+      "estimatedTokensHint": "Reference 1 Credit ≈ {refTokens} Tokens"
+    },
+    "syncCard": {
+      "title": "Digi Route Credit Sync Status",
+      "subtitle": "BP Route only accepts HMAC-signed credit allocations or official pull-sync from Digi Route",
+      "badgeError": "Sync issue",
+      "badgeSynced": "Synced",
+      "badgePending": "Awaiting sync",
+      "digiAccountLabel": "Digi Route Account",
+      "lastSource": "Last source: {source}",
+      "noSource": "none yet",
+      "lastBalanceLabel": "Last Balance on Digi Route",
+      "availableCredits": "{credits} Credits available",
+      "balanceBreakdown": "Total {total} · Held {reserved}",
+      "lastSyncLabel": "Last Sync",
+      "syncErrorNote": "Note: {error}",
+      "noSyncErrors": "No sync errors",
+      "economicsLabel": "Active Economic Parameters",
+      "creditValueIdr": "1 Credit = Rp {rupiah}",
+      "fxAndRevision": "Rate Rp {rate}/USD · Revision {revision}",
+      "policyLabel": "BP Route Balance Refill Policy",
+      "policyTitle": "Manual pool balance additions (set-total / add) are disabled",
+      "policyDescription": "Top-ups are performed through the Digi Route Web Landing Page so all credits are recorded in the master ledger.",
+      "footerNote": "Manual sync only pulls valid balances already issued for tenant {tenant}."
+    },
+    "accountsCard": {
+      "title": "Account Balance Distribution",
+      "subtitle": "Credit allocations at organization, department, and user levels in Credits and estimated token equivalents",
+      "emptyTitle": "No registered accounts yet",
+      "emptyDescription": "Organization and user accounts will appear after credit sync or Control Panel allocation runs.",
+      "columns": {
+        "account": "Account",
+        "kind": "Type",
+        "balance": "Balance (Credits)",
+        "reserved": "Reserved (Credits)",
+        "estimatedTokens": "Token Equivalent"
+      }
+    }
   }
 }

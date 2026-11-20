@@ -15189,5 +15189,89 @@
     "importButton": "Importar",
     "importFailed": "Falha na importação.",
     "importSuccess": "{connections} contas e {nodes} nós de provedor importados; {skipped} ignorados."
+  },
+  "bpbatam": {
+    "neverSynced": "Nunca sincronizado",
+    "accountKind": {
+      "platform": "Pool da Organização",
+      "department": "Departamento",
+      "user": "Usuário"
+    },
+    "errors": {
+      "ownerRequired": "Acesso de proprietário do BP Route é necessário para ler o status do pool de créditos.",
+      "loadFailed": "Não foi possível carregar o status do pool de créditos.",
+      "syncFailed": "Falha ao sincronizar saldo do Digi Route.",
+      "syncFailedWithCode": "Falha na sincronização do Digi Route ({code}).",
+      "syncExecutionFailed": "Falha ao executar a sincronização de saldo do Digi Route."
+    },
+    "notices": {
+      "syncAdded": "Sincronização concluída: {credits} novos Créditos adicionados do Digi Route.",
+      "syncUpToDate": "O saldo do pool BP Route já está sincronizado com o Digi Route."
+    },
+    "header": {
+      "eyebrow": "BP Route · Controle de Créditos",
+      "title": "Pool de Créditos BP Batam",
+      "description": "O saldo de créditos da organização vem exclusivamente do Digi Route. Adições e ajustes manuais de saldo estão desativados."
+    },
+    "actions": {
+      "syncNow": "Sincronizar Saldo do Digi Route Agora",
+      "syncing": "Sincronizando…",
+      "topUp": "Recarregar Pool de Créditos",
+      "reload": "Recarregar"
+    },
+    "alerts": {
+      "errorTitle": "Falha ao carregar ou sincronizar o pool",
+      "syncUpdatedTitle": "Status de sincronização atualizado",
+      "lowBalanceTitle": "Saldo do pool de créditos baixo (10% ou menos)",
+      "lowBalanceDescription": "Saldo restante do pool: {credits} Créditos (≈ {tokens} Tokens). Faça a recarga pelo portal Digi Route para evitar interrupções."
+    },
+    "stats": {
+      "issuedLabel": "Total de Créditos Recebidos",
+      "remainingLabel": "Saldo de Créditos Restante",
+      "consumedLabel": "Créditos Consumidos",
+      "estimatedTokensLabel": "Equivalente Estimado em Tokens",
+      "creditSuffix": " Créditos",
+      "tokenSuffix": " Tokens",
+      "issuedHint": "{micro} micro_credits do Digi Route",
+      "remainingHint": "≈ {tokens} Tokens Equivalentes",
+      "consumedHint": "Reserva ativa: {reserved} Créditos",
+      "estimatedTokensHint": "Referência 1 Crédito ≈ {refTokens} Tokens"
+    },
+    "syncCard": {
+      "title": "Status de Sincronização de Créditos Digi Route",
+      "subtitle": "O BP Route aceita apenas alocações assinadas por HMAC ou pull-sync oficial do Digi Route",
+      "badgeError": "Falha na sincronização",
+      "badgeSynced": "Sincronizado",
+      "badgePending": "Aguardando sincronização",
+      "digiAccountLabel": "Conta Digi Route",
+      "lastSource": "Última origem: {source}",
+      "noSource": "nenhuma ainda",
+      "lastBalanceLabel": "Último Saldo no Digi Route",
+      "availableCredits": "{credits} Créditos disponíveis",
+      "balanceBreakdown": "Total {total} · Retido {reserved}",
+      "lastSyncLabel": "Última Sincronização",
+      "syncErrorNote": "Nota: {error}",
+      "noSyncErrors": "Sem erros de sincronização",
+      "economicsLabel": "Parâmetros Econômicos Ativos",
+      "creditValueIdr": "1 Crédito = Rp {rupiah}",
+      "fxAndRevision": "Câmbio Rp {rate}/USD · Revisão {revision}",
+      "policyLabel": "Política de Recarga do BP Route",
+      "policyTitle": "Adições manuais ao pool (set-total / add) estão desativadas",
+      "policyDescription": "As recargas são feitas pela página web do Digi Route para que todos os créditos fiquem registrados no livro-razão mestre.",
+      "footerNote": "A sincronização manual puxa apenas saldos válidos já emitidos para o tenant {tenant}."
+    },
+    "accountsCard": {
+      "title": "Distribuição de Saldo por Conta",
+      "subtitle": "Alocações de crédito nos níveis de organização, departamento e usuário em Créditos e tokens equivalentes",
+      "emptyTitle": "Nenhuma conta registrada ainda",
+      "emptyDescription": "As contas aparecerão após a sincronização de créditos ou alocação pelo Painel de Controle.",
+      "columns": {
+        "account": "Conta",
+        "kind": "Tipo",
+        "balance": "Saldo (Créditos)",
+        "reserved": "Reservado (Créditos)",
+        "estimatedTokens": "Equivalente em Tokens"
+      }
+    }
   }
 }

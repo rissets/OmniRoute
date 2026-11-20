@@ -15076,5 +15076,89 @@
     "importButton": "Impor",
     "importFailed": "Impor gagal.",
     "importSuccess": "{connections} akun dan {nodes} node penyedia diimpor; {skipped} dilewati."
+  },
+  "bpbatam": {
+    "neverSynced": "Belum pernah tersinkronisasi",
+    "accountKind": {
+      "platform": "Pool Organisasi",
+      "department": "Departemen",
+      "user": "Pengguna"
+    },
+    "errors": {
+      "ownerRequired": "Akses owner BP Route diperlukan untuk membaca status pool kredit.",
+      "loadFailed": "Status pool kredit tidak dapat dimuat.",
+      "syncFailed": "Sinkronisasi saldo dari Digi Route gagal.",
+      "syncFailedWithCode": "Sinkronisasi Digi Route gagal ({code}).",
+      "syncExecutionFailed": "Sinkronisasi saldo dari Digi Route gagal dijalankan."
+    },
+    "notices": {
+      "syncAdded": "Sinkronisasi selesai: {credits} Kredit baru ditambahkan dari Digi Route.",
+      "syncUpToDate": "Saldo pool BP Route sudah sinkron dengan Digi Route."
+    },
+    "header": {
+      "eyebrow": "BP Route · Kontrol Kredit",
+      "title": "Pool Kredit BP Batam",
+      "description": "Saldo kredit organisasi bersumber eksklusif dari Digi Route. Penambahan dan pengaturan saldo manual dinonaktifkan."
+    },
+    "actions": {
+      "syncNow": "Sinkronkan Saldo dari Digi Route Sekarang",
+      "syncing": "Menyinkronkan…",
+      "topUp": "Top-Up Pool Kredit",
+      "reload": "Muat ulang"
+    },
+    "alerts": {
+      "errorTitle": "Gagal memuat atau menyinkronkan pool",
+      "syncUpdatedTitle": "Status sinkronisasi diperbarui",
+      "lowBalanceTitle": "Saldo pool kredit menipis (10% atau kurang)",
+      "lowBalanceDescription": "Sisa saldo pool {credits} Kredit (≈ {tokens} Token). Lakukan top-up melalui portal Digi Route agar layanan pengguna tidak terhenti."
+    },
+    "stats": {
+      "issuedLabel": "Total Kredit Diterima",
+      "remainingLabel": "Saldo Kredit Tersisa",
+      "consumedLabel": "Pemakaian Kredit",
+      "estimatedTokensLabel": "Estimasi Ekuivalen Token",
+      "creditSuffix": " Kredit",
+      "tokenSuffix": " Token",
+      "issuedHint": "{micro} micro_credits dari Digi Route",
+      "remainingHint": "≈ {tokens} Token Ekuivalen",
+      "consumedHint": "Reservasi aktif: {reserved} Kredit",
+      "estimatedTokensHint": "Patokan 1 Kredit ≈ {refTokens} Token"
+    },
+    "syncCard": {
+      "title": "Status Sinkronisasi Kredit Digi Route",
+      "subtitle": "BP Route hanya menerima alokasi kredit bertanda tangan HMAC atau pull-sync resmi dari Digi Route",
+      "badgeError": "Gangguan sinkronisasi",
+      "badgeSynced": "Tersinkronisasi",
+      "badgePending": "Menunggu sinkronisasi",
+      "digiAccountLabel": "Akun Digi Route",
+      "lastSource": "Sumber terakhir: {source}",
+      "noSource": "belum ada",
+      "lastBalanceLabel": "Saldo Terakhir di Digi Route",
+      "availableCredits": "{credits} Kredit tersedia",
+      "balanceBreakdown": "Total {total} · Ditahan {reserved}",
+      "lastSyncLabel": "Sinkronisasi Terakhir",
+      "syncErrorNote": "Catatan: {error}",
+      "noSyncErrors": "Tidak ada galat sinkronisasi",
+      "economicsLabel": "Parameter Ekonomi Aktif",
+      "creditValueIdr": "1 Kredit = Rp {rupiah}",
+      "fxAndRevision": "Kurs Rp {rate}/USD · Revisi {revision}",
+      "policyLabel": "Kebijakan Pengisian Saldo BP Route",
+      "policyTitle": "Penambahan saldo pool manual (set-total / add) dinonaktifkan",
+      "policyDescription": "Top-up dilakukan melalui Web Landing Page Digi Route agar seluruh kredit tercatat di ledger master.",
+      "footerNote": "Sinkronisasi manual hanya menarik saldo sah yang sudah diterbitkan untuk tenant {tenant}."
+    },
+    "accountsCard": {
+      "title": "Distribusi Saldo Akun",
+      "subtitle": "Alokasi kredit di level organisasi, departemen, dan pengguna dalam satuan Kredit serta estimasi ekuivalen token",
+      "emptyTitle": "Belum ada akun terdaftar",
+      "emptyDescription": "Akun organisasi dan pengguna akan tampil setelah sinkronisasi kredit atau alokasi Control Panel berjalan.",
+      "columns": {
+        "account": "Akun",
+        "kind": "Jenis",
+        "balance": "Saldo (Kredit)",
+        "reserved": "Reservasi (Kredit)",
+        "estimatedTokens": "Ekuivalen Token"
+      }
+    }
   }
 }
