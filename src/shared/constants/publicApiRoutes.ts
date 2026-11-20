@@ -58,6 +58,10 @@ const PUBLIC_API_ROUTES_EXACT = new Set([
   // collect/chaos/route.ts. Do not widen it to other /api/skills/collect/*
   // routes without the same per-handler auth.
   "/api/skills/collect/chaos",
+  // Signed Digi Route credit grant push endpoint (POST /api/bpbatam/digi-credit-sync).
+  // Exact path only; the handler verifies HMAC-SHA256 signature using
+  // DIGI_ROUTE_SYNC_SECRET before applying any pool grant.
+  "/api/bpbatam/digi-credit-sync",
 ]);
 
 // Read-only single routes that ALSO take the CORS origin relaxation: they
