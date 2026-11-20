@@ -4,6 +4,7 @@ import { encrypt, decrypt } from "./encryption";
 import { validateCustomEndpointUrl } from "../bpbatam/customTransport";
 import { invalidateDbCache, invalidateModelCatalogCache } from "./readCache";
 import { resetProviderNodePrefixCache } from "./providers/nodePrefix";
+import { getActiveDigiModelIds, hasSyncedDigiCatalog } from "./bpbatamDigiSync";
 
 export interface CustomModelDto {
   id: string;
@@ -134,6 +135,7 @@ function syncModelsToCustomModels(endpointId: string) {
     supportedEndpoints: ["chat"],
     quotaEnabled: Boolean(m.quota_enabled),
     enabled: Boolean(m.enabled),
+    isHidden: !Boolean(m.enabled),
   }));
 
   getDbInstance()
@@ -549,6 +551,109 @@ export function getCustomModelInfo(modelId: string): {
   }
 }
 
+function normalizeDigiOriginBase(rawUrl: string): string | null {
+  try {
+    const parsed = validateCustomEndpointUrl(rawUrl.trim());
+    const cleanPath = parsed.pathname
+      .replace(/\/+$/, "")
+      .replace(/\/v1(?:\/(?:chat\/completions|messages|responses))?$/, "");
+    return `${parsed.origin}${cleanPath}`;
+  } catch {
+    return null;
+  }
+}
+
+export function reconcileCustomEndpointModelsFromDigiCatalog(
+  activeModels: Array<{ model_id: string; display_name?: string | null }>,
+  options?: { digiBaseUrl?: string | null }
+): { endpoints_reconciled: number; models_enabled: number; models_disabled: number } {
+  const db = getDbInstance();
+  let endpoints: CustomEndpointRow[];
+  try {
+    endpoints = db
+      .prepare("SELECT * FROM bp_custom_endpoints WHERE enabled = 1 ORDER BY created_at ASC")
+      .all() as CustomEndpointRow[];
+  } catch {
+    return { endpoints_reconciled: 0, models_enabled: 0, models_disabled: 0 };
+  }
+  if (!endpoints.length) {
+    return { endpoints_reconciled: 0, models_enabled: 0, models_disabled: 0 };
+  }
+
+  let targets = endpoints;
+  if (options?.digiBaseUrl) {
+    const normalizedTarget = normalizeDigiOriginBase(options.digiBaseUrl);
+    if (normalizedTarget) {
+      const matched = endpoints.filter(
+        (ep) => normalizeDigiOriginBase(ep.base_url) === normalizedTarget
+      );
+      if (matched.length > 0) {
+        targets = matched;
+      }
+    }
+  }
+
+  const activeMap = new Map<string, string | null>();
+  for (const entry of activeModels) {
+    const upstreamId = entry.model_id?.trim();
+    if (!upstreamId) continue;
+    const displayName = entry.display_name?.trim() || null;
+    activeMap.set(upstreamId, displayName);
+  }
+
+  const now = new Date().toISOString();
+  let modelsEnabled = 0;
+  let modelsDisabled = 0;
+
+  for (const endpoint of targets) {
+    const existingRows = db
+      .prepare("SELECT * FROM bp_custom_models WHERE endpoint_id = ?")
+      .all(endpoint.id) as CustomModelRow[];
+    const byUpstream = new Map(existingRows.map((row) => [row.upstream_id, row]));
+
+    for (const [upstreamId, displayName] of activeMap.entries()) {
+      const existing = byUpstream.get(upstreamId);
+      if (existing) {
+        const nextName = displayName ?? existing.name;
+        if (existing.enabled !== 1 || nextName !== existing.name) {
+          db.prepare(
+            "UPDATE bp_custom_models SET enabled = 1, name = ?, updated_at = ? WHERE id = ?"
+          ).run(nextName, now, existing.id);
+        }
+        modelsEnabled++;
+      } else {
+        const modelId = `${endpoint.id}/${upstreamId}`;
+        db.prepare(
+          `INSERT INTO bp_custom_models
+           (id, endpoint_id, upstream_id, name, enabled, quota_enabled, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 1, 1, ?, ?)`
+        ).run(modelId, endpoint.id, upstreamId, displayName ?? upstreamId, now, now);
+        modelsEnabled++;
+      }
+    }
+
+    for (const existing of existingRows) {
+      if (!activeMap.has(existing.upstream_id)) {
+        if (existing.enabled !== 0) {
+          db.prepare("UPDATE bp_custom_models SET enabled = 0, updated_at = ? WHERE id = ?").run(
+            now,
+            existing.id
+          );
+          modelsDisabled++;
+        }
+      }
+    }
+
+    syncModelsToCustomModels(endpoint.id);
+  }
+
+  return {
+    endpoints_reconciled: targets.length,
+    models_enabled: modelsEnabled,
+    models_disabled: modelsDisabled,
+  };
+}
+
 export function getActiveCustomEndpointOffers(): Array<{
   id: string;
   upstream_id: string;
@@ -556,7 +661,7 @@ export function getActiveCustomEndpointOffers(): Array<{
   name: string;
 }> {
   try {
-    return getDbInstance()
+    const rows = getDbInstance()
       .prepare(
         `SELECT m.id, m.upstream_id, m.endpoint_id, m.name
          FROM bp_custom_models m
@@ -569,6 +674,9 @@ export function getActiveCustomEndpointOffers(): Array<{
       endpoint_id: string;
       name: string;
     }>;
+    if (!hasSyncedDigiCatalog()) return rows;
+    const activeDigiIds = getActiveDigiModelIds();
+    return rows.filter((r) => activeDigiIds.has(r.upstream_id) || activeDigiIds.has(r.id));
   } catch {
     return [];
   }
@@ -578,17 +686,28 @@ export function getDisabledCustomModelIds(): Set<string> {
   try {
     const rows = getDbInstance()
       .prepare(
-        `SELECT m.id, m.upstream_id, m.endpoint_id
+        `SELECT m.id, m.upstream_id, m.endpoint_id, m.enabled as model_enabled, e.enabled as endpoint_enabled
          FROM bp_custom_models m
-         JOIN bp_custom_endpoints e ON m.endpoint_id = e.id
-         WHERE m.enabled = 0 OR e.enabled = 0`
+         JOIN bp_custom_endpoints e ON m.endpoint_id = e.id`
       )
-      .all() as Array<{ id: string; upstream_id: string; endpoint_id: string }>;
+      .all() as Array<{
+      id: string;
+      upstream_id: string;
+      endpoint_id: string;
+      model_enabled: number;
+      endpoint_enabled: number;
+    }>;
 
+    const syncedCatalog = hasSyncedDigiCatalog();
+    const activeDigiIds = syncedCatalog ? getActiveDigiModelIds() : null;
     const set = new Set<string>();
     for (const r of rows) {
-      set.add(r.id);
-      set.add(`${r.endpoint_id}/${r.upstream_id}`);
+      const inactiveInDigi =
+        syncedCatalog && !activeDigiIds!.has(r.upstream_id) && !activeDigiIds!.has(r.id);
+      if (r.model_enabled === 0 || r.endpoint_enabled === 0 || inactiveInDigi) {
+        set.add(r.id);
+        set.add(`${r.endpoint_id}/${r.upstream_id}`);
+      }
     }
     return set;
   } catch {

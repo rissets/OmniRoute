@@ -1,6 +1,8 @@
 import { safeUsage } from "./bpbatamEvents";
 import { createHash, randomUUID } from "node:crypto";
 import { getDbInstance } from "./core";
+import { formatCreditsFromMicro, microCreditsToEstimatedTokens } from "@/lib/bpbatam/creditUnits";
+import { getDigiCreditSyncState } from "./bpbatamDigiSync";
 import {
   checkPoolIngress,
   checkUserLimits,
@@ -47,6 +49,14 @@ export interface Admission {
   limits_json: string;
   policy_revision: number | null;
   department_id: string | null;
+  unit?: string;
+  raw_tokens_json?: string;
+  digi_receipt_id?: string | null;
+  reconcile_attempts?: number;
+  last_reconcile_at?: string | null;
+  last_reconcile_error?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 export interface LimitSnapshot {
   id: string;
@@ -94,6 +104,27 @@ const stamp = () => new Date().toISOString();
 export function account(id: string): TokenAccount | undefined {
   return db().prepare("SELECT * FROM bp_token_accounts WHERE id=?").get(id) as
     TokenAccount | undefined;
+}
+export function accountCredits(id: string) {
+  const row = account(id);
+  if (!row) return undefined;
+  const sync = getDigiCreditSyncState("bpbatam");
+  const available = row.balance - row.reserved;
+  return {
+    ...row,
+    unit: "micro_credits" as const,
+    balance_micro: row.balance,
+    reserved_micro: row.reserved,
+    available_micro: available,
+    balance_credits: formatCreditsFromMicro(row.balance),
+    reserved_credits: formatCreditsFromMicro(row.reserved),
+    available_credits: formatCreditsFromMicro(available),
+    estimated_tokens: microCreditsToEstimatedTokens(available, sync.ref_tokens_per_credit),
+    ref_tokens_per_credit: sync.ref_tokens_per_credit,
+  };
+}
+export function withinTransaction<T>(fn: () => T): T {
+  return db().transaction(fn)();
 }
 export function initialAllocation(id: string): number | null {
   const row = db()
@@ -237,11 +268,12 @@ export function reserve(
   limits: LimitSnapshot[],
   expectedPolicyRevision?: number,
   meeting?: MeetingAdmission,
-  options?: { quotaExempt?: boolean }
+  options?: { quotaExempt?: boolean; unit?: "micro_credits" | "token" }
 ): Admission {
   if (!Number.isSafeInteger(amount) || amount <= 0)
     throw new TokenPolicyError("INVALID_RESERVATION", 400);
   const quotaExempt = Boolean(options?.quotaExempt);
+  const admissionUnit = options?.unit ?? "micro_credits";
   return db().transaction(() => {
     if (admission(id)) throw new TokenPolicyError("DUPLICATE_INFERENCE", 409);
     if (
@@ -314,7 +346,7 @@ export function reserve(
       : JSON.stringify(limits);
     db()
       .prepare(
-        "INSERT INTO bp_token_admissions(id,key_id,account_id,reserved,state,endpoint,model,limits_json,department_id,policy_revision) VALUES(?,?,?,?,'reserved',?,?,?,?,?)"
+        "INSERT INTO bp_token_admissions(id,key_id,account_id,reserved,state,endpoint,model,limits_json,department_id,policy_revision,unit) VALUES(?,?,?,?,'reserved',?,?,?,?,?,?)"
       )
       .run(
         id,
@@ -325,7 +357,8 @@ export function reserve(
         model,
         limitsPayload,
         owner?.department_id ?? null,
-        owner?.policy_revision ?? null
+        owner?.policy_revision ?? null,
+        admissionUnit
       );
     if (owner && !quotaExempt) bindUserLimitAdmission(owner.account_id, id);
     if (meeting) {
@@ -424,6 +457,26 @@ export function settle(id: string, actual: number | null, usage: object = {}): s
       db().prepare("UPDATE bp_token_admissions SET reserved=? WHERE id=?").run(actual, id);
       row.reserved = actual;
     }
+    const rawTokensPayload = (() => {
+      const u = usage as Record<string, unknown>;
+      if (u && typeof u.raw_tokens === "object" && u.raw_tokens !== null) {
+        return JSON.stringify(u.raw_tokens);
+      }
+      if (u && typeof u.input === "number" && typeof u.output === "number") {
+        return JSON.stringify({
+          input: u.input,
+          cached: typeof u.cached === "number" ? u.cached : 0,
+          output: u.output,
+          reasoning: typeof u.reasoning === "number" ? u.reasoning : 0,
+          total: typeof u.total === "number" ? u.total : u.input + u.output,
+        });
+      }
+      return "{}";
+    })();
+    const digiReceiptId =
+      typeof (usage as Record<string, unknown>)?.digi_receipt_id === "string"
+        ? String((usage as Record<string, unknown>).digi_receipt_id)
+        : null;
     if (row.account_id) {
       db()
         .prepare("UPDATE bp_token_accounts SET balance=balance-?,reserved=reserved-? WHERE id=?")
@@ -432,22 +485,50 @@ export function settle(id: string, actual: number | null, usage: object = {}): s
     }
     db()
       .prepare(
-        "UPDATE bp_token_admissions SET actual=?,state='settled',usage_json=?,updated_at=? WHERE id=?"
+        "UPDATE bp_token_admissions SET actual=?,state='settled',usage_json=?,raw_tokens_json=CASE WHEN ? != '{}' THEN ? ELSE raw_tokens_json END,digi_receipt_id=COALESCE(?,digi_receipt_id),updated_at=? WHERE id=?"
       )
-      .run(actual, JSON.stringify(usage), stamp(), id);
+      .run(
+        actual,
+        JSON.stringify(usage),
+        rawTokensPayload,
+        rawTokensPayload,
+        digiReceiptId,
+        stamp(),
+        id
+      );
     return "settled";
   })();
+}
+export function attachDigiReceiptId(id: string, digiReceiptId: string): void {
+  if (!id || !digiReceiptId) return;
+  db()
+    .prepare("UPDATE bp_token_admissions SET digi_receipt_id=?,updated_at=? WHERE id=?")
+    .run(digiReceiptId, stamp(), id);
+}
+export function listUncertainAdmissions(limit = 50): Admission[] {
+  return db()
+    .prepare(
+      "SELECT * FROM bp_token_admissions WHERE state='uncertain' ORDER BY created_at ASC LIMIT ?"
+    )
+    .all(limit) as Admission[];
+}
+export function recordReconcileAttempt(id: string, errorMessage?: string | null): void {
+  db()
+    .prepare(
+      "UPDATE bp_token_admissions SET reconcile_attempts=COALESCE(reconcile_attempts,0)+1,last_reconcile_at=?,last_reconcile_error=? WHERE id=?"
+    )
+    .run(stamp(), errorMessage ?? null, id);
 }
 export function receipts(accountId?: string) {
   const rows = accountId
     ? db()
         .prepare(
-          "SELECT id,account_id,endpoint,model,reserved,actual,state,usage_json,created_at FROM bp_token_admissions WHERE account_id=? ORDER BY created_at DESC LIMIT 200"
+          "SELECT id,account_id,endpoint,model,reserved,actual,state,usage_json,unit,raw_tokens_json,digi_receipt_id,reconcile_attempts,last_reconcile_at,last_reconcile_error,created_at FROM bp_token_admissions WHERE account_id=? ORDER BY created_at DESC LIMIT 200"
         )
         .all(accountId)
     : db()
         .prepare(
-          "SELECT id,account_id,endpoint,model,reserved,actual,state,usage_json,created_at FROM bp_token_admissions ORDER BY created_at DESC LIMIT 200"
+          "SELECT id,account_id,endpoint,model,reserved,actual,state,usage_json,unit,raw_tokens_json,digi_receipt_id,reconcile_attempts,last_reconcile_at,last_reconcile_error,created_at FROM bp_token_admissions ORDER BY created_at DESC LIMIT 200"
         )
         .all();
   return (
@@ -460,6 +541,12 @@ export function receipts(accountId?: string) {
       actual: number | null;
       state: string;
       usage_json: string;
+      unit: string | null;
+      raw_tokens_json: string | null;
+      digi_receipt_id: string | null;
+      reconcile_attempts: number | null;
+      last_reconcile_at: string | null;
+      last_reconcile_error: string | null;
       created_at: string;
     }>
   ).map((r) => ({
@@ -469,8 +556,18 @@ export function receipts(accountId?: string) {
     model: r.model,
     reserved: r.reserved,
     actual: r.actual,
+    reserved_micro: r.reserved,
+    actual_micro: r.actual,
+    reserved_credits: formatCreditsFromMicro(r.reserved),
+    actual_credits: r.actual != null ? formatCreditsFromMicro(r.actual) : null,
+    unit: r.unit ?? "micro_credits",
     state: r.state,
     usage: safeUsage(r.usage_json),
+    raw_tokens: safeUsage(r.raw_tokens_json ?? "{}"),
+    digi_receipt_id: r.digi_receipt_id ?? null,
+    reconcile_attempts: r.reconcile_attempts ?? 0,
+    last_reconcile_at: r.last_reconcile_at ?? null,
+    last_reconcile_error: r.last_reconcile_error ?? null,
     created_at: r.created_at,
   }));
 }
@@ -522,14 +619,30 @@ export function receiptPage(
   const order = query.sort_order === "asc" ? "ASC" : "DESC";
   const rows = db()
     .prepare(
-      `${scope} SELECT id,account_id,endpoint,model,reserved,actual,state,usage_json,created_at FROM bp_token_admissions WHERE ${where} ORDER BY ${sort} ${order},id LIMIT ? OFFSET ?`
+      `${scope} SELECT id,account_id,endpoint,model,reserved,actual,state,usage_json,unit,raw_tokens_json,digi_receipt_id,reconcile_attempts,last_reconcile_at,last_reconcile_error,created_at FROM bp_token_admissions WHERE ${where} ORDER BY ${sort} ${order},id LIMIT ? OFFSET ?`
     )
     .all(...params, query.page_size, (query.page - 1) * query.page_size);
   return {
-    receipts: (rows as Array<Record<string, unknown>>).map(({ usage_json, ...row }) => ({
-      ...row,
-      usage: safeUsage(String(usage_json)),
-    })),
+    receipts: (rows as Array<Record<string, unknown>>).map(
+      ({ usage_json, raw_tokens_json, ...row }) => {
+        const reserved = Number(row.reserved ?? 0);
+        const actual = row.actual != null ? Number(row.actual) : null;
+        return {
+          ...row,
+          reserved_micro: reserved,
+          actual_micro: actual,
+          reserved_credits: formatCreditsFromMicro(reserved),
+          actual_credits: actual != null ? formatCreditsFromMicro(actual) : null,
+          unit: String(row.unit ?? "micro_credits"),
+          usage: safeUsage(String(usage_json)),
+          raw_tokens: safeUsage(String(raw_tokens_json ?? "{}")),
+          digi_receipt_id: row.digi_receipt_id ?? null,
+          reconcile_attempts: Number(row.reconcile_attempts ?? 0),
+          last_reconcile_at: row.last_reconcile_at ?? null,
+          last_reconcile_error: row.last_reconcile_error ?? null,
+        };
+      }
+    ),
     total,
     page: query.page,
     page_size: query.page_size,

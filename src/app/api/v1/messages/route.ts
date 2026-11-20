@@ -1,3 +1,4 @@
+import { governedInference } from "@/lib/bpbatam/inference";
 import { handleChat } from "@/sse/handlers/chat";
 import { generateRequestId } from "@/shared/utils/requestId";
 import { resolveIncomingCorrelationId } from "@/shared/utils/correlationPreserve.ts";
@@ -104,4 +105,8 @@ async function postHandler(request: any, context: any, preParsedBody: any = null
 // The outer admission wrapper still owns the route-level lease. On a stream deadline,
 // the synthetic SSE body closes, so its response lifecycle releases that lease while
 // handleChat receives the explicit streamSignal and tears provider work down directly.
-export const POST = withChatAdmission(withInjectionGuard(postHandler, { logger: null }));
+const guardedPostHandler = withChatAdmission(withInjectionGuard(postHandler, { logger: null }));
+
+export function POST(request: Request, context: unknown) {
+  return governedInference(request, (forwarded) => guardedPostHandler(forwarded, context));
+}

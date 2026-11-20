@@ -1,6 +1,11 @@
 import { isCustomModelQuotaExempt } from "@/lib/db/bpbatamCustomEndpoints";
 import { deniedRequest } from "@/lib/db/bpbatamEvents";
-import { admissionContext, holdUnsettled } from "./context";
+import {
+  admissionContext,
+  holdUnsettled,
+  recordGovernedUpstreamHeaders,
+  type GovernedAdmissionOperation,
+} from "./context";
 import { randomUUID } from "node:crypto";
 import { getApiKeyMetadata } from "@/lib/db/apiKeys";
 import {
@@ -12,7 +17,7 @@ import { getCurrentWindowUsage } from "@omniroute/open-sse/services/tokenLimitCo
 import { errorResponse } from "@omniroute/open-sse/utils/error.ts";
 import { enforceApiKeyPolicy } from "@/shared/utils/apiKeyPolicy";
 import { principalForKey, reserve, settle, TokenPolicyError } from "@/lib/db/bpbatam";
-import { reservationBound, BoundError, DEFAULT_CHAT_OUTPUT_LIMIT } from "./usage";
+import { BoundError, canonicalUsage, DEFAULT_CHAT_OUTPUT_LIMIT } from "./usage";
 import { usesMediaExecutor, prepareMediaExecution, executeMedia } from "./mediaExecutor";
 import { integratedMedia } from "./media";
 import {
@@ -27,10 +32,17 @@ import {
   isMeetingDiarizationDispatch,
   meetingDiarizationProvider,
 } from "./meetingDiarization";
+import {
+  calculateReservationMicroCredits,
+  calculateSettlementMicroCredits,
+} from "./digiCreditSync";
+import { formatCreditsFromMicro } from "./creditUnits";
 import type { MeetingAdmission } from "@/lib/db/bpbatam";
 
 export const GOVERNED_PATHS = new Set([
   "/v1/chat/completions",
+  "/v1/messages",
+  "/v1/responses",
   "/v1/audio/speech",
   "/v1/audio/transcriptions",
   "/v1/images/generations",
@@ -38,6 +50,23 @@ export const GOVERNED_PATHS = new Set([
   "/v1/embeddings",
   "/v1/rerank",
 ]);
+
+function parseJsonRecordEnv(raw: string | undefined): Record<string, number> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const out: Record<string, number> = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (typeof v === "number" && Number.isSafeInteger(v) && v > 0) {
+        out[k] = v;
+      }
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
 export async function governedInference(
   request: Request,
   dispatch: (request: Request) => Response | Promise<Response>,
@@ -59,8 +88,7 @@ export async function governedInference(
     isMeetingDiarizationDispatch(dispatch);
   let id: string | undefined;
   let admitted = false;
-  let operation:
-    { id: string; failed: boolean; dispatched: boolean; outputLimit: number } | undefined;
+  let operation: GovernedAdmissionOperation | undefined;
   let requestedModel: string | null = null;
   const withReceipt = (response: Response): Response => {
     if (id && admitted) response.headers.set("x-bpbatam-receipt", id);
@@ -120,18 +148,43 @@ export async function governedInference(
       owner && !directDiarization && usesMediaExecutor(path, model)
         ? await prepareMediaExecution(key, path, model)
         : undefined;
-    let units: number | undefined;
-    if (path !== "/v1/chat/completions" && path !== "/v1/embeddings") {
-      const configured = JSON.parse(process.env.BPBATAM_MEDIA_TOKEN_UNITS ?? "{}");
-      units = configured[path];
-      if (typeof units !== "number" || !Number.isSafeInteger(units) || units <= 0)
-        return errorResponse(503, "MEDIA_UNIT_POLICY_REQUIRED");
-    }
-    const amount =
-      units ??
-      (path === "/v1/embeddings"
-        ? new TextEncoder().encode(JSON.stringify(body.input ?? "")).length + 128
-        : reservationBound(body, JSON.parse(process.env.BPBATAM_MODEL_INPUT_TOKEN_BOUNDS ?? "{}")));
+
+    const mediaCreditUnits = parseJsonRecordEnv(process.env.BPBATAM_MEDIA_CREDIT_UNITS);
+    const mediaTokenUnits = parseJsonRecordEnv(process.env.BPBATAM_MEDIA_TOKEN_UNITS);
+    const modelInputBounds = JSON.parse(
+      process.env.BPBATAM_MODEL_INPUT_TOKEN_BOUNDS ?? "{}"
+    ) as Record<string, unknown>;
+
+    const reservation = calculateReservationMicroCredits({
+      path,
+      model,
+      body,
+      modelInputBounds,
+      mediaCreditUnits,
+      mediaTokenUnits,
+    });
+
+    const isChatLikePath =
+      path === "/v1/chat/completions" || path === "/v1/messages" || path === "/v1/responses";
+    const isMediaFixedUnit =
+      !isChatLikePath &&
+      path !== "/v1/embeddings" &&
+      !(
+        path === "/v1/rerank" &&
+        !mediaRevision &&
+        !mediaCreditUnits[path] &&
+        !mediaTokenUnits[path] &&
+        !(reservation.rate && reservation.rate.unit_micro_credits > 0)
+      ) &&
+      !(
+        reservation.rate?.billing_unit === "tokens_1m" &&
+        !mediaRevision &&
+        !mediaCreditUnits[path] &&
+        !(reservation.rate.unit_micro_credits > 0)
+      );
+    const units = isMediaFixedUnit ? reservation.amount : undefined;
+    const amount = reservation.amount;
+
     const current = getTokenLimitsForRequest(
       key.id,
       directDiarization ? meetingDiarizationProvider(dispatch)! : "",
@@ -160,19 +213,22 @@ export async function governedInference(
     const quotaExempt = isCustomModelQuotaExempt(model);
     reserve(id, key.id, amount, path, model, current, owner?.policy_revision, meeting, {
       quotaExempt,
+      unit: reservation.unit,
     });
     admitted = true;
-    let forwarded = request;
+
     const needsStreamUsage = owner && body.stream === true && path === "/v1/chat/completions";
+    const forwardHeaders = new Headers(request.headers);
+    forwardHeaders.set("X-BPRoute-Receipt-Id", id);
+    let forwarded: Request;
     if (needsOutputLimit || needsStreamUsage) {
-      const headers = new Headers(request.headers);
-      headers.delete("content-length");
+      forwardHeaders.delete("content-length");
       // Framework adapters can supply a different Request implementation. Pass
       // the URL and explicit fields instead of relying on constructor identity.
       forwarded = new Request(request.url, {
         method: request.method,
         signal: request.signal,
-        headers,
+        headers: forwardHeaders,
         body: JSON.stringify({
           ...body,
           ...(needsStreamUsage
@@ -182,7 +238,16 @@ export async function governedInference(
             : {}),
         }),
       });
+    } else {
+      forwarded = new Request(request.url, {
+        method: request.method,
+        signal: request.signal,
+        headers: forwardHeaders,
+        body: request.body,
+        ...(request.body ? { duplex: "half" as const } : {}),
+      } as RequestInit);
     }
+
     operation = {
       id,
       failed: false,
@@ -190,12 +255,19 @@ export async function governedInference(
       outputLimit: Number(
         body.max_completion_tokens ?? body.max_tokens ?? body.max_output_tokens ?? 0
       ),
+      unit: reservation.unit,
+      modelRate: reservation.rate,
     };
-    const response = await admissionContext.run(operation, () =>
-      mediaRevision
-        ? executeMedia(forwarded, path, model, id!, mediaRevision, key)
-        : dispatch(forwarded)
-    );
+    const response = await admissionContext.run(operation, () => {
+      if (mediaRevision) {
+        return executeMedia(forwarded, path, model, id!, mediaRevision, key);
+      }
+      return Promise.resolve(dispatch(forwarded)).then((res) => {
+        recordGovernedUpstreamHeaders(res.headers);
+        return res;
+      });
+    });
+
     const headers = new Headers(response.headers);
     headers.set("x-bpbatam-receipt", id);
     headers.delete("X-CP-Media-State");
@@ -203,7 +275,7 @@ export async function governedInference(
     if (!response.ok) {
       if (
         (mediaRevision && response.headers.get("X-CP-Media-State") === "rejected") ||
-        ((path === "/v1/chat/completions" || directDiarization) && !operation.dispatched)
+        ((isChatLikePath || directDiarization) && !operation.dispatched)
       )
         settle(id, 0, { reason: "trusted_local_rejection_before_dispatch" });
       else holdUnsettled(id, "upstream_or_handler_failure");
@@ -216,25 +288,98 @@ export async function governedInference(
       holdUnsettled(id, "media_execution_confirmation_missing");
       return withReceipt(errorResponse(503, "MEDIA_EXECUTION_CONFIRMATION_MISSING"));
     }
-    if (path === "/v1/embeddings") {
+    if (path === "/v1/embeddings" || (path === "/v1/rerank" && !units)) {
       const receipt = await response
         .clone()
         .json()
         .catch(() => null);
-      const used = receipt?.usage?.total_tokens;
-      settle(
-        id,
-        typeof used === "number" && Number.isSafeInteger(used) && used >= 0 ? used : null,
-        { input: used, output: 0, total: used, unit: "provider-token", version: 1 }
-      );
+      const used =
+        receipt?.usage?.total_tokens ??
+        receipt?.usage?.prompt_tokens ??
+        receipt?.meta?.tokens?.input_tokens;
+      const canonical =
+        typeof used === "number" && Number.isSafeInteger(used) && used >= 0
+          ? canonicalUsage({ prompt_tokens: used, completion_tokens: 0, total_tokens: used })
+          : null;
+      if (!canonical) {
+        if (typeof operation.digiCreditChargedMicro === "number") {
+          const settledCharge = calculateSettlementMicroCredits({
+            usage: {
+              input: 0,
+              output: 0,
+              reasoning: 0,
+              cached: 0,
+              total: 0,
+              unit: "provider-token",
+              version: 1,
+            },
+            rate: reservation.rate,
+            digiCreditChargedMicro: operation.digiCreditChargedMicro,
+          });
+          settle(id, settledCharge.actual, {
+            unit: "micro_credits",
+            ...(operation.digiReceiptId ? { digi_receipt_id: operation.digiReceiptId } : {}),
+            actual_micro_credits: settledCharge.actual,
+            actual_credits: formatCreditsFromMicro(settledCharge.actual),
+            version: 1,
+          });
+        } else if (path === "/v1/rerank" && reservation.unit === "micro_credits") {
+          settle(id, reservation.amount, {
+            unit: "micro_credits",
+            actual_micro_credits: reservation.amount,
+            actual_credits: formatCreditsFromMicro(reservation.amount),
+            version: 1,
+          });
+        } else {
+          settle(id, null, {
+            input: used,
+            output: 0,
+            total: used,
+            unit: "provider-token",
+            version: 1,
+          });
+        }
+      } else {
+        const settledCharge = calculateSettlementMicroCredits({
+          usage: canonical,
+          rate: reservation.rate,
+          digiCreditChargedMicro: operation.digiCreditChargedMicro,
+        });
+        settle(id, settledCharge.actual, {
+          input: used,
+          output: 0,
+          total: used,
+          raw_tokens: canonical,
+          unit: settledCharge.unit === "micro_credits" ? "micro_credits" : "provider-token",
+          ...(operation.digiReceiptId ? { digi_receipt_id: operation.digiReceiptId } : {}),
+          ...(settledCharge.unit === "micro_credits"
+            ? {
+                actual_micro_credits: settledCharge.actual,
+                actual_credits: formatCreditsFromMicro(settledCharge.actual),
+              }
+            : {}),
+          version: 1,
+        });
+      }
       return new Response(response.body, { status: response.status, headers });
     }
     if (units) {
       const seconds = Number(response.headers.get("X-CP-Media-Audio-Seconds") ?? 0);
-      settle(id, units, {
-        unit: "router-media-token-equivalent",
+      const settledMediaAmount =
+        typeof operation.digiCreditChargedMicro === "number"
+          ? operation.digiCreditChargedMicro
+          : units;
+      settle(id, settledMediaAmount, {
+        unit:
+          reservation.unit === "micro_credits" ? "micro_credits" : "router-media-token-equivalent",
         version: 1,
-        total: units,
+        total: settledMediaAmount,
+        ...(reservation.unit === "micro_credits"
+          ? {
+              actual_micro_credits: settledMediaAmount,
+              actual_credits: formatCreditsFromMicro(settledMediaAmount),
+            }
+          : {}),
         ...(["/v1/audio/transcriptions", DIARIZATION_PATH].includes(path) &&
         Number.isFinite(seconds) &&
         seconds > 0
@@ -273,7 +418,9 @@ export async function governedInference(
     return new Response(stream, { status: response.status, headers });
   } catch (error) {
     if (id && admitted) {
-      if ((path === "/v1/chat/completions" || directDiarization) && !operation?.dispatched)
+      const isChatLikePath =
+        path === "/v1/chat/completions" || path === "/v1/messages" || path === "/v1/responses";
+      if ((isChatLikePath || directDiarization) && !operation?.dispatched)
         settle(id, 0, { reason: "trusted_local_rejection_before_dispatch" });
       else holdUnsettled(id, "dispatch_interrupted");
     }

@@ -1,4 +1,4 @@
-import { withGovernedProviderInput } from "@/lib/bpbatam/context";
+import { recordGovernedUpstreamHeaders, withGovernedProviderInput } from "@/lib/bpbatam/context";
 /**
  * One provider send. Lifted out of handleChatCore. The body is the tip
  * implementation; the only change is that closed-over request state arrives
@@ -368,6 +368,7 @@ export async function executeProviderRequest(
               }
             );
             const res = normalizeExecutorResult(rawExecutorResult);
+            recordGovernedUpstreamHeaders(res.response?.headers);
             res.response = markEmptyTurnExecution(res.response, res.url, execCreds);
             trace("post_executor", { status: res?.response?.status });
 

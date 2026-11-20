@@ -96,7 +96,7 @@ export function reservationBound(
     return bound + max;
   }
   return (
-    Buffer.byteLength(JSON.stringify(body.messages ?? [])) +
+    Buffer.byteLength(JSON.stringify(body.messages ?? body.input ?? [])) +
     Buffer.byteLength(JSON.stringify(body.tools ?? [])) +
     128 +
     max

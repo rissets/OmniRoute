@@ -1,6 +1,12 @@
 import { createHash } from "node:crypto";
 import { getDbInstance } from "./core";
 import { TokenPolicyError, allocate, account, createAccount } from "./bpbatam";
+import { getDigiCreditSyncState } from "./bpbatamDigiSync";
+import {
+  creditsToMicroCredits,
+  formatCreditsFromMicro,
+  microCreditsToEstimatedTokens,
+} from "@/lib/bpbatam/creditUnits";
 
 export const USER_WINDOWS = { "5h": 18000, "7d": 604800, "30d": 2592000 } as const;
 type WindowName = keyof typeof USER_WINDOWS;
@@ -304,19 +310,73 @@ export function userLimits(account: string) {
   const rows = db()
     .prepare("SELECT * FROM bp_user_windows WHERE account_id=? ORDER BY seconds")
     .all(account) as WindowRow[];
+  const sync = getDigiCreditSyncState("bpbatam");
   return {
     revision: profile?.revision ?? 0,
+    unit: "micro_credits" as const,
+    ref_tokens_per_credit: sync.ref_tokens_per_credit,
     windows: rows.map((row) => {
       const u = usage(account, row);
+      const available = Math.max(0, row.token_limit - u.used - u.held);
       return {
         window: Object.entries(USER_WINDOWS).find(([, s]) => s === row.seconds)![0],
         limit: String(row.token_limit),
         used: String(u.used),
         reserved: String(u.held),
-        available: String(Math.max(0, row.token_limit - u.used - u.held)),
+        available: String(available),
+        limit_micro: row.token_limit,
+        used_micro: u.used,
+        reserved_micro: u.held,
+        available_micro: available,
+        limit_credits: formatCreditsFromMicro(row.token_limit),
+        used_credits: formatCreditsFromMicro(u.used),
+        reserved_credits: formatCreditsFromMicro(u.held),
+        available_credits: formatCreditsFromMicro(available),
+        estimated_tokens_limit: microCreditsToEstimatedTokens(
+          row.token_limit,
+          sync.ref_tokens_per_credit
+        ),
+        estimated_tokens_used: microCreditsToEstimatedTokens(u.used, sync.ref_tokens_per_credit),
+        estimated_tokens_available: microCreditsToEstimatedTokens(
+          available,
+          sync.ref_tokens_per_credit
+        ),
         reset_at: u.reset_at,
       };
     }),
+  };
+}
+export function changeUserLimitsInCredits(
+  id: string,
+  account: string,
+  revision: number,
+  body: { limits?: { window: WindowName; credits: number | string }[]; reset?: WindowName[] }
+) {
+  return changeUserLimits(id, account, revision, {
+    ...(body.limits
+      ? {
+          limits: body.limits.map((l) => ({
+            window: l.window,
+            tokens: creditsToMicroCredits(l.credits),
+          })),
+        }
+      : {}),
+    ...(body.reset ? { reset: body.reset } : {}),
+  });
+}
+export function quotaDefaultsInCredits() {
+  const base = quotaDefaults();
+  const sync = getDigiCreditSyncState("bpbatam");
+  return {
+    ...base,
+    unit: "micro_credits" as const,
+    ref_tokens_per_credit: sync.ref_tokens_per_credit,
+    windows: base.windows.map((w) => ({
+      window: w.window,
+      micro_credits: w.tokens,
+      credits: formatCreditsFromMicro(w.tokens),
+      estimated_tokens: microCreditsToEstimatedTokens(w.tokens, sync.ref_tokens_per_credit),
+    })),
   };
 }
 export function checkUserLimits(account: string, amount: number) {
@@ -407,14 +467,67 @@ export function poolStatus(root: string) {
     balance: number;
     reserved: number;
   }[];
+  const sync = getDigiCreditSyncState(root);
+  const ceilingMicro = poolCap(root)?.ceiling ?? 0;
+  const issuedMicro = value.n;
+  const remainingMicro = rows.reduce((s, a) => s + a.balance, 0);
+  const reservedMicro = rows.reduce((s, a) => s + a.reserved, 0);
+  const consumedMicro = issuedMicro - remainingMicro;
+  const availableMicro = Math.max(0, remainingMicro - reservedMicro);
+  const refTokensPerCredit = sync.ref_tokens_per_credit;
   return {
     account_id: root,
-    ceiling: String(poolCap(root)?.ceiling ?? 0),
-    issued: String(value.n),
-    remaining: String(rows.reduce((s, a) => s + a.balance, 0)),
-    reserved: String(rows.reduce((s, a) => s + a.reserved, 0)),
-    consumed: String(value.n - rows.reduce((s, a) => s + a.balance, 0)),
-    accounts: rows.map((a) => ({ ...a, balance: String(a.balance), reserved: String(a.reserved) })),
+    unit: "micro_credits" as const,
+    ceiling: String(ceilingMicro),
+    issued: String(issuedMicro),
+    remaining: String(remainingMicro),
+    reserved: String(reservedMicro),
+    consumed: String(consumedMicro),
+    ceiling_micro: ceilingMicro,
+    issued_micro: issuedMicro,
+    remaining_micro: remainingMicro,
+    reserved_micro: reservedMicro,
+    consumed_micro: consumedMicro,
+    available_micro: availableMicro,
+    ceiling_credits: formatCreditsFromMicro(ceilingMicro),
+    issued_credits: formatCreditsFromMicro(issuedMicro),
+    remaining_credits: formatCreditsFromMicro(remainingMicro),
+    reserved_credits: formatCreditsFromMicro(reservedMicro),
+    consumed_credits: formatCreditsFromMicro(consumedMicro),
+    available_credits: formatCreditsFromMicro(availableMicro),
+    ref_tokens_per_credit: refTokensPerCredit,
+    estimated_tokens: microCreditsToEstimatedTokens(availableMicro, refTokensPerCredit),
+    low_balance: issuedMicro > 0 && remainingMicro * 10 <= issuedMicro,
+    digi_sync: {
+      synced: Boolean(sync.last_synced_at),
+      digi_account_id: sync.digi_account_id,
+      last_balance_micro: sync.last_balance_micro,
+      last_reserved_micro: sync.last_reserved_micro,
+      last_available_micro: sync.last_available_micro,
+      last_balance_credits: formatCreditsFromMicro(sync.last_balance_micro),
+      last_reserved_credits: formatCreditsFromMicro(sync.last_reserved_micro),
+      last_available_credits: formatCreditsFromMicro(sync.last_available_micro),
+      base_credit_rupiah: sync.base_credit_rupiah,
+      usd_idr_rate: sync.usd_idr_rate,
+      ref_tokens_per_credit: sync.ref_tokens_per_credit,
+      economic_revision: sync.economic_revision,
+      last_synced_at: sync.last_synced_at,
+      last_sync_source: sync.last_sync_source,
+      last_sync_error: sync.last_sync_error,
+    },
+    accounts: rows.map((a) => ({
+      ...a,
+      balance: String(a.balance),
+      reserved: String(a.reserved),
+      balance_micro: a.balance,
+      reserved_micro: a.reserved,
+      balance_credits: formatCreditsFromMicro(a.balance),
+      reserved_credits: formatCreditsFromMicro(a.reserved),
+      estimated_tokens: microCreditsToEstimatedTokens(
+        Math.max(0, a.balance - a.reserved),
+        refTokensPerCredit
+      ),
+    })),
   };
 }
 export function setPoolCap(root: string, ceiling: number) {
