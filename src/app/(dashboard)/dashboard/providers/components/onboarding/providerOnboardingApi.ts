@@ -35,6 +35,7 @@ export type CompatibleProviderNode = {
 };
 
 export type OnboardingProviderNodes = {
+  bpRouteProviderHardLock?: boolean;
   ccCompatibleProviderEnabled: boolean;
 };
 
@@ -79,6 +80,7 @@ const compatibleProviderNodeInputSchema = z.object({
 
 const providerNodesResponseSchema = z
   .object({
+    bpRouteProviderHardLock: z.boolean().optional(),
     ccCompatibleProviderEnabled: z.boolean().optional(),
   })
   .catchall(z.unknown());
@@ -145,6 +147,14 @@ export async function fetchOnboardingProviderNodes(): Promise<OnboardingProvider
   const response = await fetch("/api/provider-nodes");
   const data = await expectOk<Record<string, unknown>>(response, "Failed to load provider nodes");
   const parsed = parseOrThrow(providerNodesResponseSchema, data, "Invalid provider node response");
+  if (typeof parsed.bpRouteProviderHardLock === "boolean") {
+    return {
+      bpRouteProviderHardLock: parsed.bpRouteProviderHardLock,
+      ccCompatibleProviderEnabled: parsed.bpRouteProviderHardLock
+        ? false
+        : parsed.ccCompatibleProviderEnabled === true,
+    };
+  }
   return { ccCompatibleProviderEnabled: parsed.ccCompatibleProviderEnabled === true };
 }
 

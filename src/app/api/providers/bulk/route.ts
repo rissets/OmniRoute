@@ -33,6 +33,7 @@ import { getProxyForLevel } from "@/lib/db/settings";
 import { resolveProxyForProvider } from "@/lib/db/proxies";
 import { runWithProxyContext } from "@omniroute/open-sse/utils/proxyFetch.ts";
 import { rejectRetiredCommonChatGptWebProvider } from "@/lib/providers/chatgptWebRetirementResponse";
+import { rejectDisallowedBpRouteProvider } from "@/lib/providers/bpRouteHardLockGuard";
 
 // POST /api/providers/bulk — create multiple API-key connections for a single provider.
 // Partial-failure semantics: each entry succeeds or fails independently; the
@@ -67,6 +68,9 @@ export async function POST(request: Request) {
 
   const retirementResponse = rejectRetiredCommonChatGptWebProvider(provider);
   if (retirementResponse) return retirementResponse;
+
+  const hardLockResponse = rejectDisallowedBpRouteProvider(provider);
+  if (hardLockResponse) return hardLockResponse;
 
   const isManagedOrCompatible =
     isManagedProviderConnectionId(provider) ||

@@ -24,6 +24,10 @@ import { providerLacksModelListing } from "@/lib/providers/modelListingCapabilit
 import { compareTr, matchesAnyToken, matchesSearch } from "@/shared/utils/turkishText";
 import { fetchWithTimeout } from "@/shared/utils/fetchTimeout";
 import {
+  isAllowedBpRouteProviderId,
+  isBpRouteProviderHardLockEnabled,
+} from "@/shared/constants/bpRouteProviderPolicy";
+import {
   parseProviderDisplayModePreference,
   type ProviderDisplayMode,
 } from "./providerPageStorage";
@@ -196,8 +200,10 @@ export function readProviderFiltersFromUrl(params: URLSearchParams): ProviderFil
 export function shouldShowProviderSection(
   category: string,
   activeCategory: string | null,
-  showFreeOnly: boolean
+  showFreeOnly: boolean,
+  hardLockEnabled = false
 ): boolean {
+  if (hardLockEnabled) return category === "compatible";
   if (showFreeOnly) return category === "free";
   if (activeCategory) return activeCategory === category;
 
@@ -406,11 +412,13 @@ export function buildCompatibleProviderGroups(
     openaiCompatibleName: string;
     anthropicCompatibleName: string;
     claudeCodeCompatibleName: string;
-  }
+  },
+  options?: { hardLock?: boolean }
 ): CompatibleProviderGroups {
   const openai: CompatibleProviderInfo[] = [];
   const anthropic: CompatibleProviderInfo[] = [];
   const claudeCode: CompatibleProviderInfo[] = [];
+  const hardLock = options?.hardLock === true;
 
   for (const node of providerNodes) {
     if (node.type === "openai-compatible") {
@@ -428,6 +436,7 @@ export function buildCompatibleProviderGroups(
     if (node.type !== "anthropic-compatible") continue;
 
     if (isClaudeCodeCompatibleProvider(node.id)) {
+      if (hardLock) continue;
       claudeCode.push({
         id: node.id,
         name: node.name || labels.claudeCodeCompatibleName,
@@ -676,6 +685,7 @@ export function upsertProviderNodeById<T extends { id?: string | null }>(prev: T
 export interface ProviderPageData {
   connections: any[];
   providerNodes: any[];
+  bpRouteProviderHardLock: boolean;
   ccCompatibleProviderEnabled: boolean;
   expirations: any | null;
   blockedProviders: string[] | null;
@@ -748,10 +758,35 @@ export async function loadProviderPageData(
       safeJson("/api/providers/openrouter-stats"),
     ]);
 
+  const rawNodes = Array.isArray(nodesData?.nodes) ? nodesData.nodes : [];
+  const rawConnections = Array.isArray(connectionsData?.connections)
+    ? connectionsData.connections
+    : [];
+  const bpRouteProviderHardLock =
+    typeof nodesData?.bpRouteProviderHardLock === "boolean"
+      ? nodesData.bpRouteProviderHardLock
+      : typeof settingsData?.bpRouteProviderHardLock === "boolean"
+        ? settingsData.bpRouteProviderHardLock
+        : isBpRouteProviderHardLockEnabled();
+
+  const providerNodes = bpRouteProviderHardLock
+    ? rawNodes.filter((node: { id?: string; type?: string }) =>
+        isAllowedBpRouteProviderId(node?.id, node)
+      )
+    : rawNodes;
+  const connections = bpRouteProviderHardLock
+    ? rawConnections.filter((conn: { provider?: string }) =>
+        isAllowedBpRouteProviderId(conn?.provider)
+      )
+    : rawConnections;
+
   return {
-    connections: Array.isArray(connectionsData?.connections) ? connectionsData.connections : [],
-    providerNodes: Array.isArray(nodesData?.nodes) ? nodesData.nodes : [],
-    ccCompatibleProviderEnabled: nodesData?.ccCompatibleProviderEnabled === true,
+    connections,
+    providerNodes,
+    bpRouteProviderHardLock,
+    ccCompatibleProviderEnabled: bpRouteProviderHardLock
+      ? false
+      : nodesData?.ccCompatibleProviderEnabled === true,
     expirations: expirationsData ?? null,
     blockedProviders: Array.isArray(settingsData?.blockedProviders)
       ? settingsData.blockedProviders

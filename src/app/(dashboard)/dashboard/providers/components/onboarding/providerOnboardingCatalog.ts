@@ -78,7 +78,10 @@ function sortProviderOptions(options: WizardProviderOption[]): WizardProviderOpt
   });
 }
 
-export function getWizardApiKeyProviderOptions(): WizardProviderOption[] {
+export function getWizardApiKeyProviderOptions(options?: {
+  hardLock?: boolean;
+}): WizardProviderOption[] {
+  if (options?.hardLock) return [];
   const freeApiKeyProviders = Object.values(FREE_PROVIDERS).filter(
     (provider) => provider.noAuth || supportsApiKeyOnFreeProvider(provider.id)
   );
@@ -88,7 +91,10 @@ export function getWizardApiKeyProviderOptions(): WizardProviderOption[] {
   return sortProviderOptions(providers.map((provider) => toProviderOption(provider, "apikey")));
 }
 
-export function getWizardOAuthProviderOptions(): WizardProviderOption[] {
+export function getWizardOAuthProviderOptions(options?: {
+  hardLock?: boolean;
+}): WizardProviderOption[] {
+  if (options?.hardLock) return [];
   const providersById = new Map<string, WizardProviderDefinition>();
   for (const provider of [...Object.values(OAUTH_PROVIDERS), ...Object.values(FREE_PROVIDERS)]) {
     if (SUPPORTED_WIZARD_OAUTH_PROVIDER_IDS.has(provider.id)) {

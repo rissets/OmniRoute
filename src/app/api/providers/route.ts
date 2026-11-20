@@ -74,6 +74,11 @@ import { applyOperatorActivationIntent } from "@/lib/providers/operatorDisable";
 import { getRequestPeerLocality } from "@/shared/utils/apiAuth";
 import { hydrateCompatibleNodeCreation } from "@/lib/providers/compatibleNodeCreation";
 import { sanitizeErrorMessage } from "@omniroute/open-sse/utils/error.ts";
+import {
+  filterAllowedBpRouteConnections,
+  rejectDisallowedBpRouteProvider,
+} from "@/lib/providers/bpRouteHardLockGuard";
+import { isBpRouteProviderHardLockEnabled } from "@/shared/constants/bpRouteProviderPolicy";
 
 function projectCodexAccountPoolWithRoutingQuota(
   connection: Parameters<typeof projectCodexAccountPool>[0],
@@ -135,9 +140,19 @@ export async function GET(request: Request) {
     const offset =
       Number.isInteger(parsedOffset) && parsedOffset && parsedOffset > 0 ? parsedOffset : 0;
     const filter = provider ? { provider } : {};
+    const hardLock = isBpRouteProviderHardLockEnabled();
 
-    const connections = await getProviderConnections(filter, limit, offset);
-    const total = getProviderConnectionsCount(filter);
+    const rawConnections = await getProviderConnections(
+      filter,
+      hardLock ? undefined : limit,
+      hardLock ? 0 : offset
+    );
+    const filteredConnections = filterAllowedBpRouteConnections(rawConnections);
+    const connections =
+      hardLock && (limit !== undefined || offset > 0)
+        ? filteredConnections.slice(offset, limit !== undefined ? offset + limit : undefined)
+        : filteredConnections;
+    const total = hardLock ? filteredConnections.length : getProviderConnectionsCount(filter);
     const revealKeys = isApiKeyRevealEnabled();
 
     const quotaCache = connections.some((c) => c.provider === "codex")
@@ -235,6 +250,21 @@ export async function POST(request: Request) {
       rejectRetiredCommonChatGptWebProvider(requestedProvider) ??
       rejectRetiredCommonChatGptWebProvider(provider);
     if (retirementResponse) return retirementResponse;
+
+    const hardLockNode =
+      isBpRouteProviderHardLockEnabled() &&
+      typeof provider === "string" &&
+      provider.startsWith("ce_")
+        ? ((await resolveProviderNodeForConnection(provider)) as {
+            id?: string;
+            type?: string;
+          } | null)
+        : null;
+    const hardLockResponse =
+      rejectDisallowedBpRouteProvider(requestedProvider, hardLockNode) ??
+      rejectDisallowedBpRouteProvider(provider, hardLockNode);
+    if (hardLockResponse) return hardLockResponse;
+
     if (allowNoCredential === true && !providerAllowsOptionalApiKey(provider)) {
       return NextResponse.json(
         { error: "This provider does not allow a connection without a credential" },
@@ -250,6 +280,7 @@ export async function POST(request: Request) {
       isManagedProviderConnectionId(provider) ||
       isOpenAICompatibleProvider(provider) ||
       isAnthropicCompatibleProvider(provider) ||
+      Boolean(hardLockNode) ||
       isNoAuthProvider;
 
     if (!isValidProvider) {
@@ -309,8 +340,8 @@ export async function POST(request: Request) {
       }
     }
 
-    if (isOpenAICompatibleProvider(provider)) {
-      const node: any = await resolveProviderNodeForConnection(provider);
+    if (isOpenAICompatibleProvider(provider) || hardLockNode?.type === "openai-compatible") {
+      const node: any = hardLockNode || (await resolveProviderNodeForConnection(provider));
       if (!node) {
         return NextResponse.json({ error: "OpenAI Compatible node not found" }, { status: 404 });
       }
@@ -515,14 +546,18 @@ export async function PATCH(request: Request) {
   const { ids, isActive } = validation.data;
 
   try {
-    if (isActive) {
+    if (isActive || isBpRouteProviderHardLockEnabled()) {
       const requestedIds = new Set(ids);
       const requestedConnections = (
         await getProviderConnections({}, undefined, undefined, ["id", "provider"])
       ).filter((connection) => requestedIds.has(connection.id));
       for (const connection of requestedConnections) {
-        const retirementResponse = rejectRetiredCommonChatGptWebProvider(connection.provider);
-        if (retirementResponse) return retirementResponse;
+        if (isActive) {
+          const retirementResponse = rejectRetiredCommonChatGptWebProvider(connection.provider);
+          if (retirementResponse) return retirementResponse;
+        }
+        const hardLockResponse = rejectDisallowedBpRouteProvider(connection.provider);
+        if (hardLockResponse) return hardLockResponse;
       }
     }
 

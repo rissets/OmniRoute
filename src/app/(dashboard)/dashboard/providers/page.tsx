@@ -231,6 +231,7 @@ function ProvidersPageContent() {
   const router = useRouter();
   const [connections, setConnections] = useState<any[]>([]);
   const [providerNodes, setProviderNodes] = useState<any[]>([]);
+  const [bpRouteProviderHardLock, setBpRouteProviderHardLock] = useState(true);
   const [ccCompatibleProviderEnabled, setCcCompatibleProviderEnabled] = useState(false);
   const [blockedProviders, setBlockedProviders] = useState<string[]>([]);
   const [expirations, setExpirations] = useState<any>(null);
@@ -270,7 +271,12 @@ function ProvidersPageContent() {
   };
   const showSection = (category: string) => {
     const normalizedCategory = sectionCategoryAliases[category] ?? category;
-    return shouldShowProviderSection(normalizedCategory, activeCategory, showFreeOnly);
+    return shouldShowProviderSection(
+      normalizedCategory,
+      activeCategory,
+      showFreeOnly,
+      bpRouteProviderHardLock
+    );
   };
   const t = useTranslations("providers");
   const tc = useTranslations("common");
@@ -308,6 +314,7 @@ function ProvidersPageContent() {
         const data = await loadProviderPageData();
         setConnections(data.connections);
         setProviderNodes(data.providerNodes);
+        setBpRouteProviderHardLock(data.bpRouteProviderHardLock);
         setCcCompatibleProviderEnabled(data.ccCompatibleProviderEnabled);
         if (data.expirations) setExpirations(data.expirations);
         if (data.blockedProviders) setBlockedProviders(data.blockedProviders);
@@ -543,12 +550,16 @@ function ProvidersPageContent() {
 
   const compatibleProviderGroups = useMemo(
     () =>
-      buildCompatibleProviderGroups(providerNodes, {
-        openaiCompatibleName: t("openaiCompatibleName"),
-        anthropicCompatibleName: t("anthropicCompatibleName"),
-        claudeCodeCompatibleName: ccCompatibleLabel,
-      }),
-    [ccCompatibleLabel, providerNodes, t]
+      buildCompatibleProviderGroups(
+        providerNodes,
+        {
+          openaiCompatibleName: t("openaiCompatibleName"),
+          anthropicCompatibleName: t("anthropicCompatibleName"),
+          claudeCodeCompatibleName: ccCompatibleLabel,
+        },
+        { hardLock: bpRouteProviderHardLock }
+      ),
+    [bpRouteProviderHardLock, ccCompatibleLabel, providerNodes, t]
   );
   const compatibleProviders = compatibleProviderGroups.openai;
   const anthropicCompatibleProviders = compatibleProviderGroups.anthropic;
@@ -758,13 +769,15 @@ function ProvidersPageContent() {
       displayAuthType: "compatible" as const,
       toggleAuthType: "apikey" as const,
     })),
-    ...ccCompatibleProviders.map((provider) => ({
-      providerId: provider.id,
-      provider,
-      stats: getProviderStats(provider.id, "apikey"),
-      displayAuthType: "compatible" as const,
-      toggleAuthType: "apikey" as const,
-    })),
+    ...(bpRouteProviderHardLock
+      ? []
+      : ccCompatibleProviders.map((provider) => ({
+          providerId: provider.id,
+          provider,
+          stats: getProviderStats(provider.id, "apikey"),
+          displayAuthType: "compatible" as const,
+          toggleAuthType: "apikey" as const,
+        }))),
   ];
   const compatibleProviderEntries = filterConfiguredProviderEntries(
     compatibleProviderEntriesAll,
@@ -844,45 +857,65 @@ function ProvidersPageContent() {
   );
   const visibleWebFetchEntries = resolveVisibleWebFetchEntries(webFetchEntries, activeCategory);
 
-  const compactProviderEntries = buildCompactProviderEntriesForPage({
-    activeCategory,
-    showFreeOnly,
-    freeSectionEntries,
-    compatibleProviderEntries,
-    oauthProviderEntries,
-    ideProviderEntries,
-    noAuthEntries,
-    upstreamProxyEntries,
-    llmProviderEntries,
-    aggregatorProviderEntries,
-    enterpriseProviderEntries,
-    embeddingRerankProviderEntries,
-    imageProviderEntries,
-    videoProviderEntries,
-    webCookieProviderEntries,
-    searchProviderEntries,
-    webFetchEntries,
-    audioProviderEntries,
-    localProviderEntries,
-    cloudAgentProviderEntries,
-  });
+  const compactProviderEntries = bpRouteProviderHardLock
+    ? compatibleProviderEntries
+    : buildCompactProviderEntriesForPage({
+        activeCategory,
+        showFreeOnly,
+        freeSectionEntries,
+        compatibleProviderEntries,
+        oauthProviderEntries,
+        ideProviderEntries,
+        noAuthEntries,
+        upstreamProxyEntries,
+        llmProviderEntries,
+        aggregatorProviderEntries,
+        enterpriseProviderEntries,
+        embeddingRerankProviderEntries,
+        imageProviderEntries,
+        videoProviderEntries,
+        webCookieProviderEntries,
+        searchProviderEntries,
+        webFetchEntries,
+        audioProviderEntries,
+        localProviderEntries,
+        cloudAgentProviderEntries,
+      });
 
-  const summaryStats = {
-    all: countConfigured(dashboardProviderEntriesAll),
-    free: countConfigured(freeSectionEntriesAll),
-    noauth: countConfigured(noAuthEntriesAll),
-    oauth: countConfigured(oauthOnlyEntriesAll),
-    apikey: countConfigured(apiKeyProviderEntriesAll),
-    compatible: countConfigured(compatibleProviderEntriesAll),
-    webcookie: countConfigured(webCookieProviderEntriesAll),
-    search: countConfigured(searchProviderEntriesAll),
-    audio: countConfigured(audioProviderEntriesAll),
-    local: countConfigured(localProviderEntriesAll),
-    upstreamproxy: countConfigured(upstreamProxyEntriesAll),
-    cloudagent: countConfigured(cloudAgentProviderEntriesAll),
-    ide: countConfigured(ideProviderEntriesAll),
-    webfetch: countConfigured(webFetchEntriesAll),
-  };
+  const emptyStat = { configured: 0, total: 0 };
+  const summaryStats = bpRouteProviderHardLock
+    ? {
+        all: countConfigured(compatibleProviderEntriesAll),
+        free: emptyStat,
+        noauth: emptyStat,
+        oauth: emptyStat,
+        apikey: emptyStat,
+        compatible: countConfigured(compatibleProviderEntriesAll),
+        webcookie: emptyStat,
+        search: emptyStat,
+        audio: emptyStat,
+        local: emptyStat,
+        upstreamproxy: emptyStat,
+        cloudagent: emptyStat,
+        ide: emptyStat,
+        webfetch: emptyStat,
+      }
+    : {
+        all: countConfigured(dashboardProviderEntriesAll),
+        free: countConfigured(freeSectionEntriesAll),
+        noauth: countConfigured(noAuthEntriesAll),
+        oauth: countConfigured(oauthOnlyEntriesAll),
+        apikey: countConfigured(apiKeyProviderEntriesAll),
+        compatible: countConfigured(compatibleProviderEntriesAll),
+        webcookie: countConfigured(webCookieProviderEntriesAll),
+        search: countConfigured(searchProviderEntriesAll),
+        audio: countConfigured(audioProviderEntriesAll),
+        local: countConfigured(localProviderEntriesAll),
+        upstreamproxy: countConfigured(upstreamProxyEntriesAll),
+        cloudagent: countConfigured(cloudAgentProviderEntriesAll),
+        ide: countConfigured(ideProviderEntriesAll),
+        webfetch: countConfigured(webFetchEntriesAll),
+      };
   if (loading) {
     return (
       <div className="flex flex-col gap-8">
@@ -898,38 +931,69 @@ function ProvidersPageContent() {
   return (
     <OpenRouterProviderStatsProvider entries={openRouterProviderStats}>
       <div className="flex flex-col gap-6">
-        <DeprecatedProviderBanner />
+        {!bpRouteProviderHardLock && <DeprecatedProviderBanner />}
 
         {showFirstProviderHint && (
           <Card padding="lg">
-            <KitEmptyState
-              icon={<Icon name="dns" size={32} />}
-              title={t("addFirstProvider") || "Add your first provider"}
-              description={
-                t("addFirstProviderDesc") ||
-                "Connect an AI provider to start routing requests through BP Batam AI Gateway. You can use free providers, API keys, or OAuth accounts."
-              }
-              actions={
-                <>
-                  <Button icon="add" onClick={() => router.push("/dashboard/providers/new")}>
-                    {providerText(t, "onboardingWizard", "Provider Onboarding Wizard")}
-                  </Button>
-                  <a
-                    href="/dashboard/help"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={buttonVariants({ variant: "outline" })}
-                  >
-                    <Icon name="help" size={16} />
-                    {t("learnMore") || "Learn more"}
-                  </a>
-                </>
-              }
-            />
+            {bpRouteProviderHardLock ? (
+              <KitEmptyState
+                icon={<Icon name="hub" size={32} />}
+                title={providerText(
+                  t,
+                  "bpRouteEmptyTitle",
+                  "Connect an upstream Digi Route endpoint"
+                )}
+                description={providerText(
+                  t,
+                  "bpRouteEmptyDesc",
+                  "BP Route routes requests exclusively through OpenAI-compatible and Anthropic-compatible custom endpoints connected to Digi Route. Built-in providers are disabled."
+                )}
+                actions={
+                  <>
+                    <Button icon="add" onClick={() => setShowAddCompatibleModal(true)}>
+                      {t("addOpenAICompatible")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      icon="add"
+                      onClick={() => setShowAddAnthropicCompatibleModal(true)}
+                    >
+                      {t("addAnthropicCompatible")}
+                    </Button>
+                  </>
+                }
+              />
+            ) : (
+              <KitEmptyState
+                icon={<Icon name="dns" size={32} />}
+                title={t("addFirstProvider") || "Add your first provider"}
+                description={
+                  t("addFirstProviderDesc") ||
+                  "Connect an AI provider to start routing requests through BP Batam AI Gateway. You can use free providers, API keys, or OAuth accounts."
+                }
+                actions={
+                  <>
+                    <Button icon="add" onClick={() => router.push("/dashboard/providers/new")}>
+                      {providerText(t, "onboardingWizard", "Provider Onboarding Wizard")}
+                    </Button>
+                    <a
+                      href="/dashboard/help"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={buttonVariants({ variant: "outline" })}
+                    >
+                      <Icon name="help" size={16} />
+                      {t("learnMore") || "Learn more"}
+                    </a>
+                  </>
+                }
+              />
+            )}
           </Card>
         )}
 
         <ProviderSummaryCard
+          hardLockEnabled={bpRouteProviderHardLock}
           activeCategory={activeCategory}
           activeServiceKind={activeServiceKind}
           onServiceKindChange={setActiveServiceKind}
@@ -1024,19 +1088,29 @@ function ProvidersPageContent() {
                   title={
                     <span className="flex items-center gap-2">
                       {t("compatibleProviders")}{" "}
-                      <span
-                        className="size-2.5 rounded-full bg-orange-500"
-                        title={t("compatibleLabel")}
-                      />
+                      {!bpRouteProviderHardLock && (
+                        <span
+                          className="size-2.5 rounded-full bg-orange-500"
+                          title={t("compatibleLabel")}
+                        />
+                      )}
                       <ProviderCountBadge {...countConfigured(compatibleProviderEntriesAll)} />
                     </span>
                   }
-                  description={t("compatibleProvidersDesc")}
+                  description={
+                    bpRouteProviderHardLock
+                      ? providerText(
+                          t,
+                          "bpRouteCompatibleProvidersDesc",
+                          "Configure OpenAI-compatible and Anthropic-compatible custom endpoints connected to upstream Digi Route. Built-in providers are disabled in BP Route."
+                        )
+                      : t("compatibleProvidersDesc")
+                  }
                   actions={
                     <div className="flex flex-wrap gap-2">
                       {(compatibleProviders.length > 0 ||
                         anthropicCompatibleProviders.length > 0 ||
-                        ccCompatibleProviders.length > 0) && (
+                        (!bpRouteProviderHardLock && ccCompatibleProviders.length > 0)) && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -1049,7 +1123,7 @@ function ProvidersPageContent() {
                           {testingMode === "compatible" ? t("testing") : t("testAll")}
                         </Button>
                       )}
-                      {ccCompatibleProviderEnabled && (
+                      {!bpRouteProviderHardLock && ccCompatibleProviderEnabled && (
                         <Button
                           size="sm"
                           icon="add"
@@ -1073,7 +1147,7 @@ function ProvidersPageContent() {
                 />
                 {compatibleProviders.length === 0 &&
                 anthropicCompatibleProviders.length === 0 &&
-                ccCompatibleProviders.length === 0 ? (
+                (bpRouteProviderHardLock || ccCompatibleProviders.length === 0) ? (
                   <KitEmptyState
                     compact
                     icon={<Icon name="extension" size={18} />}
@@ -1854,6 +1928,7 @@ function ProvidersPageContent() {
         <AddCompatibleProviderModal
           isOpen={showAddCompatibleModal}
           mode="openai"
+          hardLockEnabled={bpRouteProviderHardLock}
           onClose={() => setShowAddCompatibleModal(false)}
           onCreated={(node) => {
             setProviderNodes((prev) => upsertProviderNodeById(prev, node));
@@ -1864,6 +1939,7 @@ function ProvidersPageContent() {
         <AddCompatibleProviderModal
           isOpen={showAddAnthropicCompatibleModal}
           mode="anthropic"
+          hardLockEnabled={bpRouteProviderHardLock}
           onClose={() => setShowAddAnthropicCompatibleModal(false)}
           onCreated={(node) => {
             setProviderNodes((prev) => upsertProviderNodeById(prev, node));
@@ -1871,7 +1947,7 @@ function ProvidersPageContent() {
             router.push(`/dashboard/providers/${node.id}`);
           }}
         />
-        {ccCompatibleProviderEnabled && (
+        {!bpRouteProviderHardLock && ccCompatibleProviderEnabled && (
           <AddCompatibleProviderModal
             isOpen={showAddCcCompatibleModal}
             mode="cc"
@@ -1884,11 +1960,13 @@ function ProvidersPageContent() {
             }}
           />
         )}
-        <ImportProvidersFromFileModal
-          isOpen={showImportFromFileModal}
-          onClose={() => setShowImportFromFileModal(false)}
-          onImported={async () => setConnections((await loadProviderPageData()).connections)}
-        />
+        {!bpRouteProviderHardLock && (
+          <ImportProvidersFromFileModal
+            isOpen={showImportFromFileModal}
+            onClose={() => setShowImportFromFileModal(false)}
+            onImported={async () => setConnections((await loadProviderPageData()).connections)}
+          />
+        )}
         {/* Test Results Modal */}
         <Modal
           isOpen={!!testResults}

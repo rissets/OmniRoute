@@ -46,6 +46,8 @@ import { sanitizeErrorMessage } from "@omniroute/open-sse/utils/error";
 import { GITLAB_DUO_OAUTH_SETUP_MESSAGE } from "@/shared/constants/gitlabDuoSetupMessage";
 import { keychainImportOnlyGuard } from "./keychainImportOnly";
 import { buildRemoteOAuthHint } from "./remoteOAuthHint";
+import { bpRouteProviderLockedResponse } from "@/lib/providers/bpRouteHardLockGuard";
+import { isBpRouteProviderHardLockEnabled } from "@/shared/constants/bpRouteProviderPolicy";
 
 // Persist one callback server per provider across Next.js HMR reloads.
 if (!globalThis.__pkceCallbackStates) {
@@ -149,6 +151,9 @@ export async function GET(
   // is asking — answering 401 first would mislead callers into thinking the
   // route is gated rather than gone. See spec
   try {
+    if (isBpRouteProviderHardLockEnabled()) {
+      return bpRouteProviderLockedResponse();
+    }
     const earlyParams = await params;
     if (
       RETIRED_PKCE_PROVIDERS.has(earlyParams.provider) &&
@@ -412,6 +417,9 @@ export async function POST(
   // Phase 1 hotfix (2026-05-29): retired PKCE flows return 410 Gone BEFORE auth.
   // See GET handler comment.
   try {
+    if (isBpRouteProviderHardLockEnabled()) {
+      return bpRouteProviderLockedResponse();
+    }
     const earlyParams = await params;
     if (
       RETIRED_PKCE_PROVIDERS.has(earlyParams.provider) &&

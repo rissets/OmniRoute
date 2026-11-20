@@ -17,6 +17,7 @@ import { validateProviderApiKeySchema } from "@/shared/validation/schemas";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
 import { runWithProxyContextOrDirect } from "@omniroute/open-sse/utils/proxyFetch.ts";
 import { rejectRetiredCommonChatGptWebProvider } from "@/lib/providers/chatgptWebRetirementResponse";
+import { rejectDisallowedBpRouteProvider } from "@/lib/providers/bpRouteHardLockGuard";
 
 function sanitizeAuditUrl(url: string | null | undefined) {
   if (!url) return null;
@@ -71,6 +72,9 @@ export async function POST(request) {
 
     const retirementResponse = rejectRetiredCommonChatGptWebProvider(provider);
     if (retirementResponse) return retirementResponse;
+
+    const hardLockResponse = rejectDisallowedBpRouteProvider(provider);
+    if (hardLockResponse) return hardLockResponse;
 
     let providerSpecificData: any = { validationModelId };
     if (customUserAgent) {

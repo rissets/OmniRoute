@@ -32,6 +32,11 @@ import { getProxyForLevel } from "@/lib/db/settings";
 import { resolveProxyForProvider } from "@/lib/db/proxies";
 import { runWithProxyContext } from "@omniroute/open-sse/utils/proxyFetch.ts";
 import { rejectRetiredCommonChatGptWebProvider } from "@/lib/providers/chatgptWebRetirementResponse";
+import {
+  BP_ROUTE_PROVIDER_LOCKED_MESSAGE,
+  isAllowedBpRouteProviderId,
+  isBpRouteProviderHardLockEnabled,
+} from "@/shared/constants/bpRouteProviderPolicy";
 
 type ImportEntry = {
   provider: string;
@@ -73,6 +78,9 @@ async function resolveProviderSpecificData(
 // drags the server runtime into the browser/CLI bundle). Extracted as a helper so the
 // per-row check adds no branches to importOneEntry's own complexity.
 function isKnownImportProvider(provider: string): boolean {
+  if (isBpRouteProviderHardLockEnabled() && !isAllowedBpRouteProviderId(provider)) {
+    return false;
+  }
   return (
     isManagedProviderConnectionId(provider) ||
     isOpenAICompatibleProvider(provider) ||
@@ -85,6 +93,9 @@ async function importOneEntry(
   validateKeys: boolean,
   allowLocalSpawn: boolean
 ): Promise<{ created: Record<string, unknown> } | { error: string }> {
+  if (isBpRouteProviderHardLockEnabled() && !isAllowedBpRouteProviderId(entry.provider)) {
+    return { error: BP_ROUTE_PROVIDER_LOCKED_MESSAGE };
+  }
   // Reject unknown providers per-row, preserving the partial-failure contract of /bulk.
   if (!isKnownImportProvider(entry.provider)) {
     return { error: "Unknown or unsupported provider" };

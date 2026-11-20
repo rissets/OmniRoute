@@ -335,6 +335,7 @@ export default function ProviderOnboardingWizard() {
   const [submitting, setSubmitting] = useState(false);
   const [showOAuthModal, setShowOAuthModal] = useState(false);
   const [knownOAuthConnectionIds, setKnownOAuthConnectionIds] = useState<Set<string>>(new Set());
+  const [bpRouteProviderHardLock, setBpRouteProviderHardLock] = useState(false);
   const [ccCompatibleProviderEnabled, setCcCompatibleProviderEnabled] = useState(false);
 
   const providerOptions = kind === "oauth" ? oauthOptions : apiKeyOptions;
@@ -346,8 +347,18 @@ export default function ProviderOnboardingWizard() {
     fetchOnboardingProviderNodes()
       .then((data) => {
         if (!cancelled) {
-          setCcCompatibleProviderEnabled(data.ccCompatibleProviderEnabled);
-          if (!data.ccCompatibleProviderEnabled) {
+          const hardLock = data.bpRouteProviderHardLock === true;
+          setBpRouteProviderHardLock(hardLock);
+          setCcCompatibleProviderEnabled(hardLock ? false : data.ccCompatibleProviderEnabled);
+          if (hardLock) {
+            setKind("custom");
+            setStep((current) => (current === "result" ? current : "credentials"));
+            setCustomForm((current) =>
+              current.mode === "cc"
+                ? { ...current, mode: "openai", baseUrl: "https://api.openai.com/v1", chatPath: "" }
+                : current
+            );
+          } else if (!data.ccCompatibleProviderEnabled) {
             setCustomForm((current) =>
               current.mode === "cc"
                 ? { ...current, mode: "openai", baseUrl: "https://api.openai.com/v1" }
@@ -544,10 +555,15 @@ export default function ProviderOnboardingWizard() {
             {text("onboardingWizard", "Provider Onboarding Wizard")}
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-text-muted">
-            {text(
-              "onboardingWizardDescription",
-              "Connect API-key, custom compatible, and OAuth providers with validation, persistence, and an immediate connection test."
-            )}
+            {bpRouteProviderHardLock
+              ? text(
+                  "bpRouteWizardDescription",
+                  "Connect an OpenAI-compatible or Anthropic-compatible custom endpoint to upstream Digi Route with validation, persistence, and an immediate connection test."
+                )
+              : text(
+                  "onboardingWizardDescription",
+                  "Connect API-key, custom compatible, and OAuth providers with validation, persistence, and an immediate connection test."
+                )}
           </p>
         </div>
         <Button variant="ghost" onClick={() => router.push("/dashboard/providers")}>
@@ -556,16 +572,20 @@ export default function ProviderOnboardingWizard() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <StepPill
-          label={text("onboardingStepType", "Type")}
-          active={step === "type"}
-          done={currentStepIndex > 0}
-        />
-        <StepPill
-          label={text("onboardingStepProvider", "Provider")}
-          active={step === "provider"}
-          done={currentStepIndex > 1}
-        />
+        {!bpRouteProviderHardLock && (
+          <>
+            <StepPill
+              label={text("onboardingStepType", "Type")}
+              active={step === "type"}
+              done={currentStepIndex > 0}
+            />
+            <StepPill
+              label={text("onboardingStepProvider", "Provider")}
+              active={step === "provider"}
+              done={currentStepIndex > 1}
+            />
+          </>
+        )}
         <StepPill
           label={text("onboardingStepCredentials", "Credentials")}
           active={step === "credentials" || step === "oauth"}
@@ -588,7 +608,7 @@ export default function ProviderOnboardingWizard() {
         <ProviderTosNotice providerId={selectedProvider.id} />
       )}
 
-      {step === "type" && (
+      {step === "type" && !bpRouteProviderHardLock && (
         <Card padding="lg">
           <div className="grid gap-4 md:grid-cols-3">
             {[
@@ -778,15 +798,22 @@ export default function ProviderOnboardingWizard() {
                   )}
                 </h2>
                 <p className="text-sm text-text-muted">
-                  {text(
-                    "onboardingCreateCustomCompatibleDescription",
-                    "The wizard creates a provider node first, then stores and tests its API-key connection."
-                  )}
+                  {bpRouteProviderHardLock
+                    ? text(
+                        "bpRouteWizardCompatibleDescription",
+                        "Create an OpenAI-compatible or Anthropic-compatible custom endpoint connected to upstream Digi Route."
+                      )
+                    : text(
+                        "onboardingCreateCustomCompatibleDescription",
+                        "The wizard creates a provider node first, then stores and tests its API-key connection."
+                      )}
                 </p>
               </div>
-              <Button variant="secondary" onClick={() => setStep("type")}>
-                {text("onboardingChangeType", "Change type")}
-              </Button>
+              {!bpRouteProviderHardLock && (
+                <Button variant="secondary" onClick={() => setStep("type")}>
+                  {text("onboardingChangeType", "Change type")}
+                </Button>
+              )}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Select
@@ -872,9 +899,11 @@ export default function ProviderOnboardingWizard() {
                   ? text("onboardingWorking", "Working…")
                   : text("onboardingCreateSaveTest", "Create, save and test")}
               </Button>
-              <Button variant="ghost" onClick={() => setStep("type")}>
-                {text("onboardingBack", "Back")}
-              </Button>
+              {!bpRouteProviderHardLock && (
+                <Button variant="ghost" onClick={() => setStep("type")}>
+                  {text("onboardingBack", "Back")}
+                </Button>
+              )}
             </div>
           </div>
         </Card>

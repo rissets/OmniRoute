@@ -57,6 +57,7 @@ interface ProviderConnectionsFetchResult {
   connections: ConnectionRowConnection[] | null;
   node: any;
   nodeResolved: boolean;
+  bpRouteProviderHardLock: boolean;
 }
 
 async function loadProviderConnectionsData(
@@ -71,6 +72,7 @@ async function loadProviderConnectionsData(
     ]);
     const connectionsData = await connectionsRes.json();
     const nodesData = await nodesRes.json();
+    const bpRouteProviderHardLock = nodesRes.ok && nodesData?.bpRouteProviderHardLock === true;
     const connections = connectionsRes.ok
       ? (connectionsData.connections || []).filter((c: any) =>
           connectionBelongsToProviderPage(c.provider, providerId)
@@ -94,7 +96,7 @@ async function loadProviderConnectionsData(
         }
       }
     }
-    return { connections, node, nodeResolved };
+    return { connections, node, nodeResolved, bpRouteProviderHardLock };
   } catch (error) {
     console.log("Error fetching connections:", error);
     return null;
@@ -158,6 +160,7 @@ export interface UseProviderConnectionsReturn {
   // State
   connections: ConnectionRowConnection[];
   providerNode: any;
+  bpRouteProviderHardLock: boolean;
   loading: boolean;
   retestingId: string | null;
   /** Connection id whose cooldown-clear PUT is in flight (drives button spinners). */
@@ -266,6 +269,7 @@ export function useProviderConnections(
   const [connections, setConnections] = useState<ConnectionRowConnection[]>([]);
   const handleToggleQuotaVisibility = useProviderQuotaVisibility(setConnections, notify, t);
   const [providerNode, setProviderNode] = useState<any>(null);
+  const [bpRouteProviderHardLock, setBpRouteProviderHardLock] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // ── test state ──────────────────────────────────────────────────────────
@@ -355,6 +359,7 @@ export function useProviderConnections(
     if (result) {
       if (result.connections) setConnections(result.connections);
       if (result.nodeResolved) setProviderNode(result.node);
+      setBpRouteProviderHardLock(result.bpRouteProviderHardLock);
     }
     setLoading(false);
   }, [providerId, isCompatible]);
@@ -372,6 +377,7 @@ export function useProviderConnections(
       if (result) {
         if (result.connections) setConnections(result.connections);
         if (result.nodeResolved) setProviderNode(result.node);
+        setBpRouteProviderHardLock(result.bpRouteProviderHardLock);
       }
       setLoading(false);
     };
@@ -1103,6 +1109,7 @@ export function useProviderConnections(
     // State
     connections,
     providerNode,
+    bpRouteProviderHardLock,
     loading,
     retestingId,
     batchTesting,

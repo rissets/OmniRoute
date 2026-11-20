@@ -10,6 +10,8 @@ import {
   withFreeProviderSetupLock,
 } from "@/lib/providers/freeOnboarding";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
+import { bpRouteProviderLockedResponse } from "@/lib/providers/bpRouteHardLockGuard";
+import { isBpRouteProviderHardLockEnabled } from "@/shared/constants/bpRouteProviderPolicy";
 
 const setupSchema = z.object({
   providerIds: z.array(z.string().trim().min(1)).min(1).max(20),
@@ -19,6 +21,10 @@ const setupSchema = z.object({
 export async function GET(request: Request) {
   const authError = await requireManagementAuth(request);
   if (authError) return authError;
+
+  if (isBpRouteProviderHardLockEnabled()) {
+    return NextResponse.json({ providers: [], bpRouteProviderHardLock: true });
+  }
 
   try {
     const candidates = getEligibleFreeOnboardingProviders();
@@ -34,6 +40,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const authError = await requireManagementAuth(request);
   if (authError) return authError;
+
+  if (isBpRouteProviderHardLockEnabled()) {
+    return bpRouteProviderLockedResponse();
+  }
 
   let rawBody: unknown;
   try {

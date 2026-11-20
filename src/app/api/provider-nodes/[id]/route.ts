@@ -12,6 +12,11 @@ import { isClaudeCodeCompatibleProvider } from "@/shared/constants/providers";
 import { updateProviderNodeSchema } from "@/shared/validation/schemas";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
 import { validateProviderNodeBaseUrl } from "../urlGuard";
+import { bpRouteProviderLockedResponse } from "@/lib/providers/bpRouteHardLockGuard";
+import {
+  isAllowedBpRouteProviderId,
+  isBpRouteProviderHardLockEnabled,
+} from "@/shared/constants/bpRouteProviderPolicy";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -56,12 +61,26 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (isValidationFailure(validation)) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
-    const { name, prefix, apiType, baseUrl, chatPath, modelsPath, customHeaders, iconUrl, dailyQuotaResetTimezone, dailyQuotaResetHour } =
-      validation.data;
+    const {
+      name,
+      prefix,
+      apiType,
+      baseUrl,
+      chatPath,
+      modelsPath,
+      customHeaders,
+      iconUrl,
+      dailyQuotaResetTimezone,
+      dailyQuotaResetHour,
+    } = validation.data;
     const node: any = await getProviderNodeById(id);
 
     if (!node) {
       return NextResponse.json({ error: "Provider node not found" }, { status: 404 });
+    }
+
+    if (isBpRouteProviderHardLockEnabled() && !isAllowedBpRouteProviderId(id, node)) {
+      return bpRouteProviderLockedResponse();
     }
 
     // Only validate apiType for OpenAI Compatible nodes
@@ -110,9 +129,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const updated = await updateProviderNode(id, updates);
 
     try {
-      const { registerMoonshotFetchersForNodes } = await import(
-        "@omniroute/open-sse/services/moonshotQuotaFetcher.ts"
-      );
+      const { registerMoonshotFetchersForNodes } =
+        await import("@omniroute/open-sse/services/moonshotQuotaFetcher.ts");
       registerMoonshotFetchersForNodes([
         {
           id: typeof updated?.id === "string" ? updated.id : id,
