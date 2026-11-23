@@ -12,11 +12,6 @@ import { isClaudeCodeCompatibleProvider } from "@/shared/constants/providers";
 import { updateProviderNodeSchema } from "@/shared/validation/schemas";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
 import { validateProviderNodeBaseUrl } from "../urlGuard";
-import { bpRouteProviderLockedResponse } from "@/lib/providers/bpRouteHardLockGuard";
-import {
-  isAllowedBpRouteProviderId,
-  isBpRouteProviderHardLockEnabled,
-} from "@/shared/constants/bpRouteProviderPolicy";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -77,10 +72,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     if (!node) {
       return NextResponse.json({ error: "Provider node not found" }, { status: 404 });
-    }
-
-    if (isBpRouteProviderHardLockEnabled() && !isAllowedBpRouteProviderId(id, node)) {
-      return bpRouteProviderLockedResponse();
     }
 
     // Only validate apiType for OpenAI Compatible nodes

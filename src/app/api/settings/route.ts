@@ -50,7 +50,6 @@ import {
   AUTHZ_HEADER_AUTH_KIND,
   AUTHZ_HEADER_PEER_LOCALITY,
 } from "@/server/authz/headers";
-import { isBpRouteProviderHardLockEnabled } from "@/shared/constants/bpRouteProviderPolicy";
 
 /**
  * Force this route to run dynamically per-request and never be cached/prerendered.
@@ -233,7 +232,6 @@ export async function GET(request: Request) {
         // without a dedicated round trip. See sidebarVisibility.ts's
         // `isSidebarItemVisibleForFlags()`.
         radarEnabled: isFeatureFlagEnabled("RADAR_ENABLED"),
-        bpRouteProviderHardLock: isBpRouteProviderHardLockEnabled(),
         // Owner-only operational link. This route is management-authenticated;
         // the URL has no public default and is omitted from static client code.
         radarAdminUrl: await resolveOwnerRadarAdminUrl(request),

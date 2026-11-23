@@ -9,13 +9,6 @@ import {
 } from "@/shared/constants/providers";
 import { generateId } from "@/shared/utils";
 import { isCcCompatibleProviderEnabled } from "@/shared/utils/featureFlags";
-import {
-  BP_ROUTE_PROVIDER_LOCKED_CODE,
-  BP_ROUTE_PROVIDER_LOCKED_MESSAGE,
-  isAllowedBpRouteNodeType,
-  isAllowedBpRouteProviderId,
-  isBpRouteProviderHardLockEnabled,
-} from "@/shared/constants/bpRouteProviderPolicy";
 import { createProviderNodeSchema, paginationSchema } from "@/shared/validation/schemas";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
 import { validateProviderNodeBaseUrl } from "./urlGuard";
@@ -107,25 +100,12 @@ export async function GET(request?: Request) {
     const offset =
       Number.isInteger(parsedOffset) && parsedOffset && parsedOffset > 0 ? parsedOffset : 0;
 
-    const hardLock = isBpRouteProviderHardLockEnabled();
-    const allNodes = await getProviderNodes(
-      {},
-      hardLock ? undefined : limit,
-      hardLock ? 0 : offset
-    );
-    const filteredNodes = hardLock
-      ? allNodes.filter((n: { id?: string; type?: string }) => isAllowedBpRouteProviderId(n?.id, n))
-      : allNodes;
-    const nodes =
-      hardLock && (limit !== undefined || offset > 0)
-        ? filteredNodes.slice(offset, limit !== undefined ? offset + limit : undefined)
-        : filteredNodes;
-    const total = hardLock ? filteredNodes.length : getProviderNodesCount();
+    const total = getProviderNodesCount();
+    const nodes = await getProviderNodes({}, limit, offset);
     return NextResponse.json({
       nodes,
       total,
-      bpRouteProviderHardLock: hardLock,
-      ccCompatibleProviderEnabled: hardLock ? false : isCcCompatibleProviderEnabled(),
+      ccCompatibleProviderEnabled: isCcCompatibleProviderEnabled(),
     });
   } catch (error) {
     console.log("Error fetching provider nodes:", error);
@@ -174,20 +154,6 @@ export async function POST(request) {
     // Optional operator-chosen id suffix (schema-validated charset); blank keeps the UUID.
     // Presets always get a UUID.
     const idSuffix = providerIdSuffix?.trim() || generateId();
-    const nodeType = type || "openai-compatible";
-
-    if (
-      isBpRouteProviderHardLockEnabled() &&
-      !isAllowedBpRouteNodeType(nodeType, compatMode, preset)
-    ) {
-      return NextResponse.json(
-        {
-          error: BP_ROUTE_PROVIDER_LOCKED_MESSAGE,
-          code: BP_ROUTE_PROVIDER_LOCKED_CODE,
-        },
-        { status: 403 }
-      );
-    }
 
     if (preset === "vibeproxy-openai") {
       // Schema guarantees baseUrl is non-empty for this preset.
@@ -215,6 +181,8 @@ export async function POST(request) {
     }
 
     // Determine type
+    const nodeType = type || "openai-compatible";
+
     if (nodeType === "openai-compatible") {
       const resolvedName = (name || "").trim();
       const resolvedPrefix = (prefix || "").trim();

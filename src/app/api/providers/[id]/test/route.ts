@@ -52,7 +52,6 @@ const OAUTH_TEST_TIMEOUT_MS = 30_000;
 import { CLI_RUNTIME_PROVIDER_MAP } from "./cliRuntimeProviderMap";
 import { isOperatorDisabled } from "@/lib/providers/operatorDisable";
 import { getRequestPeerLocality } from "@/shared/utils/apiAuth";
-import { rejectDisallowedBpRouteProvider } from "@/lib/providers/bpRouteHardLockGuard";
 
 /** POST body is optional; when present, only known fields are validated. */
 const providerConnectionTestBodySchema = z.object({
@@ -989,22 +988,6 @@ export async function testSingleConnection(
     };
   }
   retirement.assertProviderAvailable(provider);
-  const hardLockResponse = rejectDisallowedBpRouteProvider(provider);
-  if (hardLockResponse) {
-    return {
-      valid: false,
-      error: "Built-in providers are disabled in BP Route",
-      code: "BP_ROUTE_PROVIDER_LOCKED",
-      statusCode: 403,
-      diagnosis: makeDiagnosis(
-        "validation_error",
-        "local",
-        "Built-in providers are disabled in BP Route",
-        "bp_route_provider_locked"
-      ),
-      latencyMs: 0,
-    };
-  }
 
   let proxyInfo: any = null;
   try {
@@ -1217,12 +1200,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     if (data.error === "Connection not found") {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 });
-    }
-    if ((data as { code?: string }).code === "BP_ROUTE_PROVIDER_LOCKED") {
-      return NextResponse.json(
-        { error: data.error, code: "BP_ROUTE_PROVIDER_LOCKED" },
-        { status: 403 }
-      );
     }
 
     return NextResponse.json(data);

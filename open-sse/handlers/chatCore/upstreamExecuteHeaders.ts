@@ -16,7 +16,6 @@ import {
   shouldRequestClaudeFastMode,
 } from "@/lib/providers/claudeFastMode";
 import { isForbiddenCustomHeaderName } from "@/shared/constants/upstreamHeaders";
-import { getGovernedUpstreamHeaders } from "@/lib/bpbatam/context";
 
 export function buildUpstreamHeadersForExecute(opts: {
   modelToCall: string;
@@ -87,11 +86,6 @@ export function buildUpstreamHeadersForExecute(opts: {
     shouldRequestClaudeFastMode(settings, modelToCall)
   ) {
     upstreamHeaders[CPA_FORCE_FAST_MODE_HEADER] = "1";
-  }
-
-  const governedHeaders = getGovernedUpstreamHeaders();
-  for (const [k, v] of Object.entries(governedHeaders)) {
-    upstreamHeaders[k] = v;
   }
 
   return upstreamHeaders;

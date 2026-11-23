@@ -21,7 +21,6 @@ type CompatibleProviderNode = { id: string } & Record<string, unknown>;
 interface AddCompatibleProviderModalProps {
   isOpen: boolean;
   mode: CompatibleMode;
-  hardLockEnabled?: boolean;
   title?: string;
   onClose: () => void;
   onCreated: (node: CompatibleProviderNode) => void;
@@ -106,7 +105,6 @@ function createInitialForm(mode: CompatibleMode): CompatibleFormState {
 export default function AddCompatibleProviderModal({
   isOpen,
   mode,
-  hardLockEnabled = false,
   title,
   onClose,
   onCreated,
@@ -197,11 +195,10 @@ export default function AddCompatibleProviderModal({
     mode === "openai" ? "/v1/chat/completions" : mode === "cc" ? CC_DEFAULT_CHAT_PATH : "/messages";
   const chatPathHint = mode === "cc" ? t("ccCompatibleChatPathHint") : t("chatPathHint");
   const advancedId = `advanced-settings-${mode}`;
-  const isModeBlocked = hardLockEnabled && mode === "cc";
   const hasRequiredFields = Boolean(
-    !isModeBlocked && formData.name.trim() && formData.prefix.trim() && formData.baseUrl.trim()
+    formData.name.trim() && formData.prefix.trim() && formData.baseUrl.trim()
   );
-  const canValidate = Boolean(!isModeBlocked && checkKey.trim() && formData.baseUrl.trim());
+  const canValidate = Boolean(checkKey.trim() && formData.baseUrl.trim());
 
   const resetAfterCreate = () => {
     setFormData(createInitialForm(mode));
@@ -213,16 +210,6 @@ export default function AddCompatibleProviderModal({
   };
 
   const handleSubmit = async () => {
-    if (isModeBlocked) {
-      setSaveError(
-        providerText(
-          t,
-          "bpRouteModeBlocked",
-          "BP Route only allows OpenAI-compatible and Anthropic-compatible custom endpoints connected to Digi Route"
-        )
-      );
-      return;
-    }
     if (!hasRequiredFields) return;
     const iconUrl = formData.iconUrl.trim();
     if (!isValidProviderIconUrl(iconUrl)) {
@@ -303,7 +290,6 @@ export default function AddCompatibleProviderModal({
   };
 
   const handleValidate = async () => {
-    if (isModeBlocked) return;
     setValidating(true);
     try {
       const body: Record<string, unknown> = {
@@ -344,39 +330,10 @@ export default function AddCompatibleProviderModal({
   return (
     <Modal isOpen={isOpen} title={modalTitle} onClose={onClose}>
       <div className="flex flex-col gap-4">
-        {isModeBlocked && (
-          <div
-            role="alert"
-            aria-live="assertive"
-            className="rounded-xl border border-error/25 bg-error/10 px-3.5 py-2.5 text-sm text-error"
-          >
-            {providerText(
-              t,
-              "bpRouteModeBlocked",
-              "BP Route only allows OpenAI-compatible and Anthropic-compatible custom endpoints connected to Digi Route"
-            )}
-          </div>
-        )}
-
-        {hardLockEnabled && !isModeBlocked && (
-          <div className="rounded-xl border border-border bg-bg-subtle px-3.5 py-2.5 text-sm text-text-muted">
-            <div className="flex items-start gap-2.5">
-              <Icon name="hub" size={16} className="mt-0.5 shrink-0 text-primary" />
-              <p>
-                {providerText(
-                  t,
-                  "bpRouteCompatibleGuide",
-                  "Connect this endpoint to your upstream Digi Route gateway. Built-in providers are disabled in BP Route."
-                )}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {defaults.hasWarning && !isModeBlocked && (
-          <div className="rounded-xl border border-warning/25 bg-warning/10 px-3.5 py-2.5 text-sm text-text-muted">
-            <div className="flex items-start gap-2.5">
-              <Icon name="warning" size={16} className="mt-0.5 shrink-0 text-warning" />
+        {defaults.hasWarning && (
+          <div className="rounded-lg border border-warning/25 bg-warning/10 px-3 py-2 text-sm text-text-muted">
+            <div className="flex items-start gap-2">
+              <Icon name="warning" size={18} className="mt-0.5 text-warning" />
               <p>{t("ccCompatibleValidationHint")}</p>
             </div>
           </div>
@@ -461,10 +418,7 @@ export default function AddCompatibleProviderModal({
           {t("advancedSettings")}
         </Button>
         {showAdvanced && (
-          <div
-            id={advancedId}
-            className="flex flex-col gap-3 rounded-xl border border-border bg-bg-subtle p-3"
-          >
+          <div id={advancedId} className="flex flex-col gap-3 pl-2 border-l-2 border-border">
             <Input
               label={t("chatPathLabel")}
               value={formData.chatPath}
@@ -491,15 +445,15 @@ export default function AddCompatibleProviderModal({
           </div>
         )}
 
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-bg-subtle p-3.5">
-          <div className="flex items-end gap-2">
-            <Input
-              label={t("apiKeyForCheck")}
-              type="password"
-              value={checkKey}
-              onChange={(e) => setCheckKey(e.target.value)}
-              className="flex-1"
-            />
+        <div className="flex gap-2">
+          <Input
+            label={t("apiKeyForCheck")}
+            type="password"
+            value={checkKey}
+            onChange={(e) => setCheckKey(e.target.value)}
+            className="flex-1"
+          />
+          <div className="pt-6">
             <Button
               onClick={handleValidate}
               disabled={!canValidate || validating}
@@ -508,28 +462,28 @@ export default function AddCompatibleProviderModal({
               {validating ? t("checking") : t("check")}
             </Button>
           </div>
-          <Input
-            label={t("testModelIdLabel")}
-            value={checkModelId}
-            onChange={(e) => setCheckModelId(e.target.value)}
-            placeholder={t("testModelIdPlaceholder")}
-            hint={t("testModelIdHint")}
-          />
-          {validationResult && (
-            <div className="flex flex-col gap-1">
-              <Badge variant={validationResult.valid ? "success" : "error"}>
-                {validationResult.valid ? t("valid") : t("invalid")}
-              </Badge>
-              {validationResult.error && (
-                <span
-                  className={`text-sm ${validationResult.valid ? "text-text-muted" : "text-error"}`}
-                >
-                  {validationResult.error}
-                </span>
-              )}
-            </div>
-          )}
         </div>
+        <Input
+          label={t("testModelIdLabel")}
+          value={checkModelId}
+          onChange={(e) => setCheckModelId(e.target.value)}
+          placeholder={t("testModelIdPlaceholder")}
+          hint={t("testModelIdHint")}
+        />
+        {validationResult && (
+          <div className="flex flex-col gap-1">
+            <Badge variant={validationResult.valid ? "success" : "error"}>
+              {validationResult.valid ? t("valid") : t("invalid")}
+            </Badge>
+            {validationResult.error && (
+              <span
+                className={`text-sm ${validationResult.valid ? "text-text-muted" : "text-error"}`}
+              >
+                {validationResult.error}
+              </span>
+            )}
+          </div>
+        )}
 
         {saveError && (
           <div

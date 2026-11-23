@@ -1,4 +1,3 @@
-import { governedInference } from "@/lib/bpbatam/inference";
 import { z } from "zod";
 import { handleChat } from "@/sse/handlers/chat";
 import { logAdmissionRejection } from "@/sse/handlers/admissionRejectionLog";
@@ -249,6 +248,4 @@ async function postHandler(request: any) {
   }
 }
 
-export function POST(request: Request) {
-  return governedInference(request, (forwarded) => postHandler(forwarded));
-}
+export const POST = postHandler;

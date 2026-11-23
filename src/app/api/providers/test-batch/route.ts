@@ -22,12 +22,6 @@ import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
 import { requireManagementAuth } from "@/lib/api/requireManagementAuth";
 import { sanitizeErrorMessage } from "@omniroute/open-sse/utils/error";
 import { getRequestPeerLocality } from "@/shared/utils/apiAuth";
-import {
-  bpRouteProviderLockedResponse,
-  filterAllowedBpRouteConnections,
-  rejectDisallowedBpRouteProvider,
-} from "@/lib/providers/bpRouteHardLockGuard";
-import { isBpRouteProviderHardLockEnabled } from "@/shared/constants/bpRouteProviderPolicy";
 
 // Determine auth type group for a provider id
 function getAuthGroup(providerId) {
@@ -98,23 +92,13 @@ export async function POST(request) {
     }
     const { mode, providerId, connectionIds } = validation.data;
 
-    if (isBpRouteProviderHardLockEnabled()) {
-      if (mode === "provider" && providerId) {
-        const blocked = rejectDisallowedBpRouteProvider(providerId);
-        if (blocked) return blocked;
-      } else if (mode !== "compatible" && mode !== "all" && mode !== "selected") {
-        return bpRouteProviderLockedResponse();
-      }
-    }
-
     // Fetch connections to test. mode=selected targets explicit IDs and must
     // also reach inactive connections (matching single-connection retest);
     // every other mode tests active connections only.
-    const rawConnections =
+    const allConnections =
       mode === "selected"
         ? await getProviderConnections()
         : await getProviderConnections({ isActive: true });
-    const allConnections = filterAllowedBpRouteConnections(rawConnections);
 
     // Filter based on mode
     let connectionsToTest = [];

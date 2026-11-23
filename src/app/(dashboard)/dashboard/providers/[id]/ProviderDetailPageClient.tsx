@@ -6,11 +6,6 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Card, Button, CardSkeleton } from "@/shared/components";
-import Icon from "@/shared/components/Icon";
-import { buttonVariants } from "@omniroute/ui-kit/button";
-import { EmptyState as KitEmptyState } from "@omniroute/ui-kit/empty-state";
-import { isAllowedBpRouteProviderId } from "@/shared/constants/bpRouteProviderPolicy";
-import { providerText } from "./providerPageHelpers";
 import ProviderTosNotice from "@/shared/components/ProviderTosNotice";
 import {
   NOAUTH_PROVIDERS,
@@ -104,12 +99,13 @@ export default function ProviderDetailPageClient() {
   const [importGeminiModalOpen, setImportGeminiModalOpen] = useState(false);
   const [importGrokCliModalOpen, setImportGrokCliModalOpen] = useState(false);
   const [connectingVolcengineAccount, setConnectingVolcengineAccount] = useState(false);
+  const isOpenAICompatible = isOpenAICompatibleProvider(providerId);
   const isCcCompatible = isClaudeCodeCompatibleProvider(providerId);
   const isCommandCode = providerId === "command-code";
-  const initialIsCompatible =
-    isOpenAICompatibleProvider(providerId) ||
-    isAnthropicCompatibleProvider(providerId) ||
-    String(providerId).startsWith("ce_");
+  const isAnthropicCompatible =
+    isAnthropicCompatibleProvider(providerId) && !isClaudeCodeCompatibleProvider(providerId);
+  const isCompatible = isOpenAICompatible || isAnthropicCompatible || isCcCompatible;
+  const isAnthropicProtocolCompatible = isAnthropicCompatible || isCcCompatible;
   // #5420: hide model listing for tool-only providers, not just `-search` ids.
   const declaredServiceKinds = (
     resolveDashboardProviderInfo(providerId) as { serviceKinds?: readonly string[] } | null
@@ -123,7 +119,6 @@ export default function ProviderDetailPageClient() {
     connections,
     setConnections,
     providerNode,
-    bpRouteProviderHardLock,
     loading,
     retestingId,
     handleClearCooldown,
@@ -181,15 +176,7 @@ export default function ProviderDetailPageClient() {
     parseApiErrorMessage,
     getAttachmentFilename,
     PAGE_SIZE,
-  } = useProviderConnections(providerId, initialIsCompatible, isSearchProvider);
-
-  const isOpenAICompatible =
-    isOpenAICompatibleProvider(providerId) || providerNode?.type === "openai-compatible";
-  const isAnthropicCompatible =
-    (isAnthropicCompatibleProvider(providerId) || providerNode?.type === "anthropic-compatible") &&
-    !isCcCompatible;
-  const isCompatible = isOpenAICompatible || isAnthropicCompatible || isCcCompatible;
-  const isAnthropicProtocolCompatible = isAnthropicCompatible || isCcCompatible;
+  } = useProviderConnections(providerId, isCompatible, isSearchProvider);
 
   const {
     codexGlobalServiceMode,
@@ -571,28 +558,6 @@ export default function ProviderDetailPageClient() {
         <CardSkeleton />
         <CardSkeleton />
       </div>
-    );
-  }
-
-  if (bpRouteProviderHardLock && !isAllowedBpRouteProviderId(providerId, providerNode)) {
-    return (
-      <Card padding="lg">
-        <KitEmptyState
-          icon={<Icon name="lock" size={32} />}
-          title={providerText(t, "bpRouteProviderLockedTitle", "Provider disabled in BP Route")}
-          description={providerText(
-            t,
-            "bpRouteProviderLockedDesc",
-            "Built-in providers are disabled in BP Route. Configure an OpenAI-compatible or Anthropic-compatible custom endpoint connected to upstream Digi Route."
-          )}
-          actions={
-            <Link href="/dashboard/providers" className={buttonVariants({ variant: "default" })}>
-              <Icon name="arrow_back" size={16} />
-              {t("backToProviders")}
-            </Link>
-          }
-        />
-      </Card>
     );
   }
 

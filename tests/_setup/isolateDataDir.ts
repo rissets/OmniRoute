@@ -68,8 +68,3 @@ process.env.ADOBE_FIREFLY_BROWSER_REFRESH ||= "0";
 // DNS-write guard: the suite must NEVER mutate /etc/hosts. Tests that exercise
 // the real MITM path call addDNSEntries(); this env var makes it a no-op.
 process.env.OMNIROUTE_SKIP_DNS_WRITE = "1";
-
-// Legacy upstream OmniRoute unit tests exercise the full 60+ built-in provider
-// catalog. Tests covering BP Route hard-lock set BP_ROUTE_PROVIDER_HARD_LOCK=true
-// explicitly (or clear it to assert the default-on runtime policy).
-process.env.BP_ROUTE_PROVIDER_HARD_LOCK ||= "false";

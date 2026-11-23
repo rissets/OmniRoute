@@ -10,12 +10,6 @@ import {
 } from "@/shared/network/safeOutboundFetch";
 import { getProviderValidationGuard } from "@/shared/network/outboundUrlGuardPolicy";
 import { isCcCompatibleProviderEnabled } from "@/shared/utils/featureFlags";
-import {
-  BP_ROUTE_PROVIDER_LOCKED_CODE,
-  BP_ROUTE_PROVIDER_LOCKED_MESSAGE,
-  isAllowedBpRouteNodeType,
-  isBpRouteProviderHardLockEnabled,
-} from "@/shared/constants/bpRouteProviderPolicy";
 import { providerNodeValidateSchema } from "@/shared/validation/schemas";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
 
@@ -207,20 +201,6 @@ export async function POST(request) {
     const { baseUrl, apiKey, type, compatMode, apiType, chatPath, modelsPath, modelId } =
       validation.data;
     const trimmedModelId = typeof modelId === "string" ? modelId.trim() : "";
-
-    if (
-      isBpRouteProviderHardLockEnabled() &&
-      !isAllowedBpRouteNodeType(type || "openai-compatible", compatMode)
-    ) {
-      return NextResponse.json(
-        {
-          valid: false,
-          error: BP_ROUTE_PROVIDER_LOCKED_MESSAGE,
-          code: BP_ROUTE_PROVIDER_LOCKED_CODE,
-        },
-        { status: 403 }
-      );
-    }
 
     // Anthropic Compatible Validation
     if (type === "anthropic-compatible") {

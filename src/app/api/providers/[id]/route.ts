@@ -44,7 +44,6 @@ import {
 import { rejectRetiredCommonChatGptWebProvider } from "@/lib/providers/chatgptWebRetirementResponse";
 import { chatGptWebStorageStateFromCookieHeader } from "@omniroute/open-sse/utils/chatgptWebExecutorAdapter.ts";
 import { applyOperatorActivationIntent } from "@/lib/providers/operatorDisable";
-import { rejectDisallowedBpRouteProvider } from "@/lib/providers/bpRouteHardLockGuard";
 
 function normalizeCodexLimitPolicy(
   incoming: unknown,
@@ -175,8 +174,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
     const retirementResponse = rejectRetiredCommonChatGptWebProvider(existing.provider);
     if (retirementResponse) return retirementResponse;
-    const hardLockResponse = rejectDisallowedBpRouteProvider(existing.provider);
-    if (hardLockResponse) return hardLockResponse;
 
     const updateData: Record<string, any> = {};
     if (name !== undefined) updateData.name = name;

@@ -1,547 +1,209 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { Alert } from "@omniroute/ui-kit/alert";
-import { buttonVariants } from "@omniroute/ui-kit/button";
-import { PageHeader } from "@omniroute/ui-kit/page-header";
-import { Stat, StatRow } from "@omniroute/ui-kit/stat";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@omniroute/ui-kit/table";
-import { Badge, Button, Card, CardSkeleton, EmptyState, Icon } from "@/shared/components";
+import { useEffect, useState } from "react";
+import Card from "@/shared/components/Card";
+import Button from "@/shared/components/Button";
 
-type PoolAccount = {
-  id: string;
-  kind: string;
-  balance: string;
-  reserved: string;
-  balance_micro?: number;
-  reserved_micro?: number;
-  balance_credits?: string;
-  reserved_credits?: string;
-  estimated_tokens?: number;
-};
-
-type DigiSyncState = {
-  synced: boolean;
-  digi_account_id: string | null;
-  last_balance_micro: number;
-  last_reserved_micro: number;
-  last_available_micro: number;
-  last_balance_credits: string;
-  last_reserved_credits: string;
-  last_available_credits: string;
-  base_credit_rupiah: number;
-  usd_idr_rate: number;
-  ref_tokens_per_credit: number;
-  economic_revision: number;
-  last_synced_at: string | null;
-  last_sync_source: string | null;
-  last_sync_error: string | null;
-};
-
-type PoolPayload = {
-  account_id: string;
-  unit?: string;
+type Pool = {
   ceiling: string;
   issued: string;
   remaining: string;
-  reserved: string;
   consumed: string;
-  issued_micro: number;
-  remaining_micro: number;
-  reserved_micro: number;
-  consumed_micro: number;
-  available_micro: number;
-  issued_credits: string;
-  remaining_credits: string;
-  reserved_credits: string;
-  consumed_credits: string;
-  available_credits: string;
-  ref_tokens_per_credit: number;
-  estimated_tokens: number;
-  low_balance?: boolean;
-  manual_minting_disabled?: boolean;
-  topup_url?: string;
-  digi_sync?: DigiSyncState;
-  accounts: PoolAccount[];
+  reserved: string;
+  accounts: { id: string; kind: string; balance: string; reserved: string }[];
 };
-
-const formatInteger = (value: number, locale: string) => Math.round(value).toLocaleString(locale);
-
-const formatCredits = (
-  creditsStr: string | undefined,
-  microFallback: number,
-  locale: string
-): string => {
-  const num = creditsStr !== undefined ? Number(creditsStr) : microFallback / 1_000_000;
-  if (!Number.isFinite(num)) {
-    return (0).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-  return num.toLocaleString(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
-  });
-};
-
-const formatSyncTime = (
-  iso: string | null | undefined,
-  locale: string,
-  neverSyncedLabel: string
-): string => {
-  if (!iso) return neverSyncedLabel;
-  const parsed = Date.parse(iso);
-  if (Number.isNaN(parsed)) return iso;
-  return new Date(parsed).toLocaleString(locale, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-};
-
-export default function BpBatamPoolPage() {
-  const t = useTranslations("bpbatam");
-  const tRef = useRef(t);
-  useEffect(() => {
-    tRef.current = t;
-  }, [t]);
-  const locale = useLocale();
-  const [pool, setPool] = useState<PoolPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
+const number = (value: string) => Number(value).toLocaleString("id-ID");
+export default function BpBatamPool() {
+  const [pool, setPool] = useState<Pool | null>(null);
   const [error, setError] = useState("");
-  const [syncNotice, setSyncNotice] = useState("");
-
-  const accountKindLabel = (kind: string): string => {
-    if (kind === "platform") return t("accountKind.platform");
-    if (kind === "department") return t("accountKind.department");
-    if (kind === "user") return t("accountKind.user");
-    return kind;
-  };
-
-  const loadPool = useCallback(async () => {
+  const [busy, setBusy] = useState(false);
+  const [total, setTotal] = useState("");
+  const [addition, setAddition] = useState("");
+  const [success, setSuccess] = useState("");
+  async function load() {
     setError("");
-    setLoading(true);
     try {
-      const response = await fetch("/api/bpbatam-pool", { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(tRef.current("errors.ownerRequired"));
-      }
-      const data = (await response.json()) as PoolPayload;
-      setPool(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tRef.current("errors.loadFailed"));
-    } finally {
-      setLoading(false);
+      const r = await fetch("/api/bpbatam-pool");
+      if (!r.ok) throw new Error("Akses owner OmniRoute diperlukan untuk membaca pool.");
+      const value = await r.json();
+      setPool(value);
+      setTotal(value.ceiling);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Pool tidak dapat dibaca.");
     }
-  }, []);
-
+  }
   useEffect(() => {
     let active = true;
-    fetch("/api/bpbatam-pool", { cache: "no-store" })
+    fetch("/api/bpbatam-pool")
       .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(tRef.current("errors.ownerRequired"));
-        }
-        return (await response.json()) as PoolPayload;
+        if (!response.ok) throw new Error("Akses owner OmniRoute diperlukan untuk membaca pool.");
+        return (await response.json()) as Pool;
       })
-      .then((data) => {
+      .then((value) => {
         if (!active) return;
-        setPool(data);
-        setError("");
+        setPool(value);
+        setTotal(value.ceiling);
       })
-      .catch((err: unknown) => {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : tRef.current("errors.loadFailed"));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+      .catch((e: unknown) => {
+        if (active) setError(e instanceof Error ? e.message : "Pool tidak dapat dibaca.");
       });
     return () => {
       active = false;
     };
   }, []);
-
-  const handlePullSync = async () => {
-    if (syncing) return;
-    setSyncing(true);
+  async function update(mode: "set-total" | "add") {
+    const tokens = Number(mode === "add" ? addition : total);
+    if (!pool || !Number.isSafeInteger(tokens) || tokens <= 0) {
+      setError("Masukkan jumlah token bulat yang lebih besar dari nol.");
+      return;
+    }
+    if (mode === "set-total" && tokens < Number(pool.issued)) {
+      setError("Total pool tidak boleh di bawah jumlah token yang sudah diterbitkan.");
+      return;
+    }
+    setSuccess("");
+    setBusy(true);
     setError("");
-    setSyncNotice("");
     try {
-      const response = await fetch("/api/bpbatam-pool", {
+      const r = await fetch("/api/bpbatam-pool", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "pull-sync" }),
+        body: JSON.stringify({
+          command_id: crypto.randomUUID(),
+          mode,
+          tokens,
+          expected_issued: Number(pool.issued),
+        }),
       });
-      const data = (await response.json().catch(() => ({}))) as PoolPayload & {
-        pool?: PoolPayload;
-        delta_micro?: number;
-        code?: string;
-      };
-      if (!response.ok) {
-        throw new Error(
-          data.code ? t("errors.syncFailedWithCode", { code: data.code }) : t("errors.syncFailed")
-        );
-      }
-      if (data.pool) {
-        setPool({
-          ...data.pool,
-          topup_url: data.topup_url ?? pool?.topup_url,
-          manual_minting_disabled: data.manual_minting_disabled ?? true,
-        });
-      } else {
-        await loadPool();
-      }
-      const addedMicro = Number(data.delta_micro ?? 0);
-      setSyncNotice(
-        addedMicro > 0
-          ? t("notices.syncAdded", { credits: formatCredits(undefined, addedMicro, locale) })
-          : t("notices.syncUpToDate")
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("errors.syncExecutionFailed"));
+      if (!r.ok) throw new Error((await r.json()).code ?? "Pool gagal ditetapkan");
+      const value = await r.json();
+      setPool(value);
+      setTotal(value.ceiling);
+      setAddition("");
+      setSuccess("Pool token berhasil diperbarui.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Pool gagal ditetapkan");
     } finally {
-      setSyncing(false);
+      setBusy(false);
     }
-  };
-
-  const topupUrl = pool?.topup_url ?? "http://127.0.0.1:3090/?tenant_id=bpbatam";
-  const syncState = pool?.digi_sync;
-  const issuedCreditsNum = Number(pool?.issued_credits ?? (pool?.issued_micro ?? 0) / 1_000_000);
-  const remainingCreditsNum = Number(
-    pool?.remaining_credits ?? (pool?.remaining_micro ?? 0) / 1_000_000
-  );
-  const consumedCreditsNum = Number(
-    pool?.consumed_credits ?? (pool?.consumed_micro ?? 0) / 1_000_000
-  );
-  const refTokensPerCredit =
-    pool?.ref_tokens_per_credit ?? syncState?.ref_tokens_per_credit ?? 152200;
-
+  }
   return (
     <main className="flex flex-col gap-6">
-      <PageHeader
-        compact
-        eyebrow={t("header.eyebrow")}
-        title={t("header.title")}
-        description={t("header.description")}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="primary"
-              size="sm"
-              icon="sync"
-              loading={syncing}
-              disabled={loading || syncing}
-              onClick={() => void handlePullSync()}
-            >
-              {syncing ? t("actions.syncing") : t("actions.syncNow")}
-            </Button>
-            <a
-              href={topupUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              <Icon name="open_in_new" size={16} />
-              {t("actions.topUp")}
-            </a>
-          </div>
-        }
-      />
-
+      <header>
+        <h1 className="text-2xl font-semibold">Pool Token BP Batam</h1>
+        <p>
+          Saldo permanen organisasi. Alokasi departemen dan pengguna dikelola melalui control panel.
+        </p>
+      </header>
       {error && (
-        <Alert
-          variant="critical"
-          icon={<Icon name="error" size={18} />}
-          title={t("alerts.errorTitle")}
-          description={error}
-          actions={
-            <Button size="sm" variant="outline" icon="refresh" onClick={() => void loadPool()}>
-              {t("actions.reload")}
-            </Button>
-          }
-        />
-      )}
-
-      {syncNotice && (
-        <Alert
-          variant="success"
-          icon={<Icon name="check_circle" size={18} />}
-          title={t("alerts.syncUpdatedTitle")}
-          description={syncNotice}
-          onDismiss={() => setSyncNotice("")}
-        />
-      )}
-
-      {pool?.low_balance && (
-        <Alert
-          variant="warning"
-          icon={<Icon name="warning" size={18} />}
-          title={t("alerts.lowBalanceTitle")}
-          description={t("alerts.lowBalanceDescription", {
-            credits: formatCredits(pool.remaining_credits, pool.remaining_micro, locale),
-            tokens: formatInteger(pool.estimated_tokens, locale),
-          })}
-          actions={
-            <a
-              href={topupUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonVariants({ variant: "default", size: "sm" })}
-            >
-              <Icon name="open_in_new" size={16} />
-              {t("actions.topUp")}
-            </a>
-          }
-        />
-      )}
-
-      {loading && !pool ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          <CardSkeleton />
-          <CardSkeleton />
+        <div role="alert">
+          {error} <Button onClick={() => void load()}>Coba lagi</Button>
         </div>
-      ) : null}
-
+      )}
+      {!pool && !error && <p role="status">Memuat pool token…</p>}
       {pool && (
         <>
-          <Card padding="md">
-            <StatRow columns={4}>
-              <Stat
-                label={t("stats.issuedLabel")}
-                value={issuedCreditsNum}
-                locale={locale}
-                numberFormatOptions={{ minimumFractionDigits: 2, maximumFractionDigits: 4 }}
-                suffix={t("stats.creditSuffix")}
-                hint={t("stats.issuedHint", { micro: formatInteger(pool.issued_micro, locale) })}
-              />
-              <Stat
-                label={t("stats.remainingLabel")}
-                value={remainingCreditsNum}
-                locale={locale}
-                numberFormatOptions={{ minimumFractionDigits: 2, maximumFractionDigits: 4 }}
-                suffix={t("stats.creditSuffix")}
-                tone={pool.low_balance ? "critical" : "positive"}
-                hint={t("stats.remainingHint", {
-                  tokens: formatInteger(pool.estimated_tokens, locale),
-                })}
-              />
-              <Stat
-                label={t("stats.consumedLabel")}
-                value={consumedCreditsNum}
-                locale={locale}
-                numberFormatOptions={{ minimumFractionDigits: 2, maximumFractionDigits: 4 }}
-                suffix={t("stats.creditSuffix")}
-                hint={t("stats.consumedHint", {
-                  reserved: formatCredits(pool.reserved_credits, pool.reserved_micro, locale),
-                })}
-              />
-              <Stat
-                label={t("stats.estimatedTokensLabel")}
-                value={pool.estimated_tokens}
-                locale={locale}
-                numberFormatOptions={{ maximumFractionDigits: 0 }}
-                suffix={t("stats.tokenSuffix")}
-                hint={t("stats.estimatedTokensHint", {
-                  refTokens: formatInteger(refTokensPerCredit, locale),
-                })}
-              />
-            </StatRow>
-          </Card>
-
-          <Card
-            title={t("syncCard.title")}
-            subtitle={t("syncCard.subtitle")}
-            action={
-              <Badge
-                variant={
-                  syncState?.last_sync_error ? "error" : syncState?.synced ? "success" : "warning"
-                }
-              >
-                {syncState?.last_sync_error
-                  ? t("syncCard.badgeError")
-                  : syncState?.synced
-                    ? t("syncCard.badgeSynced")
-                    : t("syncCard.badgePending")}
-              </Badge>
-            }
-          >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="flex flex-col gap-1 rounded-lg border border-border bg-bg-subtle p-4">
-                <span className="text-xs font-medium text-text-muted">
-                  {t("syncCard.digiAccountLabel")}
-                </span>
-                <span className="font-mono text-sm font-medium text-text-main">
-                  {syncState?.digi_account_id || pool.account_id}
-                </span>
-                <span className="text-xs text-text-muted">
-                  {t("syncCard.lastSource", {
-                    source: syncState?.last_sync_source ?? t("syncCard.noSource"),
-                  })}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1 rounded-lg border border-border bg-bg-subtle p-4">
-                <span className="text-xs font-medium text-text-muted">
-                  {t("syncCard.lastBalanceLabel")}
-                </span>
-                <span className="text-sm font-semibold tabular-nums text-text-main">
-                  {t("syncCard.availableCredits", {
-                    credits: formatCredits(
-                      syncState?.last_available_credits,
-                      syncState?.last_available_micro ?? 0,
-                      locale
-                    ),
-                  })}
-                </span>
-                <span className="text-xs tabular-nums text-text-muted">
-                  {t("syncCard.balanceBreakdown", {
-                    total: formatCredits(
-                      syncState?.last_balance_credits,
-                      syncState?.last_balance_micro ?? 0,
-                      locale
-                    ),
-                    reserved: formatCredits(
-                      syncState?.last_reserved_credits,
-                      syncState?.last_reserved_micro ?? 0,
-                      locale
-                    ),
-                  })}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1 rounded-lg border border-border bg-bg-subtle p-4">
-                <span className="text-xs font-medium text-text-muted">
-                  {t("syncCard.lastSyncLabel")}
-                </span>
-                <span className="text-sm font-medium tabular-nums text-text-main">
-                  {formatSyncTime(syncState?.last_synced_at, locale, t("neverSynced"))}
-                </span>
-                <span className="text-xs text-text-muted">
-                  {syncState?.last_sync_error
-                    ? t("syncCard.syncErrorNote", { error: syncState.last_sync_error })
-                    : t("syncCard.noSyncErrors")}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1 rounded-lg border border-border bg-bg-subtle p-4">
-                <span className="text-xs font-medium text-text-muted">
-                  {t("syncCard.economicsLabel")}
-                </span>
-                <span className="text-sm font-medium tabular-nums text-text-main">
-                  {t("syncCard.creditValueIdr", {
-                    rupiah: formatInteger(syncState?.base_credit_rupiah ?? 5000, locale),
-                  })}
-                </span>
-                <span className="text-xs tabular-nums text-text-muted">
-                  {t("syncCard.fxAndRevision", {
-                    rate: formatInteger(syncState?.usd_idr_rate ?? 18255, locale),
-                    revision: syncState?.economic_revision ?? 1,
-                  })}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-1 rounded-lg border border-border bg-bg-subtle p-4 sm:col-span-2">
-                <span className="text-xs font-medium text-text-muted">
-                  {t("syncCard.policyLabel")}
-                </span>
-                <div className="flex items-center gap-2 text-sm font-medium text-text-main">
-                  <Icon name="lock" size={16} className="text-text-muted" />
-                  <span>{t("syncCard.policyTitle")}</span>
-                </div>
-                <span className="text-xs text-text-muted">{t("syncCard.policyDescription")}</span>
-              </div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-              <span className="text-xs text-text-muted">
-                {t("syncCard.footerNote", { tenant: pool.account_id })}
-              </span>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  icon="sync"
-                  loading={syncing}
-                  disabled={syncing}
-                  onClick={() => void handlePullSync()}
-                >
-                  {syncing ? t("actions.syncing") : t("actions.syncNow")}
-                </Button>
-                <a
-                  href={topupUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={buttonVariants({ variant: "default", size: "sm" })}
-                >
-                  <Icon name="open_in_new" size={16} />
-                  {t("actions.topUp")}
-                </a>
-              </div>
-            </div>
-          </Card>
-
-          <Card title={t("accountsCard.title")} subtitle={t("accountsCard.subtitle")}>
-            {pool.accounts.length === 0 ? (
-              <EmptyState
-                icon="account_balance_wallet"
-                title={t("accountsCard.emptyTitle")}
-                description={t("accountsCard.emptyDescription")}
-              />
-            ) : (
-              <Table persistentScrollbars={false}>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("accountsCard.columns.account")}</TableHead>
-                    <TableHead>{t("accountsCard.columns.kind")}</TableHead>
-                    <TableHead className="text-right">
-                      {t("accountsCard.columns.balance")}
-                    </TableHead>
-                    <TableHead className="text-right">
-                      {t("accountsCard.columns.reserved")}
-                    </TableHead>
-                    <TableHead className="text-right">
-                      {t("accountsCard.columns.estimatedTokens")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pool.accounts.map((acc) => {
-                    const balMicro = acc.balance_micro ?? Number(acc.balance ?? 0);
-                    const resMicro = acc.reserved_micro ?? Number(acc.reserved ?? 0);
-                    const estTokens =
-                      acc.estimated_tokens ??
-                      Math.round(
-                        (Math.max(0, balMicro - resMicro) / 1_000_000) * refTokensPerCredit
-                      );
-                    return (
-                      <TableRow key={acc.id}>
-                        <TableCell className="font-mono text-xs">{acc.id}</TableCell>
-                        <TableCell>
-                          <Badge variant={acc.kind === "platform" ? "primary" : "default"}>
-                            {accountKindLabel(acc.kind)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {formatCredits(acc.balance_credits, balMicro, locale)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {formatCredits(acc.reserved_credits, resMicro, locale)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-text-muted">
-                          {formatInteger(estTokens, locale)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+          <div className="grid gap-4 md:grid-cols-4">
+            {[
+              ["Batas penerbitan", pool.ceiling],
+              ["Telah diterbitkan", pool.issued],
+              ["Saldo tersisa", pool.remaining],
+              ["Pemakaian", pool.consumed],
+            ].map(([label, value]) => (
+              <Card key={label} title={label}>
+                <p className="text-2xl font-semibold">{number(value)}</p>
+                <p>token</p>
+              </Card>
+            ))}
+          </div>
+          <Card title="Kelola pool token">
+            <p className="mb-4">
+              Pool bersifat permanen dan dapat ditambah. Jumlah yang sudah diterbitkan tidak dapat
+              ditarik melalui pengurangan total. Reservasi aktif: {number(pool.reserved)} token.
+            </p>
+            {success && (
+              <p role="status" className="mb-3">
+                {success}
+              </p>
             )}
+            <form
+              className="mb-6 flex flex-col gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void update("set-total");
+              }}
+            >
+              <label htmlFor="pool-total">Total pool token</label>
+              <input
+                id="pool-total"
+                type="number"
+                min={pool.issued}
+                step="1"
+                value={total}
+                onChange={(e) => setTotal(e.target.value)}
+                className="rounded-lg border border-border bg-transparent px-3 py-2"
+                required
+                disabled={busy}
+              />
+              <p className="text-sm">
+                Menetapkan total penerbitan kumulatif. Selisih di atas token yang sudah terbit
+                ditambahkan ke saldo organisasi.
+              </p>
+              <Button type="submit" disabled={busy}>
+                {busy ? "Menyimpan…" : "Simpan total pool"}
+              </Button>
+            </form>
+            <form
+              className="flex flex-col gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void update("add");
+              }}
+            >
+              <label htmlFor="pool-add">Tambahkan token ke pool</label>
+              <input
+                id="pool-add"
+                type="number"
+                min="1"
+                step="1"
+                value={addition}
+                onChange={(e) => setAddition(e.target.value)}
+                className="rounded-lg border border-border bg-transparent px-3 py-2"
+                required
+                disabled={busy}
+              />
+              <p className="text-sm">
+                Penambahan dicatat di jurnal OmniRoute dan tidak mengubah limit atau alokasi
+                pengguna secara otomatis.
+              </p>
+              <Button type="submit" disabled={busy || !addition}>
+                {busy ? "Menambahkan…" : "Tambah token"}
+              </Button>
+            </form>
+          </Card>
+          <Card title="Distribusi saldo">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr>
+                    <th>Akun</th>
+                    <th>Jenis</th>
+                    <th>Saldo</th>
+                    <th>Reservasi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pool.accounts.map((a) => (
+                    <tr key={a.id}>
+                      <td className="break-all py-2">{a.id}</td>
+                      <td>{a.kind}</td>
+                      <td>{number(a.balance)}</td>
+                      <td>{number(a.reserved)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </>
       )}

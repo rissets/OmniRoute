@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getProviderConnections } from "@/lib/db/providers";
 import { maskStoredApiKey } from "@/lib/apiKeyExposure";
 import { sanitizeProviderSpecificDataForResponse } from "@/lib/providers/requestDefaults";
-import { filterAllowedBpRouteConnections } from "@/lib/providers/bpRouteHardLockGuard";
 
 // GET /api/providers/client - List connections for the dashboard widgets.
 // No consumer needs credentials, and this route is reachable anonymously when
@@ -10,7 +9,7 @@ import { filterAllowedBpRouteConnections } from "@/lib/providers/bpRouteHardLock
 // (GHSA-qxg2-rm3h-4cxp).
 export async function GET() {
   try {
-    const connections = filterAllowedBpRouteConnections(await getProviderConnections());
+    const connections = await getProviderConnections();
 
     const clientConnections = connections.map((c) => ({
       ...c,
